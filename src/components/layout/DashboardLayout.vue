@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X } from 'lucide-vue-next'
+import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -17,15 +17,30 @@ const showInstallBanner = ref(false)
 
 // Online / Offline Network Monitor State
 const isOnline = ref(navigator.onLine)
+const networkToastMsg = ref('')
+
+// Notification Permission State for First-Time Users
+const notificationPermission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'default')
+const showFirstTimeNotifPrompt = ref(false)
 
 // Settings & Notifications Drawer Modal State
 const showSettingsDrawer = ref(false)
 const showTermsModal = ref(false)
-const notificationPermission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'default')
 const pendingCount = ref(0)
 
 const updateNetworkStatus = () => {
+  const wasOnline = isOnline.value
   isOnline.value = navigator.onLine
+  if (!wasOnline && isOnline.value) {
+    showNetworkToast('🟢 Back Online! Synchronized latest band data.')
+  } else if (wasOnline && !isOnline.value) {
+    showNetworkToast('⚡ Operating Offline. Using last synced data.')
+  }
+}
+
+const showNetworkToast = (msg) => {
+  networkToastMsg.value = msg
+  setTimeout(() => { networkToastMsg.value = '' }, 4000)
 }
 
 const toggleTheme = () => {
@@ -38,7 +53,10 @@ const toggleTheme = () => {
 }
 
 const handleInstallPWA = async () => {
-  if (!deferredPrompt.value) return
+  if (!deferredPrompt.value) {
+    alert('To install SmartBand:\n• Mobile: Tap Share / Menu → Add to Home Screen.\n• Desktop: Click the Install icon in your browser address bar.')
+    return
+  }
   deferredPrompt.value.prompt()
   const { outcome } = await deferredPrompt.value.userChoice
   if (outcome === 'accepted') {
@@ -54,6 +72,12 @@ const requestNotificationPermission = async () => {
   }
   const result = await Notification.requestPermission()
   notificationPermission.value = result
+  showFirstTimeNotifPrompt.value = false
+}
+
+const dismissFirstTimeNotifPrompt = () => {
+  showFirstTimeNotifPrompt.value = false
+  localStorage.setItem('smartband_notif_prompt_dismissed', 'true')
 }
 
 const fetchPendingCount = async () => {
@@ -71,14 +95,25 @@ const handleSignOut = async () => {
 onMounted(() => {
   isDark.value = document.documentElement.classList.contains('dark')
 
+  // PWA Install Prompt Listener
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt.value = e
     showInstallBanner.value = true
   })
 
+  // Network State Listener
   window.addEventListener('online', updateNetworkStatus)
   window.addEventListener('offline', updateNetworkStatus)
+
+  // First-Time User Notification Prompt Trigger
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    const dismissed = localStorage.getItem('smartband_notif_prompt_dismissed')
+    if (!dismissed) {
+      showFirstTimeNotifPrompt.value = true
+    }
+  }
+
   fetchPendingCount()
 })
 
@@ -186,15 +221,15 @@ onUnmounted(() => {
 
       </nav>
 
-      <!-- Desktop PWA Install Banner -->
-      <div v-if="showInstallBanner" class="p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl space-y-2">
+      <!-- Desktop PWA Install Button Banner -->
+      <div class="p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl space-y-2">
         <div class="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400 font-black text-xs">
           <Download class="w-4 h-4" />
-          <span>Install Desktop App</span>
+          <span>Install SmartBand PWA</span>
         </div>
-        <p class="text-[11px] text-slate-600 dark:text-neutral-400 leading-tight">Install SmartBand directly on desktop for 1-click offline access.</p>
-        <button @click="handleInstallPWA" type="button" class="w-full py-2 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]">
-          Install PWA
+        <p class="text-[11px] text-slate-600 dark:text-neutral-400 leading-tight">Install SmartBand directly on your device for instant offline access.</p>
+        <button @click="handleInstallPWA" type="button" class="w-full py-2.5 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]">
+          Install App
         </button>
       </div>
 
@@ -224,14 +259,14 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center space-x-2">
+          <!-- Install App Header Trigger -->
           <button 
-            v-if="showInstallBanner"
             @click="handleInstallPWA"
             type="button"
             class="p-2 rounded-xl bg-yellow-400 text-slate-900 font-extrabold text-xs flex items-center hover:bg-yellow-500 transition-colors shadow-xs cursor-pointer min-h-[44px]"
             aria-label="Install SmartBand App"
           >
-            <Download class="w-4 h-4 mr-1" /> Install
+            <Download class="w-4 h-4 mr-1" /> Install App
           </button>
 
           <!-- Quick Mobile Theme Switcher (Sun/Moon) -->
@@ -259,6 +294,52 @@ onUnmounted(() => {
           </button>
         </div>
       </header>
+
+      <!-- FIRST-TIME USER AUTOMATIC NOTIFICATION PROMPT BANNER -->
+      <Transition name="toast">
+        <div 
+          v-if="showFirstTimeNotifPrompt"
+          class="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-slate-900 px-4 py-3 shadow-lg flex items-center justify-between border-b border-yellow-500/40 text-xs font-bold"
+        >
+          <div class="flex items-center space-x-2.5 pr-2 min-w-0">
+            <Bell class="w-5 h-5 flex-shrink-0 animate-bounce text-slate-900" />
+            <div class="min-w-0">
+              <span class="font-black block text-slate-900">Enable Push Notifications?</span>
+              <span class="text-[11px] font-semibold opacity-90 block truncate">Get instant call-time alerts & urgent schedule updates.</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1.5 flex-shrink-0">
+            <button 
+              @click="requestNotificationPermission" 
+              type="button" 
+              class="px-3 py-1.5 bg-slate-900 text-white font-extrabold rounded-xl shadow-xs text-[11px] hover:bg-black min-h-[36px] cursor-pointer"
+            >
+              Allow
+            </button>
+            <button 
+              @click="dismissFirstTimeNotifPrompt" 
+              type="button" 
+              class="p-1.5 text-slate-800 hover:text-black min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+              aria-label="Dismiss Notification Prompt"
+            >
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- NETWORK RECONNECT TOAST -->
+      <Transition name="toast">
+        <div 
+          v-if="networkToastMsg"
+          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-slate-900 dark:bg-[#121214] text-white px-4 py-3 rounded-2xl shadow-2xl border border-yellow-400/40 flex items-center justify-between font-extrabold text-xs"
+        >
+          <div class="flex items-center space-x-2">
+            <CheckCircle class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>{{ networkToastMsg }}</span>
+          </div>
+        </div>
+      </Transition>
 
       <!-- Main Router Page Body -->
       <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24 md:pb-8">
@@ -357,6 +438,21 @@ onUnmounted(() => {
             <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
           </div>
 
+          <!-- PWA Install Button in Drawer -->
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800">
+            <div>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">PWA App Installation</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">Install for offline home screen launch</p>
+            </div>
+            <button 
+              @click="handleInstallPWA"
+              type="button"
+              class="px-3 py-2 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]"
+            >
+              Install App
+            </button>
+          </div>
+
           <!-- Push Notifications Toggle -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800">
             <div>
@@ -366,7 +462,7 @@ onUnmounted(() => {
             <button 
               @click="requestNotificationPermission"
               type="button"
-              class="px-3 py-2 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]"
+              class="px-3 py-2 bg-slate-200 dark:bg-[#27272a] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
             >
               {{ notificationPermission === 'granted' ? 'Enabled' : 'Enable' }}
             </button>

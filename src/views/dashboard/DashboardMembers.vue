@@ -27,8 +27,18 @@ const isSavingMember = ref(false)
 const sections = ['All', 'Officers', 'Trumpet', 'Trombone', 'Saxophone', 'Drums', 'Flute', 'Clarinet']
 const weekDays = ['All', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-const fetchRoster = async () => {
-  isLoading.value = true
+const fetchRoster = async (skipCache = false) => {
+  if (!skipCache) {
+    isLoading.value = true
+    const cachedRoster = localStorage.getItem('smartband_roster_cache')
+    if (cachedRoster) {
+      try {
+        roster.value = JSON.parse(cachedRoster)
+        paImportanteList.value = roster.value.filter(m => m.reliability < 85)
+      } catch (e) {}
+    }
+  }
+
   try {
     const { data } = await supabase
       .from('public_roster')
@@ -49,6 +59,7 @@ const fetchRoster = async () => {
       }))
 
       paImportanteList.value = roster.value.filter(m => m.reliability < 85)
+      localStorage.setItem('smartband_roster_cache', JSON.stringify(roster.value))
     }
   } catch (err) {
     console.error('Error fetching roster:', err)
@@ -100,7 +111,6 @@ const openMemberEdit = async (member) => {
   memberAvailabilitySlots.value = []
   showMemberEditModal.value = true
 
-  // Fetch member's free availability grid from Supabase
   try {
     const { data: avail } = await supabase
       .from('member_availability')
@@ -144,6 +154,7 @@ const saveMemberEdits = async () => {
       selectedMember.value.executive_title = editExecutiveTitle.value || null
     }
 
+    localStorage.setItem('smartband_roster_cache', JSON.stringify(roster.value))
     showMemberEditModal.value = false
     alert(`Updated ${selectedMember.value.name}'s details successfully!`)
   } catch (err) {
@@ -164,6 +175,7 @@ const toggleMemberRank = async (member) => {
 
   if (!error) {
     member.rank = newRank
+    localStorage.setItem('smartband_roster_cache', JSON.stringify(roster.value))
   }
 }
 
@@ -174,7 +186,7 @@ onMounted(() => {
   membersChannel = supabase
     .channel('members-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-      fetchRoster()
+      fetchRoster(true)
     })
     .subscribe()
 })

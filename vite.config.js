@@ -9,6 +9,8 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      includeAssets: ['favicon.svg', 'icons.svg', 'apple-touch-icon.png'],
       devOptions: {
         enabled: true
       },
@@ -20,10 +22,10 @@ export default defineConfig({
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-cache',
+              cacheName: 'supabase-api-cache',
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // Cache Supabase responses for 7 days offline
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // Cache Supabase API responses for 30 days offline
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -33,23 +35,26 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'SmartBand App',
+        name: 'SmartBand Enterprise PWA',
         short_name: 'SmartBand',
-        description: 'Smartband Marching Band Application',
+        description: 'Municipal Band Management & Gig Dispatch System',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',
         icons: [
           {
-            src: '/vite.svg',
+            src: '/favicon.svg',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           },
           {
-            src: '/vite.svg',
+            src: '/favicon.svg',
             sizes: '512x512',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
       }
