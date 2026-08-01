@@ -95,11 +95,11 @@ const approveUser = async (user) => {
   }
 }
 
-// IT ADMIN ONLY: DELETE USER
+// IT ADMIN ONLY: DELETE USER (PROTECT SUPER ADMINS)
 const promptDeleteUser = (user) => {
   if (!store.isSuperAdmin) return
-  if (user.role === 'super_admin') {
-    showNotification('Security Alert: Cannot delete IT Super Admin account!')
+  if (user.role === 'super_admin' || user.id === store.user?.id) {
+    showNotification('Security Protection: IT Super Admin accounts cannot be deleted!')
     return
   }
   confirmUserTarget.value = user
@@ -108,7 +108,11 @@ const promptDeleteUser = (user) => {
 
 const executeRejectAndDeleteUser = async () => {
   const user = confirmUserTarget.value
-  if (!user) return
+  if (!user || user.role === 'super_admin' || user.id === store.user?.id) {
+    showConfirmModal.value = false
+    confirmUserTarget.value = null
+    return
+  }
 
   try {
     const { error } = await supabase
@@ -480,7 +484,8 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="flex justify-end pt-1">
+            <!-- Hide Delete & Free ID button for IT Super Admin / own account -->
+            <div v-if="member.role !== 'super_admin' && member.id !== store.user?.id" class="flex justify-end pt-1">
               <button 
                 @click="promptDeleteUser(member)"
                 type="button"
