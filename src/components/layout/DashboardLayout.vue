@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle } from 'lucide-vue-next'
+import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -11,9 +11,10 @@ const router = useRouter()
 const store = useMainStore()
 const isDark = ref(true)
 
-// PWA Install Event State
+// PWA Install & Installed Detection State
 const deferredPrompt = ref(null)
 const showInstallBanner = ref(false)
+const isAppInstalled = ref(false)
 
 // Online / Offline Network Monitor State
 const isOnline = ref(navigator.onLine)
@@ -27,6 +28,11 @@ const showFirstTimeNotifPrompt = ref(false)
 const showSettingsDrawer = ref(false)
 const showTermsModal = ref(false)
 const pendingCount = ref(0)
+
+const checkPwaInstalled = () => {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+  isAppInstalled.value = isStandalone
+}
 
 const updateNetworkStatus = () => {
   const wasOnline = isOnline.value
@@ -53,6 +59,10 @@ const toggleTheme = () => {
 }
 
 const handleInstallPWA = async () => {
+  if (isAppInstalled.value) {
+    alert('SmartBand is already installed on your device!')
+    return
+  }
   if (!deferredPrompt.value) {
     alert('To install SmartBand:\n• Mobile: Tap Share / Menu → Add to Home Screen.\n• Desktop: Click the Install icon in your browser address bar.')
     return
@@ -61,6 +71,7 @@ const handleInstallPWA = async () => {
   const { outcome } = await deferredPrompt.value.userChoice
   if (outcome === 'accepted') {
     showInstallBanner.value = false
+    isAppInstalled.value = true
   }
   deferredPrompt.value = null
 }
@@ -95,11 +106,26 @@ const handleSignOut = async () => {
 onMounted(() => {
   isDark.value = document.documentElement.classList.contains('dark')
 
+  checkPwaInstalled()
+
+  // Listen to PWA Display Mode Changes & Installation
+  const mediaQuery = window.matchMedia('(display-mode: standalone)')
+  if (mediaQuery.addEventListener) {
+    mediaQuery.addEventListener('change', checkPwaInstalled)
+  }
+
+  window.addEventListener('appinstalled', () => {
+    isAppInstalled.value = true
+    showInstallBanner.value = false
+  })
+
   // PWA Install Prompt Listener
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt.value = e
-    showInstallBanner.value = true
+    if (!isAppInstalled.value) {
+      showInstallBanner.value = true
+    }
   })
 
   // Network State Listener
@@ -221,8 +247,8 @@ onUnmounted(() => {
 
       </nav>
 
-      <!-- Desktop PWA Install Button Banner -->
-      <div class="p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl space-y-2">
+      <!-- Desktop PWA Install Banner (Hidden when installed) -->
+      <div v-if="!isAppInstalled" class="p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl space-y-2">
         <div class="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400 font-black text-xs">
           <Download class="w-4 h-4" />
           <span>Install SmartBand PWA</span>
@@ -231,6 +257,12 @@ onUnmounted(() => {
         <button @click="handleInstallPWA" type="button" class="w-full py-2.5 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]">
           Install App
         </button>
+      </div>
+
+      <!-- Desktop Installed Badge (Shown when installed) -->
+      <div v-else class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-black text-xs">
+        <CheckCircle class="w-4 h-4 flex-shrink-0" />
+        <span>App Installed & Ready</span>
       </div>
 
       <!-- User Profile Summary & Sign Out -->
@@ -259,8 +291,9 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center space-x-2">
-          <!-- Install App Header Trigger -->
+          <!-- Install App Header Trigger (Hides when already installed!) -->
           <button 
+            v-if="!isAppInstalled"
             @click="handleInstallPWA"
             type="button"
             class="p-2 rounded-xl bg-yellow-400 text-slate-900 font-extrabold text-xs flex items-center hover:bg-yellow-500 transition-colors shadow-xs cursor-pointer min-h-[44px]"
@@ -438,13 +471,22 @@ onUnmounted(() => {
             <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
           </div>
 
-          <!-- PWA Install Button in Drawer -->
+          <!-- PWA Install Status in Drawer -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">PWA App Installation</p>
-              <p class="text-[10px] text-slate-400 dark:text-neutral-500">Install for offline home screen launch</p>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">App Installation</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">
+                {{ isAppInstalled ? 'Installed as standalone app' : 'Install for offline home screen launch' }}
+              </p>
             </div>
+            
+            <div v-if="isAppInstalled" class="flex items-center space-x-1 px-3 py-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-extrabold text-xs">
+              <Check class="w-4 h-4" />
+              <span>Installed</span>
+            </div>
+            
             <button 
+              v-else
               @click="handleInstallPWA"
               type="button"
               class="px-3 py-2 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]"
