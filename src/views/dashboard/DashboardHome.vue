@@ -336,22 +336,40 @@ const approveAccount = async (id) => {
 
 const rsvp = async (eventObj, status) => {
   if (!eventObj || !store.user) return
+  const prevStatus = eventObj.rsvpStatus
   eventObj.rsvpStatus = status
   
   localStorage.setItem(`smartband_rsvp_${eventObj.id}`, status)
   
   try {
-    await supabase
+    const { error } = await supabase
       .from('event_rsvps')
-      .upsert({
-        event_id: eventObj.id,
-        user_id: store.user.id,
-        status: status
-      })
+      .upsert(
+        {
+          event_id: eventObj.id,
+          user_id: store.user.id,
+          status: status,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'event_id,user_id' }
+      )
+
+    if (error) {
+      console.error('RSVP upsert error:', error)
+      eventObj.rsvpStatus = prevStatus
+      throw error
+    }
+
     notifyOtherTabs('RSVP_CHANGED')
     showToast(status === 'attending' ? 'RSVP Confirmed!' : 'RSVP Declined.')
+
+    // If Secretary / Admin attendance modal is open, refresh it immediately!
+    if (showAttendanceModal.value && selectedEventForAttendance.value?.id === eventObj.id) {
+      openAttendanceTracker(selectedEventForAttendance.value)
+    }
   } catch(e) {
-    showToast('RSVP saved offline.')
+    console.error('RSVP error:', e)
+    showToast('Failed to update RSVP.')
   }
 }
 
@@ -363,6 +381,9 @@ onMounted(() => {
     syncBroadcast = new BroadcastChannel('smartband_live_sync')
     syncBroadcast.onmessage = () => {
       fetchHomeData(true)
+      if (showAttendanceModal.value && selectedEventForAttendance.value) {
+        openAttendanceTracker(selectedEventForAttendance.value)
+      }
     }
   }
 
@@ -377,6 +398,9 @@ onMounted(() => {
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'event_rsvps' }, () => {
       fetchHomeData(true)
+      if (showAttendanceModal.value && selectedEventForAttendance.value) {
+        openAttendanceTracker(selectedEventForAttendance.value)
+      }
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
       fetchHomeData(true)

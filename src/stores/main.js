@@ -6,8 +6,9 @@ export const useMainStore = defineStore('main', {
     user: null,
     profile: null,
     isLoading: false,
+    _profilePromise: null,
     
-    // RBAC Tier State for UI simulation / testing:
+    // RBAC Tier State:
     // 'member' (Standard Member)
     // 'secretary_admin' (Admin / Band Secretary)
     // 'executive' (President, VP, Treasurer)
@@ -44,6 +45,17 @@ export const useMainStore = defineStore('main', {
     },
     
     async fetchSession() {
+      // 1. Instant offline retrieval from local cache
+      const cachedProfile = localStorage.getItem('smartband_user_profile_cache')
+      if (cachedProfile) {
+        try {
+          const parsed = JSON.parse(cachedProfile)
+          this.profile = parsed
+          this.currentRole = parsed.role || 'member'
+          this.executiveTitle = parsed.executive_title || null
+        } catch (e) {}
+      }
+
       this.isLoading = true
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -58,18 +70,42 @@ export const useMainStore = defineStore('main', {
       }
     },
     
-    async fetchProfile() {
-      if (!this.user) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.user.id)
-        .single()
-      if (data) {
-        this.profile = data
-        this.currentRole = data.role || 'member'
-        this.executiveTitle = data.executive_title || null
+    async fetchProfile(force = false) {
+      if (!this.user) return null
+
+      // If profile is already in memory and force is false, return immediately (0ms, 0 network calls!)
+      if (this.profile && !force) {
+        return this.profile
       }
+
+      // If a fetch request is already in flight, reuse the same pending Promise (Deduplicate concurrent requests)
+      if (this._profilePromise && !force) {
+        return this._profilePromise
+      }
+
+      this._profilePromise = (async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', this.user.id)
+            .single()
+          if (data) {
+            this.profile = data
+            this.currentRole = data.role || 'member'
+            this.executiveTitle = data.executive_title || null
+            localStorage.setItem('smartband_user_profile_cache', JSON.stringify(data))
+          }
+          return this.profile
+        } catch (err) {
+          console.error('Error fetching user profile:', err)
+          return this.profile
+        } finally {
+          this._profilePromise = null
+        }
+      })()
+
+      return this._profilePromise
     },
     
     async signOut() {
@@ -77,6 +113,7 @@ export const useMainStore = defineStore('main', {
       this.user = null
       this.profile = null
       this.currentRole = 'member'
+      localStorage.removeItem('smartband_user_profile_cache')
     }
   }
 })
