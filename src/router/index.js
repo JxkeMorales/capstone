@@ -1,11 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import DashboardLayout from '../components/layout/DashboardLayout.vue'
-import DashboardHome from '../views/dashboard/DashboardHome.vue'
-import DashboardSchedule from '../views/dashboard/DashboardSchedule.vue'
-import DashboardMembers from '../views/dashboard/DashboardMembers.vue'
-import DashboardProfile from '../views/dashboard/DashboardProfile.vue'
-import DashboardAdmin from '../views/dashboard/DashboardAdmin.vue'
 import { supabase } from '../supabase'
 import { useMainStore } from '../stores/main'
 
@@ -15,23 +8,23 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: () => import('../views/HomeView.vue')
     },
     {
       path: '/dashboard',
-      component: DashboardLayout,
+      component: () => import('../components/layout/DashboardLayout.vue'),
       meta: { requiresAuth: true },
       children: [
         {
           path: '',
           name: 'dashboard-home',
-          component: DashboardHome,
+          component: () => import('../views/dashboard/DashboardHome.vue'),
           meta: { requiresAuth: true }
         },
         {
           path: 'schedule',
           name: 'dashboard-schedule',
-          component: DashboardSchedule,
+          component: () => import('../views/dashboard/DashboardSchedule.vue'),
           meta: { requiresAuth: true }
         },
         {
@@ -41,19 +34,19 @@ const router = createRouter({
         {
           path: 'members',
           name: 'dashboard-members',
-          component: DashboardMembers,
+          component: () => import('../views/dashboard/DashboardMembers.vue'),
           meta: { requiresAuth: true }
         },
         {
           path: 'profile',
           name: 'dashboard-profile',
-          component: DashboardProfile,
+          component: () => import('../views/dashboard/DashboardProfile.vue'),
           meta: { requiresAuth: true }
         },
         {
           path: 'admin',
           name: 'dashboard-admin',
-          component: DashboardAdmin,
+          component: () => import('../views/dashboard/DashboardAdmin.vue'),
           meta: { requiresAuth: true }
         }
       ]
