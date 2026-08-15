@@ -1,15 +1,16 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
 const store = useMainStore()
 
 const pendingAccounts = ref([])
-const upcomingEvents = ref([])
+const rawEvents = ref([])
 const announcements = ref([])
 const isLoading = ref(true)
+const activeEventsTab = ref('upcoming') // 'upcoming' | 'past'
 
 // Realtime Channel & Sync References
 let homeChannel = null
@@ -59,6 +60,29 @@ const eventTypeOptions = [
   'Schedule Change / Movement'
 ]
 
+// AUTOMATIC DATE FILTERING LOGIC
+const getTodayStart = () => {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+// Upcoming events (today or future), sorted chronologically ascending (soonest first)
+const upcomingEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() >= todayStart)
+    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+})
+
+// Past events (completed), sorted chronologically descending (most recent first)
+const pastEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() < todayStart)
+    .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
+})
+
 const notifyOtherTabs = (eventType) => {
   if (syncBroadcast) {
     try { syncBroadcast.postMessage({ type: eventType, time: Date.now() }) } catch(e){}
@@ -69,17 +93,17 @@ const fetchHomeData = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
     const cachedAnn = localStorage.getItem('smartband_announcements_cache')
-    const cachedEv = localStorage.getItem('smartband_upcoming_events_cache')
+    const cachedEv = localStorage.getItem('smartband_raw_events_cache')
     if (cachedAnn) {
       try { announcements.value = JSON.parse(cachedAnn) } catch(e){}
     }
     if (cachedEv) {
-      try { upcomingEvents.value = JSON.parse(cachedEv) } catch(e){}
+      try { rawEvents.value = JSON.parse(cachedEv) } catch(e){}
     }
   }
 
   try {
-    // 1. Fetch all upcoming events (ordered chronologically)
+    // 1. Fetch all events
     const { data: eventData } = await supabase
       .from('events')
       .select('*')
@@ -97,10 +121,11 @@ const fetchHomeData = async (skipCache = false) => {
         }
       }
 
-      upcomingEvents.value = eventData.map(ev => {
+      rawEvents.value = eventData.map(ev => {
         const evDate = new Date(ev.event_date)
         return {
           id: ev.id,
+          rawDate: ev.event_date,
           title: ev.title,
           date: evDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
@@ -109,7 +134,7 @@ const fetchHomeData = async (skipCache = false) => {
           rsvpStatus: rsvpMap[ev.id] || null
         }
       })
-      localStorage.setItem('smartband_upcoming_events_cache', JSON.stringify(upcomingEvents.value))
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
     }
 
     // 2. Fetch announcements
@@ -164,9 +189,9 @@ const openAttendanceTracker = async (ev) => {
           name: r.profiles?.full_name || 'Member',
           instrument: r.profiles?.instrument || 'Musician'
         }
-        if (r.status === 'attending') {
+        if (r.status === 'attending' || r.status === 'present') {
           attendingMembersList.value.push(memberInfo)
-        } else if (r.status === 'declined') {
+        } else if (r.status === 'declined' || r.status === 'absent') {
           declinedMembersList.value.push(memberInfo)
         }
       })
@@ -247,6 +272,7 @@ const handleCreateEvent = async () => {
       const evDate = new Date(data.event_date)
       const newEv = {
         id: data.id,
+        rawDate: data.event_date,
         title: data.title,
         date: evDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
         time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
@@ -255,8 +281,8 @@ const handleCreateEvent = async () => {
         rsvpStatus: null
       }
 
-      upcomingEvents.value = [...upcomingEvents.value.filter(e => e.id !== data.id), newEv]
-      localStorage.setItem('smartband_upcoming_events_cache', JSON.stringify(upcomingEvents.value))
+      rawEvents.value = [...rawEvents.value.filter(e => e.id !== data.id), newEv]
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
 
       notifyOtherTabs('EVENT_CHANGED')
 
@@ -307,10 +333,10 @@ const executeConfirmedAction = async () => {
   } else if (confirmActionType.value === 'delete_event') {
     const { error } = await supabase.from('events').delete().eq('id', id)
     if (!error) {
-      upcomingEvents.value = upcomingEvents.value.filter(e => e.id !== id)
-      localStorage.setItem('smartband_upcoming_events_cache', JSON.stringify(upcomingEvents.value))
+      rawEvents.value = rawEvents.value.filter(e => e.id !== id)
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
       notifyOtherTabs('EVENT_CHANGED')
-      showToast('Event cancelled and deleted.')
+      showToast('Event deleted.')
     }
   } else if (confirmActionType.value === 'reject_account') {
     const { error } = await supabase.from('profiles').delete().eq('id', id)
@@ -389,7 +415,7 @@ onMounted(() => {
 
   // 2. Supabase Realtime WebSocket Channel
   homeChannel = supabase
-    .channel('home-realtime-v4')
+    .channel('home-realtime-v5')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
       fetchHomeData(true)
     })
@@ -502,85 +528,168 @@ onUnmounted(() => {
     <!-- RESPONSIVE GRID ON DESKTOP -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
       
-      <!-- UPCOMING EVENTS LIST SECTION -->
+      <!-- AUTOMATIC EVENTS & GIGS SECTION -->
       <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
-          <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
-            Scheduled Events & RSVPs ({{ upcomingEvents.length }})
-          </h2>
+          <!-- Upcoming vs Past Gigs Tab Pill Toggle -->
+          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#1c1c1e] rounded-xl text-xs font-bold">
+            <button 
+              @click="activeEventsTab = 'upcoming'"
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
+              :class="activeEventsTab === 'upcoming' 
+                ? 'bg-white dark:bg-[#121214] text-slate-900 dark:text-white shadow-xs font-black' 
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+            >
+              <Calendar class="w-3.5 h-3.5 mr-1 text-yellow-500" />
+              <span>Upcoming ({{ upcomingEvents.length }})</span>
+            </button>
+
+            <button 
+              @click="activeEventsTab = 'past'"
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
+              :class="activeEventsTab === 'past' 
+                ? 'bg-white dark:bg-[#121214] text-slate-900 dark:text-white shadow-xs font-black' 
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+            >
+              <History class="w-3.5 h-3.5 mr-1 text-slate-400" />
+              <span>Past Gigs ({{ pastEvents.length }})</span>
+            </button>
+          </div>
+
           <button v-if="store.canManageEvents" @click="showEventModal = true" type="button" class="text-xs font-black text-yellow-600 dark:text-yellow-400 flex items-center hover:underline cursor-pointer min-h-[44px]">
             <Plus class="w-3.5 h-3.5 mr-0.5" /> Schedule Event
           </button>
         </div>
 
-        <div v-if="upcomingEvents.length > 0" class="space-y-3">
-          <div 
-            v-for="ev in upcomingEvents" 
-            :key="ev.id"
-            class="bg-gradient-to-br from-yellow-400 via-yellow-400 to-amber-500 rounded-3xl p-5 shadow-lg relative overflow-hidden text-slate-900"
-          >
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-3">
-                <span class="inline-block px-3 py-1 bg-black/10 backdrop-blur-sm rounded-full text-xs font-black uppercase tracking-wider">
-                  {{ ev.type }}
-                </span>
+        <!-- 1. UPCOMING EVENTS TAB VIEW -->
+        <div v-if="activeEventsTab === 'upcoming'">
+          <div v-if="upcomingEvents.length > 0" class="space-y-3">
+            <div 
+              v-for="ev in upcomingEvents" 
+              :key="ev.id"
+              class="bg-gradient-to-br from-yellow-400 via-yellow-400 to-amber-500 rounded-3xl p-5 shadow-lg relative overflow-hidden text-slate-900"
+            >
+              <div class="relative z-10">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="inline-block px-3 py-1 bg-black/10 backdrop-blur-sm rounded-full text-xs font-black uppercase tracking-wider">
+                    {{ ev.type }}
+                  </span>
+                  
+                  <div class="flex items-center space-x-1.5">
+                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-black/20 text-slate-900 font-extrabold text-[11px] rounded-full hover:bg-black/30 flex items-center cursor-pointer min-h-[36px]">
+                      <Users class="w-3.5 h-3.5 mr-1" /> Attendees
+                    </button>
+                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer" title="Delete Event">
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
                 
-                <div class="flex items-center space-x-1.5">
-                  <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-black/20 text-slate-900 font-extrabold text-[11px] rounded-full hover:bg-black/30 flex items-center cursor-pointer min-h-[36px]">
-                    <Users class="w-3.5 h-3.5 mr-1" /> Attendees
+                <h3 class="text-xl font-black mb-2 leading-tight">{{ ev.title }}</h3>
+                
+                <div class="space-y-1.5 mb-4 text-xs font-bold opacity-90">
+                  <div class="flex items-center">
+                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
+                    <span>{{ ev.date }} at {{ ev.time }}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
+                    <span>{{ ev.location }}</span>
+                  </div>
+                </div>
+
+                <!-- RSVP Action Buttons -->
+                <div v-if="!ev.rsvpStatus" class="grid grid-cols-2 gap-2">
+                  <button 
+                    @click="rsvp(ev, 'attending')"
+                    type="button"
+                    class="bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-md text-xs cursor-pointer min-h-[44px]"
+                  >
+                    <CheckCircle class="w-4 h-4 mr-1.5 text-emerald-400" />
+                    <span>I Will Attend</span>
                   </button>
-                  <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer" title="Delete Event">
+                  <button 
+                    @click="rsvp(ev, 'declined')"
+                    type="button"
+                    class="bg-white/40 hover:bg-white/60 text-slate-900 font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 text-xs cursor-pointer min-h-[44px]"
+                  >
+                    <XCircle class="w-4 h-4 mr-1.5 text-rose-600" />
+                    <span>Cannot Attend</span>
+                  </button>
+                </div>
+                
+                <!-- Color-Coded Confirmed RSVP Status -->
+                <div v-else class="flex items-center justify-between p-2.5 bg-black/10 rounded-xl backdrop-blur-sm">
+                  <span class="font-black text-xs uppercase tracking-wider" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-900 font-black' : 'text-rose-900 font-black'">
+                    {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
+                  </span>
+                  <button @click="ev.rsvpStatus = null" class="text-xs underline font-bold opacity-75 hover:opacity-100 cursor-pointer min-h-[36px]">Change</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="bg-white dark:bg-[#121214] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
+            <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
+            <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No upcoming events scheduled right now.</p>
+            <p class="text-xs text-slate-400 dark:text-neutral-500 mt-1">Past events have been automatically archived to the Past Gigs tab.</p>
+          </div>
+        </div>
+
+        <!-- 2. PAST GIGS HISTORY TAB VIEW (Automatically Archived) -->
+        <div v-else-if="activeEventsTab === 'past'">
+          <div v-if="pastEvents.length > 0" class="space-y-3">
+            <div 
+              v-for="ev in pastEvents" 
+              :key="ev.id"
+              class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+            >
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400">
+                      {{ ev.type }}
+                    </span>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                      ✓ Completed
+                    </span>
+                  </div>
+                  <h3 class="font-bold text-base text-slate-900 dark:text-white mt-1 leading-snug">{{ ev.title }}</h3>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <button 
+                    v-if="store.canConductRollCall || store.canManageEvents" 
+                    @click="openAttendanceTracker(ev)" 
+                    class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#1c1c1e] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 flex items-center cursor-pointer min-h-[36px]"
+                  >
+                    <Users class="w-3.5 h-3.5 mr-1" /> Log
+                  </button>
+                  <button 
+                    v-if="store.canManageEvents" 
+                    @click="promptDeleteEvent(ev.id)" 
+                    class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                    title="Delete Record"
+                  >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
-              
-              <h3 class="text-xl font-black mb-2 leading-tight">{{ ev.title }}</h3>
-              
-              <div class="space-y-1.5 mb-4 text-xs font-bold opacity-90">
-                <div class="flex items-center">
-                  <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
-                  <span>{{ ev.date }} at {{ ev.time }}</span>
-                </div>
-                <div class="flex items-center">
-                  <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
-                  <span>{{ ev.location }}</span>
-                </div>
-              </div>
 
-              <!-- RSVP Action Buttons -->
-              <div v-if="!ev.rsvpStatus" class="grid grid-cols-2 gap-2">
-                <button 
-                  @click="rsvp(ev, 'attending')"
-                  type="button"
-                  class="bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-md text-xs cursor-pointer min-h-[44px]"
-                >
-                  <CheckCircle class="w-4 h-4 mr-1.5 text-emerald-400" />
-                  <span>I Will Attend</span>
-                </button>
-                <button 
-                  @click="rsvp(ev, 'declined')"
-                  type="button"
-                  class="bg-white/40 hover:bg-white/60 text-slate-900 font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 text-xs cursor-pointer min-h-[44px]"
-                >
-                  <XCircle class="w-4 h-4 mr-1.5 text-rose-600" />
-                  <span>Cannot Attend</span>
-                </button>
-              </div>
-              
-              <!-- Non-Flashy Clean Color-Coded RSVP Status -->
-              <div v-else class="flex items-center justify-between p-2.5 bg-black/10 rounded-xl backdrop-blur-sm">
-                <span class="font-black text-xs uppercase tracking-wider" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-900 font-black' : 'text-rose-900 font-black'">
-                  {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
-                </span>
-                <button @click="ev.rsvpStatus = null" class="text-xs underline font-bold opacity-75 hover:opacity-100 cursor-pointer min-h-[36px]">Change</button>
+              <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-neutral-300 bg-slate-50 dark:bg-[#1c1c1e] p-2.5 rounded-xl">
+                <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
+                <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
+                <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div v-else class="bg-white dark:bg-[#121214] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
-          <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No upcoming events scheduled yet.</p>
+          <div v-else class="bg-white dark:bg-[#121214] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
+            <History class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
+            <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No past gigs recorded yet.</p>
+          </div>
         </div>
       </section>
 
@@ -647,7 +756,7 @@ onUnmounted(() => {
           <div class="space-y-2">
             <div class="flex items-center space-x-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400">
               <UserCheck class="w-4 h-4" />
-              <span>Confirmed Attending ({{ attendingMembersList.length }})</span>
+              <span>Confirmed Attending / Present ({{ attendingMembersList.length }})</span>
             </div>
             <div v-if="attendingMembersList.length > 0" class="space-y-1.5">
               <div v-for="m in attendingMembersList" :key="m.name" class="p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-xl text-xs flex justify-between">
@@ -662,7 +771,7 @@ onUnmounted(() => {
           <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
             <div class="flex items-center space-x-1.5 text-xs font-black text-rose-600 dark:text-rose-400">
               <UserX class="w-4 h-4" />
-              <span>Declined / Cannot Attend ({{ declinedMembersList.length }})</span>
+              <span>Declined / Absent ({{ declinedMembersList.length }})</span>
             </div>
             <div v-if="declinedMembersList.length > 0" class="space-y-1.5">
               <div v-for="m in declinedMembersList" :key="m.name" class="p-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl text-xs flex justify-between">

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX } from 'lucide-vue-next'
+import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
@@ -8,7 +8,8 @@ const store = useMainStore()
 
 const currentMonthName = ref('August 2026')
 const activeFilter = ref('All')
-const events = ref([])
+const activeScheduleTab = ref('upcoming') // 'upcoming' | 'past'
+const rawEvents = ref([])
 const isLoading = ref(true)
 
 // Realtime Channel & Sync References
@@ -50,6 +51,36 @@ const filterCategories = [
   'Schedule Change'
 ]
 
+// AUTOMATIC DATE CALCULATION
+const getTodayStart = () => {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+// Upcoming events (today or future)
+const upcomingEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() >= todayStart)
+    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+})
+
+// Past events (completed)
+const pastEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() < todayStart)
+    .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
+})
+
+// Combined Filtered Events based on Active Tab and Category Filter
+const displayedEvents = computed(() => {
+  const targetList = activeScheduleTab.value === 'upcoming' ? upcomingEvents.value : pastEvents.value
+  if (activeFilter.value === 'All') return targetList
+  return targetList.filter(e => e.type.toLowerCase().includes(activeFilter.value.toLowerCase().split('/')[0].trim()))
+})
+
 const notifyOtherTabs = (eventType) => {
   if (syncBroadcast) {
     try { syncBroadcast.postMessage({ type: eventType, time: Date.now() }) } catch(e){}
@@ -59,9 +90,9 @@ const notifyOtherTabs = (eventType) => {
 const fetchEvents = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
-    const cachedEvents = localStorage.getItem('smartband_events_cache')
+    const cachedEvents = localStorage.getItem('smartband_raw_events_cache')
     if (cachedEvents) {
-      try { events.value = JSON.parse(cachedEvents) } catch (e) {}
+      try { rawEvents.value = JSON.parse(cachedEvents) } catch (e) {}
     }
   }
 
@@ -72,10 +103,11 @@ const fetchEvents = async (skipCache = false) => {
       .order('event_date', { ascending: true })
 
     if (data) {
-      events.value = data.map(ev => {
+      rawEvents.value = data.map(ev => {
         const dateObj = new Date(ev.event_date)
         return {
           id: ev.id,
+          rawDate: ev.event_date,
           title: ev.title,
           type: ev.event_type,
           date: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
@@ -84,7 +116,7 @@ const fetchEvents = async (skipCache = false) => {
           dayNum: dateObj.getDate()
         }
       })
-      localStorage.setItem('smartband_events_cache', JSON.stringify(events.value))
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
     }
   } catch (err) {
     console.error('Error fetching events:', err)
@@ -92,11 +124,6 @@ const fetchEvents = async (skipCache = false) => {
     isLoading.value = false
   }
 }
-
-const filteredEvents = computed(() => {
-  if (activeFilter.value === 'All') return events.value
-  return events.value.filter(e => e.type.toLowerCase().includes(activeFilter.value.toLowerCase().split('/')[0].trim()))
-})
 
 // OPEN EVENT ATTENDANCE TRACKER MODAL (Secretary / Admin)
 const openAttendanceTracker = async (ev) => {
@@ -118,9 +145,9 @@ const openAttendanceTracker = async (ev) => {
           name: r.profiles?.full_name || 'Member',
           instrument: r.profiles?.instrument || 'Musician'
         }
-        if (r.status === 'attending') {
+        if (r.status === 'attending' || r.status === 'present') {
           attendingMembersList.value.push(memberInfo)
-        } else if (r.status === 'declined') {
+        } else if (r.status === 'declined' || r.status === 'absent') {
           declinedMembersList.value.push(memberInfo)
         }
       })
@@ -182,8 +209,8 @@ const executeDeleteEvent = async () => {
 
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (!error) {
-    events.value = events.value.filter(e => e.id !== id)
-    localStorage.setItem('smartband_events_cache', JSON.stringify(events.value))
+    rawEvents.value = rawEvents.value.filter(e => e.id !== id)
+    localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
     notifyOtherTabs('EVENT_CHANGED')
     showToastNotification('Event deleted successfully.')
   }
@@ -207,7 +234,7 @@ onMounted(() => {
 
   // 2. Supabase Realtime WebSocket Subscription
   scheduleChannel = supabase
-    .channel('schedule-realtime-v3')
+    .channel('schedule-realtime-v4')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
       fetchEvents(true)
     })
@@ -255,19 +282,44 @@ onUnmounted(() => {
 
     <header class="pt-1 flex items-center justify-between">
       <div>
-        <p class="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Calendar & Logs</p>
+        <p class="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Calendar & Logs</p>
         <h1 class="text-2xl font-black text-slate-900 dark:text-white">Schedule & Events</h1>
       </div>
-      <div class="p-2.5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 text-yellow-500 shadow-xs">
+      <div class="p-2.5 rounded-2xl bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 text-yellow-500 shadow-xs">
         <Calendar class="w-5 h-5" />
       </div>
     </header>
 
-    <!-- Month Header -->
-    <div class="flex items-center justify-between bg-white dark:bg-[#111827] p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs">
-      <span class="font-black text-base text-slate-900 dark:text-white">{{ currentMonthName }}</span>
-      <span class="text-xs font-bold bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-xl">
-        {{ events.length }} Scheduled
+    <!-- Schedule Tab Switcher (Upcoming vs Past Gigs) -->
+    <div class="flex items-center justify-between bg-white dark:bg-[#121214] p-2 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xs">
+      <div class="flex items-center space-x-1.5">
+        <button 
+          @click="activeScheduleTab = 'upcoming'"
+          type="button"
+          class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center"
+          :class="activeScheduleTab === 'upcoming' 
+            ? 'bg-yellow-400 text-slate-900 shadow-xs' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#1c1c1e]'"
+        >
+          <Calendar class="w-4 h-4 mr-1.5" />
+          <span>Upcoming Gigs ({{ upcomingEvents.length }})</span>
+        </button>
+
+        <button 
+          @click="activeScheduleTab = 'past'"
+          type="button"
+          class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center"
+          :class="activeScheduleTab === 'past' 
+            ? 'bg-yellow-400 text-slate-900 shadow-xs' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#1c1c1e]'"
+        >
+          <History class="w-4 h-4 mr-1.5" />
+          <span>Past Gigs ({{ pastEvents.length }})</span>
+        </button>
+      </div>
+
+      <span class="text-xs font-extrabold text-slate-400 dark:text-neutral-500 pr-2 hidden sm:inline">
+        {{ rawEvents.length }} Total Records
       </span>
     </div>
 
@@ -283,7 +335,7 @@ onUnmounted(() => {
         class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer min-h-[44px] flex items-center"
         :class="activeFilter === filter 
           ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-xs' 
-          : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800/80'"
+          : 'bg-white dark:bg-[#121214] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800'"
       >
         {{ filter }}
       </button>
@@ -291,17 +343,22 @@ onUnmounted(() => {
 
     <!-- Events List -->
     <section class="space-y-3" aria-label="Events Feed">
-      <div v-if="filteredEvents.length > 0" class="space-y-3">
+      <div v-if="displayedEvents.length > 0" class="space-y-3">
         <div 
-          v-for="ev in filteredEvents" 
+          v-for="ev in displayedEvents" 
           :key="ev.id"
-          class="bg-white dark:bg-[#111827] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800/80 space-y-3"
+          class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
         >
           <div class="flex justify-between items-start">
             <div>
-              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-yellow-400/10 text-yellow-600 dark:text-yellow-400">
-                {{ ev.type }}
-              </span>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-yellow-400/10 text-yellow-600 dark:text-yellow-400">
+                  {{ ev.type }}
+                </span>
+                <span v-if="activeScheduleTab === 'past'" class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                  ✓ Completed
+                </span>
+              </div>
               <h3 class="font-black text-base text-slate-900 dark:text-white mt-1.5 leading-tight">{{ ev.title }}</h3>
             </div>
             
@@ -311,7 +368,7 @@ onUnmounted(() => {
                 v-if="store.canConductRollCall || store.canManageEvents"
                 @click="openAttendanceTracker(ev)"
                 type="button"
-                class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 flex items-center cursor-pointer min-h-[44px]"
+                class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#1c1c1e] text-slate-800 dark:text-neutral-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 dark:hover:bg-neutral-800 flex items-center cursor-pointer min-h-[44px]"
                 aria-label="View RSVP Attendees"
               >
                 <Users class="w-3.5 h-3.5 mr-1" /> Attendees
@@ -341,7 +398,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#1f2937] p-2.5 rounded-xl">
+          <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-neutral-300 bg-slate-50 dark:bg-[#1c1c1e] p-2.5 rounded-xl">
             <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
             <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
             <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
@@ -349,16 +406,18 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="bg-white dark:bg-[#111827] rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-800/80">
-        <Calendar class="w-8 h-8 text-slate-400 dark:text-slate-400 mx-auto mb-2" />
-        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No events found in this category.</p>
+      <div v-else class="bg-white dark:bg-[#121214] rounded-2xl p-8 text-center border border-slate-200 dark:border-neutral-800">
+        <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
+        <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">
+          {{ activeScheduleTab === 'upcoming' ? 'No upcoming events scheduled in this category.' : 'No past events found in this category.' }}
+        </p>
       </div>
     </section>
 
     <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER MODAL -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div>
             <span class="text-[10px] font-black text-yellow-500 uppercase">RSVP Attendance Tracker</span>
             <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedEventForAttendance?.title }}</h3>
@@ -373,7 +432,7 @@ onUnmounted(() => {
           <div class="space-y-2">
             <div class="flex items-center space-x-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400">
               <UserCheck class="w-4 h-4" />
-              <span>Confirmed Attending ({{ attendingMembersList.length }})</span>
+              <span>Confirmed Attending / Present ({{ attendingMembersList.length }})</span>
             </div>
             <div v-if="attendingMembersList.length > 0" class="space-y-1.5">
               <div v-for="m in attendingMembersList" :key="m.name" class="p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-xl text-xs flex justify-between">
@@ -385,10 +444,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Declined List -->
-          <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
             <div class="flex items-center space-x-1.5 text-xs font-black text-rose-600 dark:text-rose-400">
               <UserX class="w-4 h-4" />
-              <span>Declined / Cannot Attend ({{ declinedMembersList.length }})</span>
+              <span>Declined / Absent ({{ declinedMembersList.length }})</span>
             </div>
             <div v-if="declinedMembersList.length > 0" class="space-y-1.5">
               <div v-for="m in declinedMembersList" :key="m.name" class="p-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl text-xs flex justify-between">
@@ -400,7 +459,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button @click="showAttendanceModal = false" type="button" class="w-full py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer">
             Close
           </button>
@@ -409,9 +468,9 @@ onUnmounted(() => {
     </div>
 
     <!-- ROLL CALL MODAL -->
-    <div v-if="showRollCallModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+    <div v-if="showRollCallModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <div>
             <span class="text-[10px] font-black text-yellow-500 uppercase">Official Roll Call</span>
             <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedEventForRollCall?.title }}</h3>
@@ -420,37 +479,37 @@ onUnmounted(() => {
         </div>
 
         <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
-          <div v-for="mem in memberRosterForRollCall" :key="mem.id" class="flex items-center justify-between bg-slate-50 dark:bg-[#1f2937] p-2.5 rounded-xl text-xs font-bold">
+          <div v-for="mem in memberRosterForRollCall" :key="mem.id" class="flex items-center justify-between bg-slate-50 dark:bg-[#1c1c1e] p-2.5 rounded-xl text-xs font-bold">
             <span class="text-slate-900 dark:text-white truncate max-w-[120px]">{{ mem.full_name }}</span>
             <div class="flex space-x-1">
-              <button @click="rollCallState[mem.id] = 'present'" :class="rollCallState[mem.id] === 'present' ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Present</button>
-              <button @click="rollCallState[mem.id] = 'absent'" :class="rollCallState[mem.id] === 'absent' ? 'bg-rose-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Absent</button>
-              <button @click="rollCallState[mem.id] = 'excused'" :class="rollCallState[mem.id] === 'excused' ? 'bg-amber-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Excused</button>
+              <button @click="rollCallState[mem.id] = 'present'" :class="rollCallState[mem.id] === 'present' ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-[#27272a] text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Present</button>
+              <button @click="rollCallState[mem.id] = 'absent'" :class="rollCallState[mem.id] === 'absent' ? 'bg-rose-600 text-white' : 'bg-slate-200 dark:bg-[#27272a] text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Absent</button>
+              <button @click="rollCallState[mem.id] = 'excused'" :class="rollCallState[mem.id] === 'excused' ? 'bg-amber-600 text-white' : 'bg-slate-200 dark:bg-[#27272a] text-slate-500'" class="px-2 py-1 rounded text-[10px] font-bold min-h-[36px]">Excused</button>
             </div>
           </div>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="showRollCallModal = false" class="flex-1 py-3 bg-slate-200 dark:bg-slate-800 font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showRollCallModal = false" class="flex-1 py-3 bg-slate-200 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="saveRollCall" :disabled="isSavingRollCall" class="flex-1 py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer">Save Roll Call</button>
         </div>
       </div>
     </div>
 
     <!-- DELETE CONFIRM MODAL -->
-    <div v-if="showDeleteConfirmModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-center">
+    <div v-if="showDeleteConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         <div>
           <h3 class="font-black text-lg text-slate-900 dark:text-white leading-tight">Delete Event?</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-            Are you sure you want to cancel and delete this scheduled event?
+          <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
+            Are you sure you want to delete this scheduled event?
           </p>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="executeDeleteEvent" type="button" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Delete</button>
         </div>
       </div>
