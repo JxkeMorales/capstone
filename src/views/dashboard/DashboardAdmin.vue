@@ -346,17 +346,31 @@ onUnmounted(() => {
 
         <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Select target week day & date to check available musicians.</p>
 
-        <div class="grid grid-cols-2 gap-3 text-xs font-bold">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
           <div>
             <label for="day-select" class="block text-[10px] uppercase text-slate-400 mb-1">Target Day & Date</label>
-            <select id="day-select" v-model="selectedDayNeeded" class="w-full bg-slate-50 dark:bg-[#1c1c1e] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-800 font-bold min-h-[44px]">
+            <select id="day-select" v-model="selectedDayNeeded" class="w-full bg-slate-50 dark:bg-[#181d2f] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-slate-700/80 font-bold min-h-[44px]">
               <option v-for="d in weekDaysOptions" :key="d.key" :value="d.key">{{ d.fullLabel }}</option>
             </select>
           </div>
           <div>
             <label for="slot-select" class="block text-[10px] uppercase text-slate-400 mb-1">Time Slot</label>
-            <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#1c1c1e] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-800 font-bold min-h-[44px]">
+            <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#181d2f] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-slate-700/80 font-bold min-h-[44px]">
               <option v-for="s in timeSlots" :key="s" :value="s">{{ s }}</option>
+            </select>
+          </div>
+          <div>
+            <label for="inst-select" class="block text-[10px] uppercase text-slate-400 mb-1">Instrument Section</label>
+            <select id="inst-select" v-model="selectedInstrumentNeeded" class="w-full bg-slate-50 dark:bg-[#181d2f] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-slate-700/80 font-bold min-h-[44px]">
+              <option value="All">All Instruments</option>
+              <option value="Clarinet">Clarinet</option>
+              <option value="Flute">Flute / Piccolo</option>
+              <option value="Saxophone">Saxophone</option>
+              <option value="Trumpet">Trumpet</option>
+              <option value="Trombone">Trombone</option>
+              <option value="Horn">Horn / Euphonium</option>
+              <option value="Tuba">Tuba / Bass</option>
+              <option value="Drum">Drums / Percussion</option>
             </select>
           </div>
         </div>

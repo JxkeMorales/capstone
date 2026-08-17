@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Moon, CheckCircle2, AlertCircle, X, ShieldCheck, FileText, Smartphone, Award, Cpu } from 'lucide-vue-next'
+import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Moon, CheckCircle2, AlertCircle, X, ShieldCheck, FileText, Smartphone, Award, Cpu, Eye, EyeOff } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
@@ -10,6 +10,9 @@ const store = useMainStore()
 
 const activeTab = ref('signin') // 'signin' or 'signup'
 const isDark = ref(true)
+
+// Password Visibility Toggles
+const showPassword = ref(false)
 
 const toggleTheme = () => {
   isDark.value = !isDark.value
@@ -31,7 +34,8 @@ const fullName = ref('')
 const birthDate = ref('')
 const sex = ref('')
 const contactNumber = ref('')
-const instrument = ref('')
+const primaryInstrument = ref('')
+const secondaryInstrument = ref('None / N/A')
 const termsAccepted = ref(false)
 
 // Modals State
@@ -47,14 +51,57 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const signupSuccess = ref(false)
 
+// Philippine Phone Number Formatting & Validation (Starts with 09 and exactly 11 digits)
+const handlePhoneInput = (e) => {
+  let val = e.target.value.replace(/\D/g, '') // remove non-digits
+  if (val.length > 11) val = val.slice(0, 11)
+  contactNumber.value = val
+}
+
+const isPhoneValid = computed(() => {
+  if (!contactNumber.value) return true
+  return /^09\d{9}$/.test(contactNumber.value)
+})
+
+// Complete 16-Instrument Municipal Band Section List
 const instrumentOptions = [
-  { value: '', label: 'Select an instrument...' },
-  { value: 'trumpet', label: 'Trumpet' },
-  { value: 'trombone', label: 'Trombone' },
-  { value: 'saxophone', label: 'Saxophone' },
-  { value: 'drums', label: 'Drums / Percussion' },
-  { value: 'flute', label: 'Flute' },
-  { value: 'clarinet', label: 'Clarinet' }
+  { value: '', label: 'Select Primary Instrument...' },
+  { value: 'Clarinet', label: 'Clarinet' },
+  { value: 'Bass Clarinet', label: 'Bass Clarinet' },
+  { value: 'Flute', label: 'Flute' },
+  { value: 'Piccolo', label: 'Piccolo' },
+  { value: 'French Horn', label: 'French Horn' },
+  { value: 'Tenor Sax', label: 'Tenor Sax' },
+  { value: 'Sax (Alto Sax)', label: 'Sax (Alto Sax)' },
+  { value: 'Baritone Sax', label: 'Baritone Sax' },
+  { value: 'Trumpet', label: 'Trumpet' },
+  { value: 'Trombone', label: 'Trombone' },
+  { value: 'Bass Trombone', label: 'Bass Trombone' },
+  { value: 'Baritone / Euphonium', label: 'Baritone / Euphonium' },
+  { value: 'Bass / Tuba', label: 'Bass / Tuba' },
+  { value: 'Bass Drum', label: 'Bass Drum' },
+  { value: 'Snare Drum / Drums', label: 'Snare Drum / Drums' },
+  { value: 'Cymbals', label: 'Cymbals' }
+]
+
+const secondaryInstrumentOptions = [
+  { value: 'None / N/A', label: 'None / N/A (Plays 1 Instrument Only)' },
+  { value: 'Clarinet', label: 'Clarinet' },
+  { value: 'Bass Clarinet', label: 'Bass Clarinet' },
+  { value: 'Flute', label: 'Flute' },
+  { value: 'Piccolo', label: 'Piccolo' },
+  { value: 'French Horn', label: 'French Horn' },
+  { value: 'Tenor Sax', label: 'Tenor Sax' },
+  { value: 'Sax (Alto Sax)', label: 'Sax (Alto Sax)' },
+  { value: 'Baritone Sax', label: 'Baritone Sax' },
+  { value: 'Trumpet', label: 'Trumpet' },
+  { value: 'Trombone', label: 'Trombone' },
+  { value: 'Bass Trombone', label: 'Bass Trombone' },
+  { value: 'Baritone / Euphonium', label: 'Baritone / Euphonium' },
+  { value: 'Bass / Tuba', label: 'Bass / Tuba' },
+  { value: 'Bass Drum', label: 'Bass Drum' },
+  { value: 'Snare Drum / Drums', label: 'Snare Drum / Drums' },
+  { value: 'Cymbals', label: 'Cymbals' }
 ]
 
 const handleSubmit = async () => {
@@ -79,8 +126,21 @@ const handleSubmit = async () => {
 
     } else {
       if (!termsAccepted.value) {
-        throw new Error('Please accept the Terms & Conditions to register.')
+        throw new Error('Please review and accept the Terms & Conditions to register.')
       }
+
+      // Strict Philippine Phone Validation (09XXXXXXXXX)
+      if (!/^09\d{9}$/.test(contactNumber.value.trim())) {
+        throw new Error('Please enter a valid 11-digit Philippine mobile number starting with 09 (e.g. 09123456789).')
+      }
+
+      if (!primaryInstrument.value) {
+        throw new Error('Please select your primary instrument.')
+      }
+
+      const combinedInstrument = secondaryInstrument.value && secondaryInstrument.value !== 'None / N/A'
+        ? `${primaryInstrument.value} / ${secondaryInstrument.value}`
+        : primaryInstrument.value
 
       const { data, error } = await supabase.auth.signUp({
         email: email.value.trim(),
@@ -91,7 +151,7 @@ const handleSubmit = async () => {
             birth_date: birthDate.value,
             sex: sex.value,
             contact_number: contactNumber.value.trim(),
-            instrument: instrument.value
+            instrument: combinedInstrument
           }
         }
       })
@@ -128,25 +188,25 @@ const handleResetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-slate-50 dark:bg-black transition-colors duration-300">
+  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#f8fafc] dark:bg-[#090a0f] text-slate-900 dark:text-neutral-100 transition-colors duration-300">
     
-    <!-- Theme Toggle -->
+    <!-- Theme Toggle (Sun / Moon) -->
     <button 
       @click="toggleTheme" 
       type="button"
-      class="absolute top-4 right-4 p-3 rounded-full bg-slate-200 dark:bg-neutral-900 text-slate-800 dark:text-yellow-400 hover:bg-slate-300 dark:hover:bg-neutral-800 transition-colors shadow-xs z-10 border border-transparent dark:border-neutral-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#121522] text-slate-700 dark:text-yellow-400 hover:bg-slate-100 dark:hover:bg-[#181d2f] transition-colors shadow-xs z-10 border border-slate-200 dark:border-slate-800/80 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
       :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
     >
       <Sun v-if="isDark" class="w-5 h-5" />
       <Moon v-else class="w-5 h-5" />
     </button>
 
-    <!-- Main Container (Responsive Grid: Single column on Mobile, 2-Column Hero on Desktop) -->
+    <!-- Main Container (Responsive 2-Column Hero on Desktop) -->
     <div class="w-full max-w-md md:max-w-4xl lg:max-w-5xl my-auto py-8">
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
         
-        <!-- Left Hero Section (Visible & Expanded on Desktop) -->
+        <!-- Left Hero Section (Desktop View) -->
         <div class="space-y-6 text-left hidden md:block">
           <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-yellow-400/15 border border-yellow-400/30 text-yellow-600 dark:text-yellow-400 text-xs font-black uppercase tracking-wider">
             <Music class="w-4 h-4" />
@@ -157,112 +217,104 @@ const handleResetPassword = async () => {
             Automated Band Operations & Gig Scheduling
           </h1>
 
-          <p class="text-slate-600 dark:text-neutral-300 text-base leading-relaxed font-medium">
-            Streamlining rehearsal call-times, fiesta parades, funeral processions, and attendance reliability scoring for municipal musicians and band leaders.
+          <p class="text-slate-600 dark:text-slate-300 text-base leading-relaxed font-medium">
+            Streamlining rehearsal call-times, civic parades, funeral processions, and attendance reliability scoring for municipal musicians and band leaders.
           </p>
 
-          <div class="space-y-3 pt-2">
+          <div class="space-y-3.5 pt-2">
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-8 h-8 rounded-xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black">
+              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Cpu class="w-4 h-4" />
               </div>
-              <span>Rule-Based Smart Dispatch & Budget Batching</span>
+              <span>Automated Call-Time Siren & Section Dispatch</span>
             </div>
 
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-8 h-8 rounded-xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black">
+              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Award class="w-4 h-4" />
               </div>
-              <span>Reliability Score (%) & Pa-Importante Analytics</span>
+              <span>Attendance Reliability Score (%) & Roll Call</span>
             </div>
 
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-8 h-8 rounded-xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black">
+              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Smartphone class="w-4 h-4" />
               </div>
-              <span>PWA Offline Access & Install Prompting</span>
+              <span>Offline-First PWA Cache & Instant Launch</span>
             </div>
           </div>
         </div>
 
-        <!-- Mobile Header / Logo Area (Visible on Mobile) -->
-        <div class="md:hidden flex items-center justify-center space-x-3 mb-2">
-          <div class="bg-yellow-400 p-3 rounded-2xl shadow-[0_0_25px_rgba(250,204,21,0.35)] flex items-center justify-center">
-            <Music class="w-7 h-7 text-black" stroke-width="3" />
-          </div>
-          <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            SmartBand
-          </h1>
-        </div>
-
-        <!-- Right Sign In / Sign Up Card Component -->
+        <!-- Right Authentication Card -->
         <div class="w-full">
           
-          <!-- Sign Up Success Message Modal -->
-          <div v-if="signupSuccess" class="bg-white dark:bg-[#121212] rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 dark:border-neutral-800 text-center space-y-4">
-            <div class="w-14 h-14 rounded-full bg-green-100 dark:bg-green-950/60 text-green-600 dark:text-green-400 flex items-center justify-center mx-auto">
-              <CheckCircle2 class="w-8 h-8" />
-            </div>
-            <h2 class="text-2xl font-black text-slate-900 dark:text-white">Account Created!</h2>
-            <p class="text-sm text-slate-600 dark:text-neutral-300 leading-relaxed">
-              Your registration was sent successfully. Your profile is currently **pending Super Admin verification** against the physical master list.
-            </p>
-            <button 
-              @click="signupSuccess = false; activeTab = 'signin'"
-              class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-black py-3.5 px-6 rounded-xl transition-all shadow-md active:scale-[0.98] text-base min-h-[44px] cursor-pointer"
-            >
-              Return to Sign In
-            </button>
-          </div>
-
-          <!-- Card Container -->
-          <div v-else class="bg-white dark:bg-[#121212] rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 dark:border-neutral-800">
+          <div class="bg-white dark:bg-[#121522] border border-slate-200/90 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
             
-            <!-- Segmented Control -->
-            <div class="flex rounded-2xl bg-slate-100 dark:bg-[#1a1a1a] p-1.5 mb-6 border border-slate-200 dark:border-neutral-800" role="tablist">
+            <!-- Mobile Brand Header -->
+            <div class="text-center md:hidden mb-6 space-y-2">
+              <div class="inline-flex p-3 bg-yellow-400 rounded-2xl shadow-sm text-slate-900 mx-auto">
+                <Music class="w-8 h-8" stroke-width="2.5" />
+              </div>
+              <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
+              <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Municipal Band Operations System</p>
+            </div>
+
+            <!-- Sign In / Sign Up Segmented Tab Bar -->
+            <div class="flex p-1 bg-slate-100 dark:bg-[#181d2f] rounded-2xl mb-6 border border-slate-200/60 dark:border-slate-700/60" role="tablist">
               <button 
-                @click="activeTab = 'signin'; errorMessage = ''"
-                type="button"
+                @click="activeTab = 'signin'; errorMessage = ''; signupSuccess = false"
+                type="button" 
                 role="tab"
                 :aria-selected="activeTab === 'signin'"
-                class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 min-h-[44px] cursor-pointer"
+                class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signin' 
-                  ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' 
-                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'"
+                  ? 'bg-white dark:bg-[#121522] text-slate-900 dark:text-white shadow-xs font-black' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
               >
-                SIGN IN
+                Sign In
               </button>
               <button 
-                @click="activeTab = 'signup'; errorMessage = ''"
-                type="button"
+                @click="activeTab = 'signup'; errorMessage = ''; signupSuccess = false"
+                type="button" 
                 role="tab"
                 :aria-selected="activeTab === 'signup'"
-                class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 min-h-[44px] cursor-pointer"
+                class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signup' 
-                  ? 'bg-white dark:bg-[#262626] text-slate-900 dark:text-white shadow-sm' 
-                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'"
+                  ? 'bg-white dark:bg-[#121522] text-slate-900 dark:text-white shadow-xs font-black' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
               >
-                SIGN UP
+                New Musician Register
               </button>
             </div>
 
-            <!-- Error Feedback Banner -->
-            <div v-if="errorMessage" class="mb-5 p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl flex items-start space-x-2 text-red-700 dark:text-red-300 text-xs font-bold" role="alert">
-              <AlertCircle class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            <!-- Success Alert after Sign Up -->
+            <div v-if="signupSuccess" class="mb-5 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-left space-y-2">
+              <div class="flex items-center space-x-2 text-emerald-700 dark:text-emerald-300 font-black text-sm">
+                <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500" />
+                <span>Registration Submitted!</span>
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                Your account is queued for physical verification by the IT Admin against the municipal band master list. You may now sign in.
+              </p>
+            </div>
+
+            <!-- Error Banner -->
+            <div v-if="errorMessage" class="mb-5 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl flex items-start space-x-2 text-rose-700 dark:text-rose-300 text-xs font-bold text-left" role="alert">
+              <AlertCircle class="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
               <span>{{ errorMessage }}</span>
             </div>
 
             <!-- Form Area -->
-            <form @submit.prevent="handleSubmit" class="space-y-5" aria-label="Authentication Form">
+            <form @submit.prevent="handleSubmit" class="space-y-4" aria-label="Authentication Form">
               
               <!-- Email Address -->
               <div class="space-y-1.5 text-left">
-                <label for="email-input" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                <label for="email-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Mail class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                   </div>
                   <input 
                     id="email-input"
@@ -270,7 +322,7 @@ const handleResetPassword = async () => {
                     type="email" 
                     placeholder="you@example.com"
                     autocomplete="email"
-                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium min-h-[44px]"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
                     required
                   >
                 </div>
@@ -279,7 +331,7 @@ const handleResetPassword = async () => {
               <!-- Password -->
               <div class="space-y-1.5 text-left">
                 <div class="flex items-center justify-between">
-                  <label for="password-input" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                  <label for="password-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     Password
                   </label>
                   <button 
@@ -292,31 +344,40 @@ const handleResetPassword = async () => {
                   </button>
                 </div>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                   </div>
                   <input 
                     id="password-input"
                     v-model="password"
-                    type="password" 
+                    :type="showPassword ? 'text' : 'password'"
                     placeholder="••••••••"
                     autocomplete="current-password"
-                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium min-h-[44px]"
+                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
                     required
                   >
+                  <button 
+                    type="button" 
+                    @click="showPassword = !showPassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <Eye v-if="!showPassword" class="w-4 h-4" />
+                    <EyeOff v-else class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              <!-- SIGN UP FIELDS -->
+              <!-- SIGN UP SPECIFIC FIELDS -->
               <template v-if="activeTab === 'signup'">
                 
+                <!-- Full Name -->
                 <div class="space-y-1.5 text-left">
-                  <label for="fullname-input" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Full Name
+                  <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Full Name (As listed on Band Master List)
                   </label>
                   <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <User class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <User class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     </div>
                     <input 
                       id="fullname-input"
@@ -324,117 +385,147 @@ const handleResetPassword = async () => {
                       type="text" 
                       placeholder="Juan Dela Cruz"
                       autocomplete="name"
-                      class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
                       required
                     >
                   </div>
                 </div>
 
-                <div class="space-y-1.5 text-left">
-                  <label for="birthdate-input" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Birth Date
-                  </label>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Calendar class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                <!-- Birth Date & Sex (2 columns) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                  <div class="space-y-1.5">
+                    <label for="birthdate-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Birth Date
+                    </label>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Calendar class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      </div>
+                      <input 
+                        id="birthdate-input"
+                        v-model="birthDate"
+                        type="date" 
+                        class="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[44px]"
+                        required
+                      >
                     </div>
-                    <input 
-                      id="birthdate-input"
-                      v-model="birthDate"
-                      type="date" 
-                      class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium min-h-[44px] [color-scheme:light] dark:[color-scheme:dark]"
-                      required
-                    >
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <span class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Sex
+                    </span>
+                    <div class="flex gap-2">
+                      <label class="flex-1 cursor-pointer">
+                        <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                          Male
+                        </div>
+                      </label>
+                      <label class="flex-1 cursor-pointer">
+                        <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                          Female
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
+                <!-- Strict Philippine Mobile Number (09XXXXXXXXX - 11 Digits) -->
                 <div class="space-y-1.5 text-left">
-                  <span class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider mb-2">
-                    Sex
-                  </span>
-                  <div class="flex gap-3">
-                    <label class="flex-1 cursor-pointer">
-                      <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
-                      <div class="text-center py-3.5 rounded-xl border border-slate-300 dark:border-neutral-800 bg-slate-50 dark:bg-[#1c1c1e] peer-checked:border-yellow-400 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-base transition-all min-h-[44px] flex items-center justify-center">
-                        Male
-                      </div>
+                  <div class="flex items-center justify-between">
+                    <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Philippine Mobile Number (11 digits)
                     </label>
-                    <label class="flex-1 cursor-pointer">
-                      <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
-                      <div class="text-center py-3.5 rounded-xl border border-slate-300 dark:border-neutral-800 bg-slate-50 dark:bg-[#1c1c1e] peer-checked:border-yellow-400 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-base transition-all min-h-[44px] flex items-center justify-center">
-                        Female
-                      </div>
-                    </label>
+                    <span class="text-[10px] font-black" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
+                      {{ contactNumber.length }}/11 digits
+                    </span>
                   </div>
-                </div>
-
-                <div class="space-y-1.5 text-left">
-                  <label for="phone-input" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Contact Number
-                  </label>
                   <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Phone class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Phone class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     </div>
                     <input 
                       id="phone-input"
-                      v-model="contactNumber"
+                      :value="contactNumber"
+                      @input="handlePhoneInput"
                       type="tel" 
-                      placeholder="0912 345 6789"
+                      placeholder="09123456789"
+                      maxlength="11"
                       autocomplete="tel"
-                      class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
+                      :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-slate-700/80'"
                       required
                     >
                   </div>
+                  <p v-if="!isPhoneValid" class="text-[10px] font-bold text-rose-500 mt-1">
+                    Must start with 09 and contain exactly 11 digits (e.g. 09123456789).
+                  </p>
                 </div>
 
+                <!-- Primary Instrument Played -->
                 <div class="space-y-1.5 text-left">
-                  <label for="instrument-select" class="block text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Instrument Played
+                  <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Primary Instrument (Required)
                   </label>
                   <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Activity class="w-5 h-5 text-slate-400 dark:text-neutral-500" />
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Activity class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     </div>
                     <select 
-                      id="instrument-select"
-                      v-model="instrument"
-                      class="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-300 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-base font-medium appearance-none cursor-pointer min-h-[44px]"
+                      id="primary-instrument-select"
+                      v-model="primaryInstrument"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400 min-h-[44px]"
                       required
                     >
-                      <option v-for="opt in instrumentOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">
-                        {{ opt.label }}
+                      <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
+                        {{ inst.label }}
                       </option>
                     </select>
-                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <svg class="w-5 h-5 text-slate-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
                   </div>
                 </div>
 
-                <div class="pt-2 pb-1 text-left">
-                  <label class="flex items-start space-x-3 cursor-pointer group">
-                    <div class="relative flex items-center justify-center mt-0.5">
-                      <input 
-                        type="checkbox" 
-                        v-model="termsAccepted"
-                        class="peer sr-only"
-                        required
-                      >
-                      <div class="w-5 h-5 border-2 border-slate-300 dark:border-neutral-700 rounded bg-slate-50 dark:bg-[#1c1c1e] peer-checked:bg-yellow-400 peer-checked:border-yellow-400 transition-all flex items-center justify-center">
-                        <svg class="w-3.5 h-3.5 text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                      </div>
+                <!-- Secondary Instrument (Optional / Dual Instrument Capability) -->
+                <div class="space-y-1.5 text-left">
+                  <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Secondary Instrument (Optional / N/A)
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Activity class="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     </div>
-                    <span class="text-slate-600 dark:text-neutral-400 text-xs sm:text-sm leading-snug">
-                      I accept the 
+                    <select 
+                      id="secondary-instrument-select"
+                      v-model="secondaryInstrument"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400 min-h-[44px]"
+                    >
+                      <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
+                        {{ inst.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Terms and Conditions Agreement Checkbox -->
+                <div class="pt-1 text-left">
+                  <label class="flex items-start space-x-2.5 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      v-model="termsAccepted" 
+                      class="mt-1 w-4 h-4 text-yellow-400 bg-slate-100 dark:bg-[#181d2f] border-slate-300 dark:border-slate-700 rounded focus:ring-yellow-400 cursor-pointer"
+                      required
+                    >
+                    <span class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                      I agree to the 
                       <button 
-                        @click.prevent="showTermsModal = true" 
+                        @click="showTermsModal = true" 
                         type="button" 
-                        class="text-yellow-600 dark:text-yellow-400 font-bold hover:underline cursor-pointer inline"
+                        class="font-black text-yellow-600 dark:text-yellow-400 hover:underline cursor-pointer"
                       >
-                        Terms & Conditions
+                        Municipal Band Terms & Conditions
                       </button> 
-                      and privacy policy.
+                      and physical master list verification.
                     </span>
                   </label>
                 </div>
@@ -442,94 +533,119 @@ const handleResetPassword = async () => {
               </template>
 
               <!-- Submit Button -->
-              <div class="pt-3">
+              <div class="pt-2">
                 <button 
-                  type="submit"
+                  type="submit" 
                   :disabled="isLoading"
-                  class="w-full flex items-center justify-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-black py-4 px-6 rounded-xl transition-all shadow-md active:scale-[0.98] text-base disabled:opacity-50 cursor-pointer min-h-[44px]"
+                  class="w-full py-3.5 px-4 bg-yellow-400 hover:bg-yellow-500 active:scale-98 text-slate-900 font-black text-sm rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer disabled:opacity-50 min-h-[48px]"
                 >
                   <span v-if="isLoading">Processing...</span>
-                  <span v-else>{{ activeTab === 'signin' ? 'ACCESS DASHBOARD' : 'CREATE ACCOUNT' }}</span>
-                  <ArrowRight v-if="!isLoading" class="w-5 h-5" stroke-width="3" />
+                  <span v-else-if="activeTab === 'signin'" class="flex items-center">
+                    Sign In to Band Dashboard <ArrowRight class="w-4 h-4 ml-1.5" />
+                  </span>
+                  <span v-else class="flex items-center">
+                    Submit Registration <ArrowRight class="w-4 h-4 ml-1.5" />
+                  </span>
                 </button>
               </div>
+
             </form>
 
           </div>
+
         </div>
 
       </div>
 
+    </div>
+
+    <!-- COMPREHENSIVE TERMS & CONDITIONS MODAL (5 ARTICLES) -->
+    <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+        
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+          <div class="flex items-center space-x-2 text-yellow-500">
+            <FileText class="w-5 h-5" />
+            <h3 class="font-black text-lg text-slate-900 dark:text-white">Municipal Band Terms & Conditions</h3>
+          </div>
+          <button @click="showTermsModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-slate-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
+            <p>All sign-up applications are provisional until physically verified by the IT Super Admin against the official municipal band registry. Unverified accounts cannot view private contact rosters or access secretary dispatch controls.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 2: Attendance & RSVP Reliability Scoring</h4>
+            <p>Submitting an RSVP of "I Will Attend" is an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%) and future gig prioritization.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 3: Call-Time Punctuality & Alert Protocols</h4>
+            <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and civic concerts. The automated in-app 10–15m call-time alarms serve as operational notifications.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 4: Band Property & Instrument Accountability</h4>
+            <p>Members issued municipal band instruments, uniforms, lyres, or sheet music folios are strictly responsible for their maintenance, safekeeping, and prompt return upon request.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 5: Data Privacy & Security</h4>
+            <p>Member contact numbers and personal birth dates are protected under Row Level Security (RLS) policies and will never be shared publicly.</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex justify-end">
+          <button 
+            @click="showTermsModal = false; termsAccepted = true" 
+            type="button" 
+            class="py-3 px-6 bg-yellow-400 hover:bg-yellow-500 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer"
+          >
+            I Accept Terms
+          </button>
+        </div>
+
+      </div>
     </div>
 
     <!-- FORGOT PASSWORD MODAL -->
-    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121212] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2 text-yellow-500">
-            <Lock class="w-5 h-5" />
-            <h3 class="font-black text-lg text-slate-900 dark:text-white">Reset Password</h3>
-          </div>
-          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-white cursor-pointer"><X class="w-5 h-5" /></button>
-        </div>
-
-        <div v-if="resetSent" class="p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/60 rounded-2xl text-center space-y-2">
-          <CheckCircle2 class="w-8 h-8 text-green-500 mx-auto" />
-          <p class="font-black text-sm text-slate-900 dark:text-white">Reset Link Sent!</p>
-          <p class="text-xs text-slate-500 dark:text-neutral-400">Check <b>{{ resetEmail }}</b> for instructions to reset your password.</p>
-        </div>
-
-        <div v-else class="space-y-4">
-          <p class="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
-            Enter your registered email address below. We will send you an official link to reset your account password.
-          </p>
-          <div>
-            <label for="reset-email-input" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Email Address</label>
-            <input 
-              id="reset-email-input"
-              v-model="resetEmail" 
-              type="email" 
-              placeholder="you@example.com"
-              class="w-full p-3 bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-            >
-          </div>
-          <div class="flex space-x-2 pt-2">
-            <button @click="showForgotPasswordModal = false" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-neutral-800 font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
-            <button @click="handleResetPassword" :disabled="resetLoading" type="button" class="flex-1 py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer">
-              {{ resetLoading ? 'Sending...' : 'Send Link' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TERMS AND CONDITIONS MODAL SHEET -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121212] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div class="flex items-center space-x-2 text-yellow-500">
-            <FileText class="w-5 h-5" />
-            <h3 class="font-black text-lg text-slate-900 dark:text-white">Terms & Conditions</h3>
-          </div>
-          <button @click="showTermsModal = false" class="text-slate-400 hover:text-white cursor-pointer"><X class="w-5 h-5" /></button>
-        </div>
-
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3 pr-1 leading-relaxed">
-          <h4 class="font-black text-slate-900 dark:text-white">1. Master List Verification Requirement</h4>
-          <p>All sign-ups are subject to physical verification against the municipal band master list by the IT Super Admin. Unverified accounts will remain pending.</p>
-
-          <h4 class="font-black text-slate-900 dark:text-white">2. Attendance & Reliability Policy</h4>
-          <p>RSVPing "Will Attend" creates an operational commitment for gig scheduling. Failing to attend without prior excuse affects your personal Reliability Score (%) and Junior/Senior rank status.</p>
-
-          <h4 class="font-black text-slate-900 dark:text-white">3. Data Privacy & Roster Rights</h4>
-          <p>Personal phone numbers and private email addresses are protected under Row Level Security (RLS) and will never be exposed to public directory views.</p>
-        </div>
-
-        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
-          <button @click="termsAccepted = true; showTermsModal = false" type="button" class="w-full py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer">
-            I Understand & Agree
+    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
+        
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+          <h3 class="font-black text-base text-slate-900 dark:text-white">Reset Password</h3>
+          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
+            <X class="w-5 h-5" />
           </button>
         </div>
+
+        <div v-if="resetSent" class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-bold space-y-1">
+          <p>✓ Reset instructions sent! Please check your email inbox to create a new password.</p>
+        </div>
+
+        <div v-else class="space-y-3">
+          <p class="text-xs text-slate-600 dark:text-slate-400">Enter your registered email address to receive password reset instructions.</p>
+          <input 
+            v-model="resetEmail" 
+            type="email" 
+            placeholder="you@example.com" 
+            class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+          >
+          <button 
+            @click="handleResetPassword" 
+            :disabled="resetLoading" 
+            type="button" 
+            class="w-full py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer"
+          >
+            {{ resetLoading ? 'Sending...' : 'Send Reset Link' }}
+          </button>
+        </div>
+
       </div>
     </div>
 

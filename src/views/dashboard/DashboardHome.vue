@@ -53,11 +53,12 @@ const newEvTime = ref('14:00')
 const newEvLocation = ref('')
 
 const eventTypeOptions = [
-  'Ensayo / Practice',
-  'Town Fiesta Parade / Procession',
-  'Funeral Gig (Sudden Call)',
-  'Band Meeting / Pulong',
-  'Schedule Change / Movement'
+  'Practice & Rehearsal (Ensayo)',
+  'Wake & Vigil Service (Bantay / Lamay)',
+  'Funeral March & Interment (Libing)',
+  'Civic Parade & Exhibition (Parada)',
+  'Religious Feast Procession (Prusisyon)',
+  'Band General Meeting (Pulong)'
 ]
 
 // AUTOMATIC DATE FILTERING LOGIC

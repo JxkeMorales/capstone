@@ -24,7 +24,18 @@ const editInstrument = ref('Trumpet')
 const editExecutiveTitle = ref('')
 const isSavingMember = ref(false)
 
-const sections = ['All', 'Officers', 'Trumpet', 'Trombone', 'Saxophone', 'Drums', 'Flute', 'Clarinet']
+const sections = [
+  'All', 
+  'Officers', 
+  'Clarinet', 
+  'Flute', 
+  'Saxophone', 
+  'Trumpet', 
+  'Trombone', 
+  'Horn / Euphonium', 
+  'Tuba / Bass', 
+  'Percussion / Drums'
+]
 const weekDays = ['All', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const fetchRoster = async (skipCache = false) => {
@@ -71,9 +82,15 @@ const fetchRoster = async (skipCache = false) => {
 // Executive Officers (President, VP, Secretary, Treasurer) and IT Admin Pinned to Top
 const sortedAndFilteredRoster = computed(() => {
   let list = roster.value.filter(m => {
-    const matchesSection = activeFilter.value === 'All' 
-      || (activeFilter.value === 'Officers' && (m.executive_title || m.role === 'secretary_admin' || m.role === 'super_admin'))
-      || m.instrument.toLowerCase() === activeFilter.value.toLowerCase()
+    let matchesSection = false
+    if (activeFilter.value === 'All') {
+      matchesSection = true
+    } else if (activeFilter.value === 'Officers') {
+      matchesSection = !!(m.executive_title || m.role === 'secretary_admin' || m.role === 'super_admin')
+    } else {
+      const filterKey = activeFilter.value.toLowerCase().split('/')[0].trim()
+      matchesSection = m.instrument.toLowerCase().includes(filterKey)
+    }
 
     const q = searchQuery.value.toLowerCase()
     const matchesSearch = m.name.toLowerCase().includes(q) 

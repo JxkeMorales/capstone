@@ -44,11 +44,12 @@ const targetEventIdToDelete = ref(null)
 
 const filterCategories = [
   'All', 
-  'Ensayo / Practice', 
-  'Town Fiesta Parade', 
-  'Funeral Gig', 
-  'Band Meeting', 
-  'Schedule Change'
+  'Practice & Rehearsal (Ensayo)', 
+  'Wake & Vigil (Bantay / Lamay)', 
+  'Funeral March (Libing)', 
+  'Civic Parade (Parada)', 
+  'Feast Procession (Prusisyon)',
+  'Band Meeting (Pulong)'
 ]
 
 // AUTOMATIC DATE CALCULATION

@@ -355,10 +355,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 dark:bg-black text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
+  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#090a0f] text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
     
     <!-- DESKTOP LEFT NAVIGATION SIDEBAR -->
-    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-white dark:bg-[#121214] border-r border-slate-200 dark:border-neutral-800 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-white dark:bg-[#121522] border-r border-slate-200 dark:border-slate-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
       
       <!-- Brand Logo -->
       <div class="flex items-center justify-between">
@@ -368,7 +368,7 @@ onUnmounted(() => {
           </div>
           <div>
             <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
-            <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Enterprise PWA</span>
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Enterprise PWA</span>
           </div>
         </div>
 
@@ -815,18 +815,34 @@ onUnmounted(() => {
           <button @click="showTermsModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3 pr-1 leading-relaxed">
-          <h4 class="font-black text-slate-900 dark:text-white">1. Master List Verification Requirement</h4>
-          <p>All sign-ups are subject to physical verification against the municipal band master list by the IT Super Admin.</p>
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-slate-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
+            <p>All sign-ups are provisional until physically verified by the IT Super Admin against the official municipal band registry.</p>
+          </div>
 
-          <h4 class="font-black text-slate-900 dark:text-white">2. Attendance & Reliability Policy</h4>
-          <p>RSVPing "Will Attend" creates an operational commitment for gig scheduling. Failing to attend without prior excuse affects your personal Reliability Score (%).</p>
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 2: Attendance & RSVP Reliability Scoring</h4>
+            <p>RSVPing "I Will Attend" creates an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%).</p>
+          </div>
 
-          <h4 class="font-black text-slate-900 dark:text-white">3. Data Privacy & Roster Rights</h4>
-          <p>Personal phone numbers and private email addresses are protected under Row Level Security (RLS) and will never be exposed to public directory views.</p>
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 3: Call-Time Punctuality & Alert Protocols</h4>
+            <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and concerts. The in-app 10–15m call-time alarms serve as operational notifications.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 4: Band Property & Instrument Care</h4>
+            <p>Members issued municipal band instruments, uniforms, or sheet music folios are strictly responsible for their maintenance, safekeeping, and prompt return upon request.</p>
+          </div>
+
+          <div>
+            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 5: Data Privacy & Security</h4>
+            <p>Member contact numbers and personal birth dates are protected under Row Level Security (RLS) and will never be exposed to public directory views.</p>
+          </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80">
           <button @click="showTermsModal = false" type="button" class="w-full py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer">
             Close
           </button>
