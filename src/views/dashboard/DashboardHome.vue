@@ -237,6 +237,15 @@ const handleCreateAnnouncement = async () => {
 
       notifyOtherTabs('ANNOUNCEMENT_CHANGED')
 
+      // Trigger Web Push Notification via Edge Function
+      try {
+        await supabase.functions.invoke('push-announcement', {
+          body: { record: data }
+        })
+      } catch (pushErr) {
+        console.warn('Failed to trigger web push:', pushErr)
+      }
+
       newAnnTitle.value = ''
       newAnnContent.value = ''
       showAnnouncementModal.value = false

@@ -138,13 +138,32 @@ const testAlarmTone = () => {
   showNetworkToast('🔊 Playing 5-second Call-Time Alarm test...')
 }
 
+const urlB64ToUint8Array = (base64String) => {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
+}
+
 const syncPushSubscription = async () => {
   if (!store.user) return
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
 
   try {
     const reg = await navigator.serviceWorker.ready
-    const sub = await reg.pushManager.getSubscription()
+    let sub = await reg.pushManager.getSubscription()
+    
+    if (!sub && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8Array('BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA')
+      })
+    }
+
     if (sub) {
       const rawKey = sub.getKey ? sub.getKey('p256dh') : null
       const rawAuth = sub.getKey ? sub.getKey('auth') : null
@@ -255,6 +274,14 @@ const checkUpcomingCallTimes = async () => {
             countdownText: `Starts in ${diffMinutes} minutes`,
             urgency: 'warning'
           }
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+              new Notification(`🚨 Call-Time: ${ev.title}`, {
+                body: `Starts in ${diffMinutes} min at ${ev.location}!`,
+                icon: '/favicon.svg'
+              })
+            } catch(e){}
+          }
         }
 
         if (enableBanners.value) {
@@ -282,6 +309,14 @@ const checkUpcomingCallTimes = async () => {
             timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             countdownText: `EVENT IS STARTING NOW!`,
             urgency: 'danger'
+          }
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+              new Notification(`🚨 Event Starting!`, {
+                body: `${ev.title} is starting right now at ${ev.location}!`,
+                icon: '/favicon.svg'
+              })
+            } catch(e){}
           }
         }
 
