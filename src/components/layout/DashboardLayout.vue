@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check } from 'lucide-vue-next'
+import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -29,8 +29,10 @@ const showSettingsDrawer = ref(false)
 const showTermsModal = ref(false)
 const pendingCount = ref(0)
 
-// Pre-Event Call-Time Reminder Monitor Timer (10-15 min before start)
+// Pre-Event Call-Time Alarm Engine State
 let callTimeMonitorTimer = null
+let audioCtx = null
+const activeAlarmModal = ref(null) // Holds event details when 5s alarm fires
 
 const checkPwaInstalled = () => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
@@ -43,7 +45,7 @@ const updateNetworkStatus = () => {
   if (!wasOnline && isOnline.value) {
     showNetworkToast('🟢 Back Online! Synchronized latest band data.')
   } else if (wasOnline && !isOnline.value) {
-    showNetworkToast('⚡ Operating Offline. Using last synced data.')
+    showNetworkToast('⚡ Operating Offline. Offline alarm countdown active.')
   }
 }
 
@@ -77,6 +79,49 @@ const handleInstallPWA = async () => {
     isAppInstalled.value = true
   }
   deferredPrompt.value = null
+}
+
+// 5-SECOND AUDIBLE MARCHING BRASS ALARM SYNTHESIZER (Works 100% Offline with zero audio file dependencies)
+const playAlarmSiren = (durationSeconds = 5) => {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    if (!AudioContextClass) return
+    if (!audioCtx) audioCtx = new AudioContextClass()
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+
+    const now = audioCtx.currentTime
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+
+    osc.type = 'sawtooth' // Rich trumpet/brass alarm tone
+
+    // Alternating attention-grabbing high-low pulses
+    for (let t = 0; t < durationSeconds; t += 0.5) {
+      osc.frequency.setValueAtTime(880, now + t) // A5 High
+      osc.frequency.setValueAtTime(1320, now + t + 0.25) // E6 High
+    }
+
+    gain.gain.setValueAtTime(0.35, now)
+    gain.gain.linearRampToValueAtTime(0.01, now + durationSeconds)
+
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
+
+    osc.start(now)
+    osc.stop(now + durationSeconds)
+
+    // Trigger physical device vibration if supported (e.g. Android)
+    if (navigator.vibrate) {
+      navigator.vibrate([400, 200, 400, 200, 400])
+    }
+  } catch (e) {
+    console.warn('Audio alarm notice:', e)
+  }
+}
+
+const testAlarmTone = () => {
+  playAlarmSiren(5)
+  showNetworkToast('🔊 Playing 5-second Call-Time Alarm test...')
 }
 
 const syncPushSubscription = async () => {
@@ -114,7 +159,7 @@ const requestNotificationPermission = async () => {
   showFirstTimeNotifPrompt.value = false
 
   if (result === 'granted') {
-    showNetworkToast('🔔 Notifications enabled! You will receive 10–15m call-time alerts.')
+    showNetworkToast('🔔 Call-Time Alarm & Push Notifications Active!')
     await syncPushSubscription()
     checkUpcomingCallTimes()
   }
@@ -125,69 +170,120 @@ const dismissFirstTimeNotifPrompt = () => {
   localStorage.setItem('smartband_notif_prompt_dismissed', 'true')
 }
 
-// AUTOMATIC PRE-EVENT CALL-TIME REMINDER MONITOR (10–15 Minutes Before Start)
+// FULLY OFFLINE-CAPABLE PRE-EVENT CALL-TIME ALARM & COUNTDOWN ENGINE
 const checkUpcomingCallTimes = async () => {
-  if (!store.user) return
+  let attendingEvents = []
 
-  try {
-    const { data: rsvps } = await supabase
-      .from('event_rsvps')
-      .select('event_id, status, events(id, title, event_date, location, event_type)')
-      .eq('user_id', store.user.id)
-      .eq('status', 'attending')
+  // 1. First, check cached events & local RSVPs (Works 100% Offline without internet / during ISP outage)
+  const cachedEvents = localStorage.getItem('smartband_raw_events_cache')
+  if (cachedEvents) {
+    try {
+      const parsed = JSON.parse(cachedEvents)
+      parsed.forEach(ev => {
+        const localRsvp = localStorage.getItem(`smartband_rsvp_${ev.id}`)
+        // If user marked attending OR if user is Secretary/Admin who created it
+        if (localRsvp === 'attending' || ev.rsvpStatus === 'attending' || store.canManageEvents) {
+          attendingEvents.push(ev)
+        }
+      })
+    } catch(e){}
+  }
 
-    if (!rsvps || rsvps.length === 0) return
+  // 2. If online, fetch fresh verified RSVPs from Supabase
+  if (navigator.onLine && store.user) {
+    try {
+      const { data: rsvps } = await supabase
+        .from('event_rsvps')
+        .select('event_id, status, events(id, title, event_date, location, event_type)')
+        .eq('user_id', store.user.id)
+        .eq('status', 'attending')
 
-    const now = Date.now()
-
-    for (const r of rsvps) {
-      const ev = r.events
-      if (!ev || !ev.event_date) continue
-
-      const evTime = new Date(ev.event_date).getTime()
-      const diffMs = evTime - now
-      const diffMinutes = Math.round(diffMs / (60 * 1000))
-
-      // Trigger alert if event starts within 15 minutes (0 to 15 mins away)
-      if (diffMs > 0 && diffMinutes <= 15) {
-        const notifKey = `smartband_calltime_notified_${ev.id}`
-        const alreadyNotified = localStorage.getItem(notifKey)
-
-        if (!alreadyNotified) {
-          localStorage.setItem(notifKey, 'true')
-
-          const title = `🔔 Call-Time Alert: ${ev.title}`
-          const timeFormatted = new Date(ev.event_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          const message = `Starts in ${diffMinutes} min (${timeFormatted}) at ${ev.location}!`
-
-          // 1. Native Push / Notification
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-              navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, {
-                  body: message,
-                  icon: '/favicon.svg',
-                  badge: '/favicon.svg',
-                  vibrate: [200, 100, 200],
-                  tag: `calltime-${ev.id}`
-                })
-              })
-            } else {
-              new Notification(title, {
-                body: message,
-                icon: '/favicon.svg'
+      if (rsvps && rsvps.length > 0) {
+        rsvps.forEach(r => {
+          if (r.events && r.events.event_date) {
+            if (!attendingEvents.some(e => e.id === r.events.id)) {
+              attendingEvents.push({
+                id: r.events.id,
+                title: r.events.title,
+                rawDate: r.events.event_date,
+                location: r.events.location,
+                type: r.events.event_type
               })
             }
           }
+        })
+      }
+    } catch (err) {
+      console.warn('Offline mode: using cached schedule for alarm countdown')
+    }
+  }
 
-          // 2. In-App Visual Alert Toast
-          showNetworkToast(`🔔 Call-Time Alert: ${ev.title} starts in ${diffMinutes} mins!`)
+  if (attendingEvents.length === 0) return
+
+  const now = Date.now()
+
+  for (const ev of attendingEvents) {
+    const rawDate = ev.rawDate || ev.event_date
+    if (!rawDate) continue
+
+    const evTime = new Date(rawDate).getTime()
+    const diffMs = evTime - now
+    const diffMinutes = Math.round(diffMs / (60 * 1000))
+
+    // A. 10–15 MINUTE PRE-CALLTIME ALARM TRIGGER (-15m to 0m)
+    if (diffMs > 0 && diffMinutes <= 15) {
+      const notifKey15 = `smartband_alarm_15m_${ev.id}`
+      if (!localStorage.getItem(notifKey15)) {
+        localStorage.setItem(notifKey15, 'true')
+
+        // 1. Play 5-Second Audible Brass Alarm Siren
+        playAlarmSiren(5)
+
+        // 2. Pop up impossible-to-miss Call-Time Alarm Modal for older musicians
+        activeAlarmModal.value = {
+          title: ev.title,
+          location: ev.location,
+          timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          countdownText: `Starts in ${diffMinutes} minutes`,
+          urgency: 'warning'
+        }
+
+        // 3. Trigger native notification if allowed
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          try {
+            new Notification(`🚨 Call-Time Alarm: ${ev.title}`, {
+              body: `Starts in ${diffMinutes} min (${activeAlarmModal.value.timeText}) at ${ev.location}!`,
+              icon: '/favicon.svg'
+            })
+          } catch(e){}
         }
       }
     }
-  } catch (err) {
-    console.error('Call-time monitor check error:', err)
+
+    // B. EXACT START TIME ALARM TRIGGER (0 to +2 minutes)
+    if (diffMs <= 0 && diffMs >= -2 * 60 * 1000) {
+      const notifKey0 = `smartband_alarm_0m_${ev.id}`
+      if (!localStorage.getItem(notifKey0)) {
+        localStorage.setItem(notifKey0, 'true')
+
+        // 1. Play 5-Second Audible Brass Alarm Siren
+        playAlarmSiren(5)
+
+        // 2. Pop up Start Time Alarm Modal
+        activeAlarmModal.value = {
+          title: ev.title,
+          location: ev.location,
+          timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          countdownText: `EVENT IS STARTING NOW!`,
+          urgency: 'danger'
+        }
+      }
+    }
   }
+}
+
+const dismissActiveAlarm = () => {
+  activeAlarmModal.value = null
 }
 
 const fetchPendingCount = async () => {
@@ -241,9 +337,9 @@ onMounted(() => {
 
   fetchPendingCount()
 
-  // Start Pre-Event Call-Time Monitor (Checks immediately + every 60 seconds)
+  // Start Offline & Online Call-Time Alarm Monitor (Checks immediately + every 10 seconds for real-time accuracy)
   checkUpcomingCallTimes()
-  callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 60000)
+  callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 10000)
 
   // Sync Push Subscription if granted
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -446,8 +542,8 @@ onUnmounted(() => {
           <div class="flex items-center space-x-2.5 pr-2 min-w-0">
             <Bell class="w-5 h-5 flex-shrink-0 animate-bounce text-slate-900" />
             <div class="min-w-0">
-              <span class="font-black block text-slate-900">Enable Push Notifications?</span>
-              <span class="text-[11px] font-semibold opacity-90 block truncate">Get instant 10–15m call-time alerts & urgent schedule updates.</span>
+              <span class="font-black block text-slate-900">Enable 10–15m Call-Time Alarm?</span>
+              <span class="text-[11px] font-semibold opacity-90 block truncate">Audible siren & notifications for upcoming rehearsals and gigs.</span>
             </div>
           </div>
           <div class="flex items-center space-x-1.5 flex-shrink-0">
@@ -470,7 +566,7 @@ onUnmounted(() => {
         </div>
       </Transition>
 
-      <!-- NETWORK RECONNECT & CALL-TIME TOAST -->
+      <!-- NETWORK RECONNECT TOAST -->
       <Transition name="toast">
         <div 
           v-if="networkToastMsg"
@@ -557,6 +653,44 @@ onUnmounted(() => {
 
     </div>
 
+    <!-- HIGH-VISIBILITY 5-SECOND CALL-TIME ALARM SIREN MODAL (For Seniors & Active Events) -->
+    <Transition name="toast">
+      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-yellow-400 via-amber-400 to-yellow-500 text-slate-900 border-4 border-black rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-bounce">
+          
+          <div class="w-16 h-16 rounded-full bg-slate-900 text-yellow-400 flex items-center justify-center mx-auto shadow-lg">
+            <Volume2 class="w-8 h-8 animate-pulse" />
+          </div>
+
+          <div>
+            <span class="inline-block px-3 py-1 bg-black text-white text-[11px] font-black uppercase rounded-full tracking-wider mb-2">
+              🚨 CALL-TIME ALARM ACTIVE
+            </span>
+            <h2 class="text-2xl font-black text-slate-900 leading-tight">
+              {{ activeAlarmModal.title }}
+            </h2>
+            <p class="text-sm font-black text-rose-950 mt-1 uppercase tracking-wide">
+              {{ activeAlarmModal.countdownText }}
+            </p>
+          </div>
+
+          <div class="bg-white/80 p-3 rounded-2xl space-y-1.5 text-xs font-bold text-slate-900 text-left">
+            <div class="flex items-center"><Clock class="w-4 h-4 mr-2 text-slate-700" /> Scheduled Time: {{ activeAlarmModal.timeText }}</div>
+            <div class="flex items-center"><MapPin class="w-4 h-4 mr-2 text-slate-700" /> Location: {{ activeAlarmModal.location }}</div>
+          </div>
+
+          <button 
+            @click="dismissActiveAlarm"
+            type="button"
+            class="w-full py-4 bg-slate-900 hover:bg-black text-white font-black text-sm rounded-2xl shadow-xl active:scale-95 cursor-pointer min-h-[52px]"
+          >
+            ✓ I Am Ready / Stop Alarm
+          </button>
+
+        </div>
+      </div>
+    </Transition>
+
     <!-- DEDICATED APP SETTINGS & NOTIFICATIONS DRAWER MODAL -->
     <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
@@ -575,9 +709,24 @@ onUnmounted(() => {
             <div class="flex items-center space-x-2">
               <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-500" />
               <WifiOff v-else class="w-4 h-4 text-rose-500" />
-              <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">{{ isOnline ? 'PWA Online Sync' : 'Offline Mode' }}</span>
+              <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">{{ isOnline ? 'PWA Online Sync' : 'Offline Countdown Mode' }}</span>
             </div>
             <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+          </div>
+
+          <!-- Test Alarm Tone Button -->
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800">
+            <div>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">Band Call-Time Siren</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">5-second brass alarm tone</p>
+            </div>
+            <button 
+              @click="testAlarmTone"
+              type="button"
+              class="px-3 py-2 bg-yellow-400 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px] flex items-center"
+            >
+              <Volume2 class="w-4 h-4 mr-1" /> Test Alarm
+            </button>
           </div>
 
           <!-- PWA Install Status in Drawer -->
