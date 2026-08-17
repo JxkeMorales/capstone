@@ -109,7 +109,7 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    if (activeTab.value === 'signin') {
+    if (activeTab === 'signin') {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.value.trim(),
         password: password.value
@@ -129,7 +129,6 @@ const handleSubmit = async () => {
         throw new Error('Please review and accept the Terms & Conditions to register.')
       }
 
-      // Strict Philippine Phone Validation (09XXXXXXXXX)
       if (!/^09\d{9}$/.test(contactNumber.value.trim())) {
         throw new Error('Please enter a valid 11-digit Philippine mobile number starting with 09 (e.g. 09123456789).')
       }
@@ -194,21 +193,21 @@ const handleResetPassword = async () => {
     <button 
       @click="toggleTheme" 
       type="button"
-      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#121522] text-slate-700 dark:text-yellow-400 hover:bg-slate-100 dark:hover:bg-[#181d2f] transition-colors shadow-xs z-10 border border-slate-200 dark:border-slate-800/80 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#121522] text-slate-700 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#181d2f] transition-colors shadow-xs z-10 border border-slate-200 dark:border-slate-800/80 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
       :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
     >
-      <Sun v-if="isDark" class="w-5 h-5" />
-      <Moon v-else class="w-5 h-5" />
+      <Sun v-if="isDark" class="w-5 h-5 text-amber-400" />
+      <Moon v-else class="w-5 h-5 text-blue-600" />
     </button>
 
-    <!-- Main Container (Responsive 2-Column Hero on Desktop) -->
+    <!-- Main Container -->
     <div class="w-full max-w-md md:max-w-4xl lg:max-w-5xl my-auto py-8">
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
         
         <!-- Left Hero Section (Desktop View) -->
         <div class="space-y-6 text-left hidden md:block">
-          <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-yellow-400/15 border border-yellow-400/30 text-yellow-600 dark:text-yellow-400 text-xs font-black uppercase tracking-wider">
+          <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
             <Music class="w-4 h-4" />
             <span>SmartBand Municipal PWA</span>
           </div>
@@ -223,21 +222,21 @@ const handleResetPassword = async () => {
 
           <div class="space-y-3.5 pt-2">
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
+              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Cpu class="w-4 h-4" />
               </div>
               <span>Automated Call-Time Siren & Section Dispatch</span>
             </div>
 
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
+              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Award class="w-4 h-4" />
               </div>
               <span>Attendance Reliability Score (%) & Roll Call</span>
             </div>
 
             <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center font-black shadow-xs flex-shrink-0">
+              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
                 <Smartphone class="w-4 h-4" />
               </div>
               <span>Offline-First PWA Cache & Instant Launch</span>
@@ -252,7 +251,7 @@ const handleResetPassword = async () => {
             
             <!-- Mobile Brand Header -->
             <div class="text-center md:hidden mb-6 space-y-2">
-              <div class="inline-flex p-3 bg-yellow-400 rounded-2xl shadow-sm text-slate-900 mx-auto">
+              <div class="inline-flex p-3 bg-blue-600 rounded-2xl shadow-sm text-white mx-auto">
                 <Music class="w-8 h-8" stroke-width="2.5" />
               </div>
               <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
@@ -268,7 +267,7 @@ const handleResetPassword = async () => {
                 :aria-selected="activeTab === 'signin'"
                 class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signin' 
-                  ? 'bg-white dark:bg-[#121522] text-slate-900 dark:text-white shadow-xs font-black' 
+                  ? 'bg-blue-600 text-white shadow-xs font-black' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
               >
                 Sign In
@@ -280,7 +279,7 @@ const handleResetPassword = async () => {
                 :aria-selected="activeTab === 'signup'"
                 class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signup' 
-                  ? 'bg-white dark:bg-[#121522] text-slate-900 dark:text-white shadow-xs font-black' 
+                  ? 'bg-blue-600 text-white shadow-xs font-black' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
               >
                 New Musician Register
@@ -322,7 +321,7 @@ const handleResetPassword = async () => {
                     type="email" 
                     placeholder="you@example.com"
                     autocomplete="email"
-                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                     required
                   >
                 </div>
@@ -338,7 +337,7 @@ const handleResetPassword = async () => {
                     v-if="activeTab === 'signin'" 
                     @click="showForgotPasswordModal = true; resetSent = false; resetEmail = email"
                     type="button" 
-                    class="text-xs font-bold text-yellow-600 dark:text-yellow-400 hover:underline cursor-pointer"
+                    class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                   >
                     Forgot Password?
                   </button>
@@ -353,7 +352,7 @@ const handleResetPassword = async () => {
                     :type="showPassword ? 'text' : 'password'"
                     placeholder="••••••••"
                     autocomplete="current-password"
-                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                     required
                   >
                   <button 
@@ -385,7 +384,7 @@ const handleResetPassword = async () => {
                       type="text" 
                       placeholder="Juan Dela Cruz"
                       autocomplete="name"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                       required
                     >
                   </div>
@@ -418,13 +417,13 @@ const handleResetPassword = async () => {
                     <div class="flex gap-2">
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
                           Male
                         </div>
                       </label>
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 peer-checked:text-yellow-600 dark:peer-checked:text-yellow-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
                           Female
                         </div>
                       </label>
@@ -432,7 +431,7 @@ const handleResetPassword = async () => {
                   </div>
                 </div>
 
-                <!-- Strict Philippine Mobile Number (09XXXXXXXXX - 11 Digits) -->
+                <!-- Strict Philippine Mobile Number (09XXXXXXXXX) -->
                 <div class="space-y-1.5 text-left">
                   <div class="flex items-center justify-between">
                     <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
@@ -454,7 +453,7 @@ const handleResetPassword = async () => {
                       placeholder="09123456789"
                       maxlength="11"
                       autocomplete="tel"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs font-semibold min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                       :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-slate-700/80'"
                       required
                     >
@@ -476,7 +475,7 @@ const handleResetPassword = async () => {
                     <select 
                       id="primary-instrument-select"
                       v-model="primaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400 min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                       required
                     >
                       <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
@@ -486,7 +485,7 @@ const handleResetPassword = async () => {
                   </div>
                 </div>
 
-                <!-- Secondary Instrument (Optional / Dual Instrument Capability) -->
+                <!-- Secondary Instrument -->
                 <div class="space-y-1.5 text-left">
                   <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     Secondary Instrument (Optional / N/A)
@@ -498,7 +497,7 @@ const handleResetPassword = async () => {
                     <select 
                       id="secondary-instrument-select"
                       v-model="secondaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400 min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                     >
                       <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
                         {{ inst.label }}
@@ -513,7 +512,7 @@ const handleResetPassword = async () => {
                     <input 
                       type="checkbox" 
                       v-model="termsAccepted" 
-                      class="mt-1 w-4 h-4 text-yellow-400 bg-slate-100 dark:bg-[#181d2f] border-slate-300 dark:border-slate-700 rounded focus:ring-yellow-400 cursor-pointer"
+                      class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 dark:bg-[#181d2f] border-slate-300 dark:border-slate-700 rounded focus:ring-blue-500 cursor-pointer"
                       required
                     >
                     <span class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
@@ -521,7 +520,7 @@ const handleResetPassword = async () => {
                       <button 
                         @click="showTermsModal = true" 
                         type="button" 
-                        class="font-black text-yellow-600 dark:text-yellow-400 hover:underline cursor-pointer"
+                        class="font-black text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                       >
                         Municipal Band Terms & Conditions
                       </button> 
@@ -537,7 +536,7 @@ const handleResetPassword = async () => {
                 <button 
                   type="submit" 
                   :disabled="isLoading"
-                  class="w-full py-3.5 px-4 bg-yellow-400 hover:bg-yellow-500 active:scale-98 text-slate-900 font-black text-sm rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer disabled:opacity-50 min-h-[48px]"
+                  class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-black text-sm rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer disabled:opacity-50 min-h-[48px]"
                 >
                   <span v-if="isLoading">Processing...</span>
                   <span v-else-if="activeTab === 'signin'" class="flex items-center">
@@ -559,12 +558,12 @@ const handleResetPassword = async () => {
 
     </div>
 
-    <!-- COMPREHENSIVE TERMS & CONDITIONS MODAL (5 ARTICLES) -->
+    <!-- TERMS & CONDITIONS MODAL -->
     <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
         
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
-          <div class="flex items-center space-x-2 text-yellow-500">
+          <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
             <FileText class="w-5 h-5" />
             <h3 class="font-black text-lg text-slate-900 dark:text-white">Municipal Band Terms & Conditions</h3>
           </div>
@@ -604,7 +603,7 @@ const handleResetPassword = async () => {
           <button 
             @click="showTermsModal = false; termsAccepted = true" 
             type="button" 
-            class="py-3 px-6 bg-yellow-400 hover:bg-yellow-500 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="py-3 px-6 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
           >
             I Accept Terms
           </button>
@@ -640,7 +639,7 @@ const handleResetPassword = async () => {
             @click="handleResetPassword" 
             :disabled="resetLoading" 
             type="button" 
-            class="w-full py-3 bg-yellow-400 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
           >
             {{ resetLoading ? 'Sending...' : 'Send Reset Link' }}
           </button>

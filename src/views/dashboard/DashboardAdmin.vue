@@ -248,14 +248,14 @@ onUnmounted(() => {
     
     <header class="pt-1 flex items-center justify-between">
       <div>
-        <p class="text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
+        <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
           {{ store.isSuperAdmin ? 'IT Super Admin Caretaker' : 'Band Secretary Operations Hub' }}
         </p>
         <h1 class="text-2xl font-black text-slate-900 dark:text-white">
           {{ store.isSuperAdmin ? 'System & Accounts Admin' : 'Secretary Management Hub' }}
         </h1>
       </div>
-      <div class="p-2.5 rounded-2xl bg-yellow-400/20 text-yellow-600 dark:text-yellow-400">
+      <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
         <Shield class="w-6 h-6" />
       </div>
     </header>
@@ -264,13 +264,13 @@ onUnmounted(() => {
     <Transition name="toast">
       <div 
         v-if="notification" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-extrabold text-xs"
+        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#121522] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between font-extrabold text-xs"
       >
         <div class="flex items-center space-x-2">
-          <CheckCircle2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
           <span>{{ notification }}</span>
         </div>
-        <button @click="notification = ''" class="ml-2 text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer">
+        <button @click="notification = ''" class="ml-2 text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer">
           <X class="w-3.5 h-3.5" />
         </button>
       </div>
@@ -281,7 +281,7 @@ onUnmounted(() => {
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
           <ShieldAlert class="w-4 h-4 text-amber-500" />
-          <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+          <h2 class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Pending Master List Approvals ({{ pendingAccounts.length }})
           </h2>
         </div>
@@ -291,19 +291,19 @@ onUnmounted(() => {
         <div 
           v-for="user in pendingAccounts" 
           :key="user.id"
-          class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+          class="bg-white dark:bg-[#121522] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800/80 space-y-3"
         >
           <div class="flex justify-between items-start">
             <div>
               <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">{{ user.full_name }}</h3>
-              <p class="text-xs text-slate-500 dark:text-neutral-400">{{ user.email }} • {{ user.contact_number }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ user.email }} • {{ user.contact_number }}</p>
             </div>
             <span class="text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md">
               UNVERIFIED
             </span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#1c1c1e] p-2.5 rounded-xl text-slate-600 dark:text-neutral-300">
+          <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#181d2f] p-2.5 rounded-xl text-slate-600 dark:text-slate-300">
             <div><span class="text-slate-400">Instrument:</span> {{ user.instrument }}</div>
             <div><span class="text-slate-400">Sex:</span> {{ user.sex }}</div>
           </div>
@@ -326,25 +326,25 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-if="pendingAccounts.length === 0" class="text-center py-6 bg-white dark:bg-[#121214] rounded-2xl border border-slate-200 dark:border-neutral-800">
+        <div v-if="pendingAccounts.length === 0" class="text-center py-6 bg-white dark:bg-[#121522] rounded-2xl border border-slate-200 dark:border-slate-800/80">
           <CheckCircle2 class="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-          <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">All sign-ups processed!</p>
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">All sign-ups processed!</p>
         </div>
       </div>
     </section>
 
     <!-- ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER -->
     <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
-      <div class="bg-white dark:bg-[#121214] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
+      <div class="bg-white dark:bg-[#121522] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-slate-800/80 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <Calendar class="w-5 h-5 text-yellow-500" />
+            <Calendar class="w-5 h-5 text-blue-500" />
             <h2 class="font-black text-base text-slate-900 dark:text-white">Check Member Availability</h2>
           </div>
-          <span class="text-[10px] font-black bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-full uppercase">Secretary Tool</span>
+          <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full uppercase">Secretary Tool</span>
         </div>
 
-        <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Select target week day & date to check available musicians.</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Select target week day & date to check available musicians.</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
           <div>
@@ -378,14 +378,14 @@ onUnmounted(() => {
         <button 
           @click="runAvailabilityCheck"
           type="button"
-          class="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-black text-xs rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
+          class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
         >
           <Cpu class="w-4 h-4 mr-2" /> Check Free Musicians
         </button>
       </div>
 
       <!-- MATCHED AVAILABILITY DISPLAY -->
-      <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200 dark:border-neutral-800 space-y-3">
+      <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#121522] rounded-2xl p-4 shadow-xs border border-slate-200 dark:border-slate-800/80 space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="font-black text-sm text-slate-900 dark:text-white">Roster for {{ selectedDayNeeded }} {{ selectedSlotNeeded.split(' ')[0] }}</h3>
           <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-md">
@@ -394,7 +394,7 @@ onUnmounted(() => {
         </div>
 
         <div class="space-y-2">
-          <div v-for="m in matchedDispatchRoster" :key="m.id" class="p-2.5 bg-slate-50 dark:bg-[#1c1c1e] rounded-xl flex items-center justify-between text-xs">
+          <div v-for="m in matchedDispatchRoster" :key="m.id" class="p-2.5 bg-slate-50 dark:bg-[#181d2f] rounded-xl flex items-center justify-between text-xs">
             <div class="flex items-center space-x-2">
               <span class="font-bold text-slate-900 dark:text-white">{{ m.full_name }} ({{ m.instrument }})</span>
               <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">
@@ -402,21 +402,21 @@ onUnmounted(() => {
               </span>
               <span v-else class="text-[10px] font-bold text-slate-400">Unavailable</span>
             </div>
-            <span class="font-bold text-slate-500 dark:text-neutral-400">{{ m.rank }} Rank</span>
+            <span class="font-bold text-slate-500 dark:text-slate-400">{{ m.rank }} Rank</span>
           </div>
         </div>
       </div>
 
       <!-- Re-notifications Trigger -->
-      <div class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
+      <div class="bg-white dark:bg-[#121522] rounded-2xl p-4 shadow-xs border border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-sm text-slate-900 dark:text-white">RSVP Re-notifications</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400">Send follow-up reminders to unconfirmed members</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Send follow-up reminders to unconfirmed members</p>
         </div>
         <button 
           @click="triggerReNotifications"
           type="button"
-          class="py-2.5 px-3.5 bg-yellow-400 text-slate-900 font-bold text-xs rounded-xl flex items-center shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+          class="py-2.5 px-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
         >
           <Send class="w-3.5 h-3.5 mr-1" /> Alert Unconfirmed
         </button>
@@ -426,17 +426,17 @@ onUnmounted(() => {
     <!-- ROSTER MANAGEMENT FOR IT ADMIN -->
     <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Member Roster & Roles Section">
       <div class="flex items-center justify-between px-1">
-        <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
+        <h2 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           System Roles & Officer Assignments
         </h2>
       </div>
 
-      <div class="bg-white dark:bg-[#121214] rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden">
+      <div class="bg-white dark:bg-[#121522] rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800/80 overflow-hidden">
         <div v-if="memberRoster.length > 0">
           <div 
             v-for="member in memberRoster" 
             :key="member.id"
-            class="p-4 border-b border-slate-100 dark:border-neutral-800 last:border-0 space-y-3"
+            class="p-4 border-b border-slate-100 dark:border-slate-800/80 last:border-0 space-y-3"
           >
             <div class="flex justify-between items-start">
               <div>
@@ -445,11 +445,11 @@ onUnmounted(() => {
                   <span v-if="member.role === 'super_admin'" class="ml-2 text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded-md">
                     IT Super Admin
                   </span>
-                  <span v-else-if="member.executive_title" class="ml-2 text-[10px] font-black uppercase bg-yellow-400 text-slate-900 px-2 py-0.5 rounded-md">
+                  <span v-else-if="member.executive_title" class="ml-2 text-[10px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-md">
                     {{ member.executive_title }}
                   </span>
                 </h3>
-                <p class="text-xs text-slate-500 dark:text-neutral-400">{{ member.email }} • {{ member.instrument }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ member.email }} • {{ member.instrument }}</p>
               </div>
 
               <button 
@@ -458,8 +458,8 @@ onUnmounted(() => {
                 :disabled="member.role === 'super_admin'"
                 class="text-[10px] font-black px-3 py-1.5 rounded-lg border transition-all flex items-center active:scale-95 disabled:opacity-50 cursor-pointer min-h-[44px]"
                 :class="member.rank === 'Senior' 
-                  ? 'bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border-yellow-400/40' 
-                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-800'"
+                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/40' 
+                  : 'bg-slate-100 dark:bg-[#181d2f] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/80'"
               >
                 <Award class="w-3.5 h-3.5 mr-1" /> {{ member.rank }} Rank
               </button>
@@ -467,13 +467,13 @@ onUnmounted(() => {
 
             <div class="grid grid-cols-2 gap-2 pt-1">
               <div>
-                <label :for="'role-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">System Role</label>
+                <label :for="'role-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">System Role</label>
                 <select 
                   :id="'role-select-' + member.id"
                   :value="member.role"
                   @change="e => changeRole(member, e.target.value)"
                   :disabled="member.role === 'super_admin'"
-                  class="w-full bg-slate-50 dark:bg-[#1c1c1e] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 focus:ring-0 disabled:opacity-50 min-h-[44px]"
+                  class="w-full bg-slate-50 dark:bg-[#181d2f] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-slate-700/80 focus:ring-0 disabled:opacity-50 min-h-[44px]"
                 >
                   <option value="member">Musician (Member)</option>
                   <option value="secretary_admin">Band Secretary (Admin)</option>
@@ -483,12 +483,12 @@ onUnmounted(() => {
               </div>
 
               <div>
-                <label :for="'exec-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">Executive Title</label>
+                <label :for="'exec-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Executive Title</label>
                 <select 
                   :id="'exec-select-' + member.id"
                   :value="member.executive_title || ''"
                   @change="e => assignExecutiveTitle(member, e.target.value)"
-                  class="w-full bg-slate-50 dark:bg-[#1c1c1e] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 focus:ring-0 min-h-[44px]"
+                  class="w-full bg-slate-50 dark:bg-[#181d2f] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-slate-700/80 focus:ring-0 min-h-[44px]"
                 >
                   <option value="">None</option>
                   <option value="president">President</option>

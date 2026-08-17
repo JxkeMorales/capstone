@@ -272,7 +272,7 @@ onMounted(() => {
     <section class="bg-white dark:bg-[#121522] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-slate-800/80">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
-          <div class="w-14 h-14 rounded-2xl bg-yellow-400 text-slate-900 flex items-center justify-center text-xl font-black shadow-md flex-shrink-0">
+          <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md flex-shrink-0">
             {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
           </div>
           <div class="min-w-0">
@@ -288,7 +288,7 @@ onMounted(() => {
         <button 
           @click="openEditProfile"
           type="button"
-          class="p-2.5 bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-400 hover:text-slate-900 rounded-2xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+          class="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
           aria-label="Edit Profile Details"
         >
           <Edit3 class="w-5 h-5" />
@@ -312,16 +312,16 @@ onMounted(() => {
       <div class="flex justify-between items-end px-1">
         <div>
           <h2 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center">
-            <Calendar class="w-3.5 h-3.5 mr-1 text-yellow-500" /> Weekly Availability Grid
+            <Calendar class="w-3.5 h-3.5 mr-1 text-blue-500" /> Weekly Availability Grid
           </h2>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Tap slots when FREE. Saved directly to database.</p>
         </div>
         <button 
           @click="saveAvailability"
           :disabled="isSaving"
-          class="px-4 py-2 bg-yellow-400 text-slate-900 font-black text-xs rounded-xl shadow-xs active:scale-95 transition-all flex items-center min-h-[44px] cursor-pointer"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-xs active:scale-95 transition-all flex items-center min-h-[44px] cursor-pointer"
         >
-          <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1 text-slate-900" />
+          <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1 text-white" />
           {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Availability' }}
         </button>
       </div>
@@ -350,7 +350,7 @@ onMounted(() => {
                   :aria-label="`Toggle ${d.name} ${slot}`"
                   class="w-full py-2.5 rounded-xl font-black text-xs transition-all cursor-pointer min-h-[44px] flex items-center justify-center"
                   :class="isSlotFree(d.key, slot) 
-                    ? 'bg-yellow-400 text-slate-900 shadow-xs scale-95' 
+                    ? 'bg-blue-600 text-white shadow-xs scale-95' 
                     : 'bg-slate-100 dark:bg-[#181d2f] text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'"
                 >
                   {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
@@ -433,7 +433,7 @@ onMounted(() => {
               @click="showPasswordSection = !showPasswordSection"
               class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-[#181d2f] text-xs font-black text-slate-800 dark:text-slate-200 min-h-[44px] cursor-pointer"
             >
-              <span class="flex items-center"><KeyRound class="w-4 h-4 mr-2 text-yellow-500" /> Change Account Password</span>
+              <span class="flex items-center"><KeyRound class="w-4 h-4 mr-2 text-blue-500" /> Change Account Password</span>
               <span>{{ showPasswordSection ? '▲' : '▼' }}</span>
             </button>
 
@@ -489,7 +489,7 @@ onMounted(() => {
             @click="handleUpdateProfile" 
             :disabled="isUpdatingProfile" 
             type="button" 
-            class="flex-1 py-3 bg-yellow-400 hover:bg-yellow-500 font-black text-xs text-slate-900 rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
           >
             {{ isUpdatingProfile ? 'Saving...' : 'Save Changes' }}
           </button>
