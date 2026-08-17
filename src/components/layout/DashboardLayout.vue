@@ -407,7 +407,7 @@ onMounted(() => {
   fetchPendingCount()
 
   checkUpcomingCallTimes()
-  callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 10000)
+  callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 30000)
 
   // Realtime subscription for new announcements
   announceSub = supabase.channel('public:announcements')
@@ -570,7 +570,7 @@ onUnmounted(() => {
     <div class="flex-1 min-w-0 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
       
       <!-- MATTE BLACK MOBILE TOP HEADER -->
-      <header class="sticky top-0 z-40 bg-white/90 dark:bg-[#121214]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
+      <header class="sticky top-0 z-40 bg-white dark:bg-[#121214] border-b border-slate-200 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
           <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
             <Music class="w-5 h-5" stroke-width="2.5" />
@@ -669,7 +669,7 @@ onUnmounted(() => {
 
       <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal) -->
       <nav 
-        class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-xl border-t border-slate-200 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
+        class="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-[#1c1c1e] border-t border-slate-200 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
         aria-label="Bottom Navigation Bar"
       >
         <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
@@ -738,7 +738,7 @@ onUnmounted(() => {
 
     <!-- HIGH-VISIBILITY 5-SECOND CALL-TIME ALARM MODAL -->
     <Transition name="toast">
-      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
         <div class="bg-gradient-to-b from-amber-400 via-yellow-400 to-amber-500 text-slate-900 border-4 border-slate-900 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-bounce">
           
           <div class="w-16 h-16 rounded-full bg-slate-900 text-yellow-400 flex items-center justify-center mx-auto shadow-lg">
@@ -775,7 +775,7 @@ onUnmounted(() => {
     </Transition>
 
     <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (Neutral Matte Black) -->
-    <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
         
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
@@ -900,7 +900,7 @@ onUnmounted(() => {
     </div>
 
     <!-- TERMS & CONDITIONS MODAL (Neutral Matte Black) -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[80vh] flex flex-col">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">

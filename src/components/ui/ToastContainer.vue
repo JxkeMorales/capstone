@@ -37,7 +37,7 @@ const getIconColor = (type) => {
       <div 
         v-for="toast in uiStore.toasts" 
         :key="toast.id"
-        class="w-full bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-800 p-4 flex items-start space-x-3 pointer-events-auto backdrop-blur-md"
+        class="w-full bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-800 p-4 flex items-start space-x-3 pointer-events-auto"
       >
         <!-- Icon -->
         <div class="flex-shrink-0 mt-0.5">
