@@ -466,7 +466,7 @@ onUnmounted(() => {
     </aside>
 
     <!-- MAIN RESPONSIVE CANVAS AREA -->
-    <div class="flex-1 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
+    <div class="flex-1 min-w-0 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
       
       <!-- MATTE BLACK MOBILE TOP HEADER -->
       <header class="sticky top-0 z-40 bg-white/90 dark:bg-[#121214]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">

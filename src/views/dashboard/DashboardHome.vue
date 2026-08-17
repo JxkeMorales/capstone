@@ -68,12 +68,12 @@ const getTodayStart = () => {
   return d.getTime()
 }
 
-// Upcoming events (today or future), sorted chronologically ascending (soonest first)
+// Upcoming events (today or future), sorted by creation date descending (newest posts first) as requested
 const upcomingEvents = computed(() => {
   const todayStart = getTodayStart()
   return rawEvents.value
     .filter(ev => new Date(ev.rawDate).getTime() >= todayStart)
-    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 })
 
 // Past events (completed), sorted chronologically descending (most recent first)
@@ -108,7 +108,7 @@ const fetchHomeData = async (skipCache = false) => {
     const { data: eventData } = await supabase
       .from('events')
       .select('*')
-      .order('event_date', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (eventData) {
       let rsvpMap = {}
@@ -132,7 +132,8 @@ const fetchHomeData = async (skipCache = false) => {
           time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           location: ev.location,
           type: ev.event_type,
-          rsvpStatus: rsvpMap[ev.id] || null
+          rsvpStatus: rsvpMap[ev.id] || null,
+          createdAt: ev.created_at
         }
       })
       localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
@@ -279,7 +280,8 @@ const handleCreateEvent = async () => {
         time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         location: data.location,
         type: data.event_type,
-        rsvpStatus: null
+        rsvpStatus: null,
+        createdAt: data.created_at
       }
 
       rawEvents.value = [...rawEvents.value.filter(e => e.id !== data.id), newEv]
@@ -570,7 +572,7 @@ onUnmounted(() => {
             <div 
               v-for="ev in upcomingEvents" 
               :key="ev.id"
-              class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 rounded-3xl p-5 shadow-lg relative overflow-hidden text-white border border-blue-500/30"
+              class="bg-slate-900 dark:bg-[#18181b] rounded-3xl p-5 shadow-lg relative overflow-hidden text-white border border-slate-800 dark:border-neutral-800"
             >
               <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">

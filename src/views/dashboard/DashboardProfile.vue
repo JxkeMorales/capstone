@@ -141,11 +141,18 @@ const saveAvailability = async () => {
       }
     }
 
-    const { error } = await supabase
+    const { error: deleteErr } = await supabase
       .from('member_availability')
-      .upsert(rows, { onConflict: 'user_id,day_of_week,time_slot' })
+      .delete()
+      .eq('user_id', store.user.id)
 
-    if (error) throw error
+    if (deleteErr) throw deleteErr
+
+    const { error: insertErr } = await supabase
+      .from('member_availability')
+      .insert(rows)
+
+    if (insertErr) throw insertErr
 
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
@@ -215,7 +222,7 @@ const handleUpdateProfile = async () => {
       passwordChangeSuccess.value = true
     }
 
-    await store.fetchProfile()
+    await store.fetchProfile(true)
     showEditProfileModal.value = false
     alert('Profile updated successfully!')
   } catch (err) {

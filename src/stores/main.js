@@ -46,14 +46,16 @@ export const useMainStore = defineStore('main', {
     
     async fetchSession() {
       // 1. Instant offline retrieval from local cache
-      const cachedProfile = localStorage.getItem('smartband_user_profile_cache')
-      if (cachedProfile) {
-        try {
+      try {
+        const cachedProfile = localStorage.getItem('smartband_user_profile_cache')
+        if (cachedProfile) {
           const parsed = JSON.parse(cachedProfile)
           this.profile = parsed
           this.currentRole = parsed.role || 'member'
           this.executiveTitle = parsed.executive_title || null
-        } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Local storage not accessible in this context')
       }
 
       this.isLoading = true
@@ -94,7 +96,9 @@ export const useMainStore = defineStore('main', {
             this.profile = data
             this.currentRole = data.role || 'member'
             this.executiveTitle = data.executive_title || null
-            localStorage.setItem('smartband_user_profile_cache', JSON.stringify(data))
+            try {
+              localStorage.setItem('smartband_user_profile_cache', JSON.stringify(data))
+            } catch (e) {}
           }
           return this.profile
         } catch (err) {
@@ -113,7 +117,9 @@ export const useMainStore = defineStore('main', {
       this.user = null
       this.profile = null
       this.currentRole = 'member'
-      localStorage.removeItem('smartband_user_profile_cache')
+      try {
+        localStorage.removeItem('smartband_user_profile_cache')
+      } catch (e) {}
     }
   }
 })
