@@ -11,6 +11,14 @@ const router = createRouter({
       component: () => import('../views/HomeView.vue')
     },
     {
+      path: '/home',
+      redirect: '/'
+    },
+    {
+      path: '/login',
+      redirect: '/'
+    },
+    {
       path: '/dashboard',
       component: () => import('../components/layout/DashboardLayout.vue'),
       meta: { requiresAuth: true },
@@ -50,6 +58,11 @@ const router = createRouter({
           meta: { requiresAuth: true }
         }
       ]
+    },
+    // Global Catch-all redirect to home for any undefined/unknown routes
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ]
 })
@@ -58,20 +71,36 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const store = useMainStore()
 
-  if (requiresAuth) {
+  try {
     const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) {
-      next({ name: 'home' })
-    } else {
-      if (!store.user) {
-        store.user = session.user
-        await store.fetchProfile()
+    if (requiresAuth) {
+      if (!session) {
+        return next('/')
+      } else {
+        if (!store.user) {
+          store.user = session.user
+          await store.fetchProfile()
+        }
+        return next()
       }
-      next()
+    } else {
+      // If user is already authenticated and visits public landing '/' or '/home', forward to '/dashboard'
+      if (session && (to.path === '/' || to.path === '/home' || to.path === '/login')) {
+        if (!store.user) {
+          store.user = session.user
+          await store.fetchProfile()
+        }
+        return next('/dashboard')
+      }
+      return next()
     }
-  } else {
-    next()
+  } catch (err) {
+    console.error('Navigation guard error:', err)
+    if (requiresAuth) {
+      return next('/')
+    }
+    return next()
   }
 })
 
