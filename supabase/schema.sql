@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS public.event_rsvps (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    status TEXT NOT NULL CHECK (status IN ('attending', 'declined', 'tentative')),
+    status TEXT NOT NULL CHECK (status IN ('attending', 'declined', 'tentative', 'present', 'absent', 'excused')),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(event_id, user_id)
 );
@@ -252,3 +252,27 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Secretary can view all member availability"
 ON public.member_availability FOR SELECT
 USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
+
+
+-- --------------------------------------------------------------------
+-- 10. PUSH NOTIFICATION SUBSCRIPTIONS TABLE & RLS (For 10-15m Call-Time Alerts)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    p256dh TEXT,
+    auth TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(user_id, endpoint)
+);
+
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own push subscriptions"
+ON public.push_subscriptions FOR ALL
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view push subscriptions"
+ON public.push_subscriptions FOR SELECT
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));

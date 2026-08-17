@@ -29,6 +29,9 @@ const showSettingsDrawer = ref(false)
 const showTermsModal = ref(false)
 const pendingCount = ref(0)
 
+// Pre-Event Call-Time Reminder Monitor Timer (10-15 min before start)
+let callTimeMonitorTimer = null
+
 const checkPwaInstalled = () => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
   isAppInstalled.value = isStandalone
@@ -46,7 +49,7 @@ const updateNetworkStatus = () => {
 
 const showNetworkToast = (msg) => {
   networkToastMsg.value = msg
-  setTimeout(() => { networkToastMsg.value = '' }, 4000)
+  setTimeout(() => { networkToastMsg.value = '' }, 4500)
 }
 
 const toggleTheme = () => {
@@ -76,6 +79,31 @@ const handleInstallPWA = async () => {
   deferredPrompt.value = null
 }
 
+const syncPushSubscription = async () => {
+  if (!store.user) return
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+
+  try {
+    const reg = await navigator.serviceWorker.ready
+    const sub = await reg.pushManager.getSubscription()
+    if (sub) {
+      const rawKey = sub.getKey ? sub.getKey('p256dh') : null
+      const rawAuth = sub.getKey ? sub.getKey('auth') : null
+      const p256dh = rawKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey))) : null
+      const auth = rawAuth ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuth))) : null
+
+      await supabase.from('push_subscriptions').upsert({
+        user_id: store.user.id,
+        endpoint: sub.endpoint,
+        p256dh: p256dh,
+        auth: auth
+      }, { onConflict: 'user_id,endpoint' })
+    }
+  } catch(e) {
+    console.warn('Push subscription sync notice:', e)
+  }
+}
+
 const requestNotificationPermission = async () => {
   if (!('Notification' in window)) {
     alert('Notifications are not supported on this browser.')
@@ -84,11 +112,82 @@ const requestNotificationPermission = async () => {
   const result = await Notification.requestPermission()
   notificationPermission.value = result
   showFirstTimeNotifPrompt.value = false
+
+  if (result === 'granted') {
+    showNetworkToast('🔔 Notifications enabled! You will receive 10–15m call-time alerts.')
+    await syncPushSubscription()
+    checkUpcomingCallTimes()
+  }
 }
 
 const dismissFirstTimeNotifPrompt = () => {
   showFirstTimeNotifPrompt.value = false
   localStorage.setItem('smartband_notif_prompt_dismissed', 'true')
+}
+
+// AUTOMATIC PRE-EVENT CALL-TIME REMINDER MONITOR (10–15 Minutes Before Start)
+const checkUpcomingCallTimes = async () => {
+  if (!store.user) return
+
+  try {
+    const { data: rsvps } = await supabase
+      .from('event_rsvps')
+      .select('event_id, status, events(id, title, event_date, location, event_type)')
+      .eq('user_id', store.user.id)
+      .eq('status', 'attending')
+
+    if (!rsvps || rsvps.length === 0) return
+
+    const now = Date.now()
+
+    for (const r of rsvps) {
+      const ev = r.events
+      if (!ev || !ev.event_date) continue
+
+      const evTime = new Date(ev.event_date).getTime()
+      const diffMs = evTime - now
+      const diffMinutes = Math.round(diffMs / (60 * 1000))
+
+      // Trigger alert if event starts within 15 minutes (0 to 15 mins away)
+      if (diffMs > 0 && diffMinutes <= 15) {
+        const notifKey = `smartband_calltime_notified_${ev.id}`
+        const alreadyNotified = localStorage.getItem(notifKey)
+
+        if (!alreadyNotified) {
+          localStorage.setItem(notifKey, 'true')
+
+          const title = `🔔 Call-Time Alert: ${ev.title}`
+          const timeFormatted = new Date(ev.event_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          const message = `Starts in ${diffMinutes} min (${timeFormatted}) at ${ev.location}!`
+
+          // 1. Native Push / Notification
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, {
+                  body: message,
+                  icon: '/favicon.svg',
+                  badge: '/favicon.svg',
+                  vibrate: [200, 100, 200],
+                  tag: `calltime-${ev.id}`
+                })
+              })
+            } else {
+              new Notification(title, {
+                body: message,
+                icon: '/favicon.svg'
+              })
+            }
+          }
+
+          // 2. In-App Visual Alert Toast
+          showNetworkToast(`🔔 Call-Time Alert: ${ev.title} starts in ${diffMinutes} mins!`)
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Call-time monitor check error:', err)
+  }
 }
 
 const fetchPendingCount = async () => {
@@ -141,11 +240,21 @@ onMounted(() => {
   }
 
   fetchPendingCount()
+
+  // Start Pre-Event Call-Time Monitor (Checks immediately + every 60 seconds)
+  checkUpcomingCallTimes()
+  callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 60000)
+
+  // Sync Push Subscription if granted
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    syncPushSubscription()
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('online', updateNetworkStatus)
   window.removeEventListener('offline', updateNetworkStatus)
+  if (callTimeMonitorTimer) clearInterval(callTimeMonitorTimer)
 })
 </script>
 
@@ -338,7 +447,7 @@ onUnmounted(() => {
             <Bell class="w-5 h-5 flex-shrink-0 animate-bounce text-slate-900" />
             <div class="min-w-0">
               <span class="font-black block text-slate-900">Enable Push Notifications?</span>
-              <span class="text-[11px] font-semibold opacity-90 block truncate">Get instant call-time alerts & urgent schedule updates.</span>
+              <span class="text-[11px] font-semibold opacity-90 block truncate">Get instant 10–15m call-time alerts & urgent schedule updates.</span>
             </div>
           </div>
           <div class="flex items-center space-x-1.5 flex-shrink-0">
@@ -361,11 +470,11 @@ onUnmounted(() => {
         </div>
       </Transition>
 
-      <!-- NETWORK RECONNECT TOAST -->
+      <!-- NETWORK RECONNECT & CALL-TIME TOAST -->
       <Transition name="toast">
         <div 
           v-if="networkToastMsg"
-          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-slate-900 dark:bg-[#121214] text-white px-4 py-3 rounded-2xl shadow-2xl border border-yellow-400/40 flex items-center justify-between font-extrabold text-xs"
+          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-[#121214] text-white px-4 py-3 rounded-2xl shadow-2xl border border-yellow-400/40 flex items-center justify-between font-extrabold text-xs"
         >
           <div class="flex items-center space-x-2">
             <CheckCircle class="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -495,10 +604,10 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <!-- Push Notifications Toggle -->
+          <!-- Push Notifications Toggle & Call-Time Status -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">Push Notifications</p>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">10–15m Call-Time Alerts</p>
               <p class="text-[10px] text-slate-400 dark:text-neutral-500 capitalize">Status: {{ notificationPermission }}</p>
             </div>
             <button 
@@ -506,7 +615,7 @@ onUnmounted(() => {
               type="button"
               class="px-3 py-2 bg-slate-200 dark:bg-[#27272a] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
             >
-              {{ notificationPermission === 'granted' ? 'Enabled' : 'Enable' }}
+              {{ notificationPermission === 'granted' ? 'Active ✓' : 'Enable' }}
             </button>
           </div>
 
