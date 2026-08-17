@@ -91,14 +91,14 @@ const fetchAvailability = async () => {
   try {
     const { data } = await supabase
       .from('member_availability')
-      .select('day_of_week, time_slot, is_available')
+      .select('day_of_week, time_slot, is_free')
       .eq('user_id', store.user.id)
 
     if (data && data.length > 0) {
       const map = {}
       data.forEach(item => {
         const key = `${item.day_of_week}_${item.time_slot}`
-        map[key] = item.is_available
+        map[key] = item.is_free
       })
       availability.value = map
     }
@@ -136,7 +136,7 @@ const saveAvailability = async () => {
           user_id: store.user.id,
           day_of_week: d.key,
           time_slot: shortSlot,
-          is_available: isFree
+          is_free: isFree
         })
       }
     }
@@ -186,13 +186,22 @@ const saveAvailability = async () => {
 const openEditProfile = () => {
   editFullName.value = store.profile?.full_name || ''
   const currentInst = store.profile?.instrument || ''
-  if (currentInst.includes('/')) {
-    const parts = currentInst.split('/').map(s => s.trim())
-    editPrimaryInstrument.value = parts[0] || 'Trumpet'
-    editSecondaryInstrument.value = parts[1] || 'None / N/A'
+  
+  if (currentInst.includes(' + ')) {
+    const parts = currentInst.split(' + ')
+    editPrimaryInstrument.value = instrumentList.includes(parts[0]) ? parts[0] : 'Trumpet'
+    editSecondaryInstrument.value = instrumentList.includes(parts[1]) ? parts[1] : 'None / N/A'
   } else {
-    editPrimaryInstrument.value = currentInst || 'Trumpet'
-    editSecondaryInstrument.value = 'None / N/A'
+    // Legacy slash support or single instrument
+    const possibleMatch = instrumentList.find(inst => currentInst.startsWith(inst + ' / ') && currentInst !== inst)
+    if (possibleMatch) {
+       editPrimaryInstrument.value = possibleMatch
+       const secondary = currentInst.substring(possibleMatch.length + 3)
+       editSecondaryInstrument.value = instrumentList.includes(secondary) ? secondary : 'None / N/A'
+    } else {
+       editPrimaryInstrument.value = instrumentList.includes(currentInst) ? currentInst : 'Trumpet'
+       editSecondaryInstrument.value = 'None / N/A'
+    }
   }
   editContactNumber.value = store.profile?.contact_number || ''
   showPasswordSection.value = false
@@ -213,7 +222,7 @@ const handleUpdateProfile = async () => {
     }
 
     const combinedInstrument = editSecondaryInstrument.value && editSecondaryInstrument.value !== 'None / N/A'
-      ? `${editPrimaryInstrument.value} / ${editSecondaryInstrument.value}`
+      ? `${editPrimaryInstrument.value} + ${editSecondaryInstrument.value}`
       : editPrimaryInstrument.value
 
     const { error: profileErr } = await supabase

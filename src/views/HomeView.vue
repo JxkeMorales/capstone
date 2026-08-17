@@ -138,7 +138,7 @@ const handleSubmit = async () => {
       }
 
       const combinedInstrument = secondaryInstrument.value && secondaryInstrument.value !== 'None / N/A'
-        ? `${primaryInstrument.value} / ${secondaryInstrument.value}`
+        ? `${primaryInstrument.value} + ${secondaryInstrument.value}`
         : primaryInstrument.value
 
       const { data, error } = await supabase.auth.signUp({
