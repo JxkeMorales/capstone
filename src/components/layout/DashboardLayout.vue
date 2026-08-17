@@ -313,10 +313,7 @@ onMounted(() => {
   window.addEventListener('offline', updateNetworkStatus)
 
   if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-    const dismissed = localStorage.getItem('smartband_notif_prompt_dismissed')
-    if (!dismissed) {
-      showFirstTimeNotifPrompt.value = true
-    }
+    showFirstTimeNotifPrompt.value = true
   }
 
   fetchPendingCount()

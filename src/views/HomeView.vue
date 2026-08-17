@@ -109,7 +109,7 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    if (activeTab === 'signin') {
+    if (activeTab.value === 'signin') {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.value.trim(),
         password: password.value

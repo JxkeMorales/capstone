@@ -141,18 +141,37 @@ const saveAvailability = async () => {
       }
     }
 
-    const { error: deleteErr } = await supabase
+    const { data: existing } = await supabase
       .from('member_availability')
-      .delete()
+      .select('id, day_of_week, time_slot')
       .eq('user_id', store.user.id)
 
-    if (deleteErr) throw deleteErr
+    const existingMap = {}
+    if (existing) {
+      existing.forEach(e => { existingMap[`${e.day_of_week}_${e.time_slot}`] = e.id })
+    }
 
-    const { error: insertErr } = await supabase
-      .from('member_availability')
-      .insert(rows)
+    const toUpdate = []
+    const toInsert = []
 
-    if (insertErr) throw insertErr
+    for (const row of rows) {
+      const id = existingMap[`${row.day_of_week}_${row.time_slot}`]
+      if (id) {
+        toUpdate.push({ id, ...row })
+      } else {
+        toInsert.push(row)
+      }
+    }
+
+    if (toInsert.length > 0) {
+      const { error: insertErr } = await supabase.from('member_availability').insert(toInsert)
+      if (insertErr) throw insertErr
+    }
+
+    for (const item of toUpdate) {
+      const { id, ...updateData } = item
+      await supabase.from('member_availability').update(updateData).eq('id', id)
+    }
 
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
