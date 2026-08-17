@@ -274,7 +274,18 @@ const checkUpcomingCallTimes = async () => {
             countdownText: `Starts in ${diffMinutes} minutes`,
             urgency: 'warning'
           }
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        }
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification(`🚨 Call-Time: ${ev.title}`, {
+                body: `Starts in ${diffMinutes} min at ${ev.location}!`,
+                icon: '/favicon.svg',
+                vibrate: [200, 100, 200]
+              })
+            }).catch(e => console.warn(e))
+          } else {
             try {
               new Notification(`🚨 Call-Time: ${ev.title}`, {
                 body: `Starts in ${diffMinutes} min at ${ev.location}!`,
@@ -310,7 +321,18 @@ const checkUpcomingCallTimes = async () => {
             countdownText: `EVENT IS STARTING NOW!`,
             urgency: 'danger'
           }
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        }
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification(`🚨 Event Starting!`, {
+                body: `${ev.title} is starting right now at ${ev.location}!`,
+                icon: '/favicon.svg',
+                vibrate: [400, 200, 400]
+              })
+            }).catch(e => console.warn(e))
+          } else {
             try {
               new Notification(`🚨 Event Starting!`, {
                 body: `${ev.title} is starting right now at ${ev.location}!`,
