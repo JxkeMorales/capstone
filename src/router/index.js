@@ -62,7 +62,8 @@ const router = createRouter({
     // Global Catch-all redirect to home for any undefined/unknown routes
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/'
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue')
     }
   ]
 })

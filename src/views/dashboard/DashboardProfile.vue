@@ -3,10 +3,12 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Phone, Music, Activity, Clock, CheckCircle2, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 
 const router = useRouter()
 const store = useMainStore()
+const uiStore = useUIStore()
 
 const isSaving = ref(false)
 const saveSuccess = ref(false)
@@ -175,9 +177,10 @@ const saveAvailability = async () => {
 
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
+    uiStore.addToast({ title: 'Availability Saved', message: 'Your weekly availability has been updated.', type: 'success' })
   } catch (err) {
     console.error('Save availability error:', err)
-    alert('Failed to save availability.')
+    uiStore.addToast({ title: 'Save Failed', message: 'Failed to save availability.', type: 'error' })
   } finally {
     isSaving.value = false
   }
@@ -252,11 +255,11 @@ const handleUpdateProfile = async () => {
 
     await store.fetchProfile(true)
     showEditProfileModal.value = false
-    alert('Profile updated successfully!')
+    uiStore.addToast({ title: 'Profile Updated', message: 'Your profile has been updated successfully!', type: 'success' })
   } catch (err) {
     console.error('Update profile error:', err)
     passwordChangeError.value = err?.message || 'Failed to update profile.'
-    alert(err?.message || 'Failed to update profile.')
+    uiStore.addToast({ title: 'Update Failed', message: err?.message || 'Failed to update profile.', type: 'error' })
   } finally {
     isUpdatingProfile.value = false
   }

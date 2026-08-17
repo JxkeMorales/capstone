@@ -3,13 +3,29 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 
 const route = useRoute()
 const router = useRouter()
 const store = useMainStore()
+const uiStore = useUIStore()
 const isDark = ref(true)
+
+// User Notification Settings (LocalStorage)
+const enableBanners = ref(localStorage.getItem('smartband_banners_enabled') !== 'false')
+const enableAlarms = ref(localStorage.getItem('smartband_alarms_enabled') !== 'false')
+
+const toggleBanners = () => {
+  enableBanners.value = !enableBanners.value
+  localStorage.setItem('smartband_banners_enabled', enableBanners.value)
+}
+
+const toggleAlarms = () => {
+  enableAlarms.value = !enableAlarms.value
+  localStorage.setItem('smartband_alarms_enabled', enableAlarms.value)
+}
 
 // PWA Install & Installed Detection State
 const deferredPrompt = ref(null)
@@ -65,11 +81,11 @@ const toggleTheme = () => {
 
 const handleInstallPWA = async () => {
   if (isAppInstalled.value) {
-    alert('SmartBand is already installed on your device!')
+    uiStore.addToast({ title: 'Already Installed', message: 'SmartBand is already installed on your device!', type: 'info' })
     return
   }
   if (!deferredPrompt.value) {
-    alert('To install SmartBand:\n• Mobile: Tap Share / Menu → Add to Home Screen.\n• Desktop: Click the Install icon in your browser address bar.')
+    uiStore.addToast({ title: 'Manual Install Required', message: 'To install: Tap Share (iOS) / Menu (Android) → Add to Home Screen. On Desktop: Click the Install icon in the address bar.', type: 'warning', duration: 8000 })
     return
   }
   deferredPrompt.value.prompt()
@@ -149,7 +165,7 @@ const syncPushSubscription = async () => {
 
 const requestNotificationPermission = async () => {
   if (!('Notification' in window)) {
-    alert('Notifications are not supported on this browser.')
+    uiStore.addToast({ title: 'Unsupported', message: 'Browser push notifications are not supported. Using in-app banners instead.', type: 'warning' })
     return
   }
   const result = await Notification.requestPermission()
@@ -230,23 +246,25 @@ const checkUpcomingCallTimes = async () => {
       if (!localStorage.getItem(notifKey15)) {
         localStorage.setItem(notifKey15, 'true')
 
-        playAlarmSiren(5)
-
-        activeAlarmModal.value = {
-          title: ev.title,
-          location: ev.location,
-          timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          countdownText: `Starts in ${diffMinutes} minutes`,
-          urgency: 'warning'
+        if (enableAlarms.value) {
+          playAlarmSiren(5)
+          activeAlarmModal.value = {
+            title: ev.title,
+            location: ev.location,
+            timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            countdownText: `Starts in ${diffMinutes} minutes`,
+            urgency: 'warning'
+          }
         }
 
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          try {
-            new Notification(`🚨 Call-Time Alarm: ${ev.title}`, {
-              body: `Starts in ${diffMinutes} min (${activeAlarmModal.value.timeText}) at ${ev.location}!`,
-              icon: '/favicon.svg'
-            })
-          } catch(e){}
+        if (enableBanners.value) {
+          uiStore.playChime()
+          uiStore.addToast({
+            title: `🚨 Call-Time: ${ev.title}`,
+            message: `Starts in ${diffMinutes} min at ${ev.location}!`,
+            type: 'warning',
+            duration: 10000
+          })
         }
       }
     }
@@ -256,14 +274,25 @@ const checkUpcomingCallTimes = async () => {
       if (!localStorage.getItem(notifKey0)) {
         localStorage.setItem(notifKey0, 'true')
 
-        playAlarmSiren(5)
+        if (enableAlarms.value) {
+          playAlarmSiren(5)
+          activeAlarmModal.value = {
+            title: ev.title,
+            location: ev.location,
+            timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            countdownText: `EVENT IS STARTING NOW!`,
+            urgency: 'danger'
+          }
+        }
 
-        activeAlarmModal.value = {
-          title: ev.title,
-          location: ev.location,
-          timeText: new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          countdownText: `EVENT IS STARTING NOW!`,
-          urgency: 'danger'
+        if (enableBanners.value) {
+          uiStore.playChime()
+          uiStore.addToast({
+            title: `🚨 Event Starting!`,
+            message: `${ev.title} is starting right now at ${ev.location}!`,
+            type: 'error',
+            duration: 10000
+          })
         }
       }
     }
@@ -273,6 +302,8 @@ const checkUpcomingCallTimes = async () => {
 const dismissActiveAlarm = () => {
   activeAlarmModal.value = null
 }
+
+let announceSub = null
 
 const fetchPendingCount = async () => {
   if (store.isSuperAdmin) {
@@ -321,6 +352,21 @@ onMounted(() => {
   checkUpcomingCallTimes()
   callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 10000)
 
+  // Realtime subscription for new announcements
+  announceSub = supabase.channel('public:announcements')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
+      if (enableBanners.value) {
+        uiStore.playChime()
+        uiStore.addToast({
+          title: `📢 New Announcement: ${payload.new.title}`,
+          message: payload.new.category || 'Band Update',
+          type: 'info',
+          duration: 10000
+        })
+      }
+    })
+    .subscribe()
+
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     syncPushSubscription()
   }
@@ -330,6 +376,7 @@ onUnmounted(() => {
   window.removeEventListener('online', updateNetworkStatus)
   window.removeEventListener('offline', updateNetworkStatus)
   if (callTimeMonitorTimer) clearInterval(callTimeMonitorTimer)
+  if (announceSub) supabase.removeChannel(announceSub)
 })
 </script>
 
@@ -693,19 +740,30 @@ onUnmounted(() => {
             <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
           </div>
 
-          <!-- Test Alarm Tone Button -->
+          <!-- Audible Alarms Toggle -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">Band Call-Time Siren</p>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">Call-Time Siren</p>
               <p class="text-[10px] text-slate-400 dark:text-neutral-500">5-second brass alarm tone</p>
             </div>
-            <button 
-              @click="testAlarmTone"
-              type="button"
-              class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px] flex items-center"
-            >
-              <Volume2 class="w-4 h-4 mr-1" /> Test Alarm
-            </button>
+            <div class="flex items-center space-x-2">
+              <button 
+                @click="testAlarmTone"
+                type="button"
+                class="p-2 bg-slate-200 dark:bg-[#323238] hover:bg-slate-300 dark:hover:bg-[#404044] text-slate-900 dark:text-white rounded-xl cursor-pointer transition-colors"
+                title="Test Alarm"
+              >
+                <Volume2 class="w-4 h-4" />
+              </button>
+              <button 
+                @click="toggleAlarms"
+                type="button"
+                class="px-3 py-2 font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px] transition-colors"
+                :class="enableAlarms ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white'"
+              >
+                {{ enableAlarms ? 'Enabled ✓' : 'Disabled' }}
+              </button>
+            </div>
           </div>
 
           <!-- PWA Install Status in Drawer -->
@@ -732,18 +790,19 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <!-- Push Notifications Toggle -->
+          <!-- In-App Banners Toggle -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">10–15m Call-Time Alerts</p>
-              <p class="text-[10px] text-slate-400 dark:text-neutral-500 capitalize">Status: {{ notificationPermission }}</p>
+              <p class="font-bold text-xs text-slate-900 dark:text-white">In-App Notifications</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">Visual banners & chimes</p>
             </div>
             <button 
-              @click="requestNotificationPermission"
+              @click="toggleBanners"
               type="button"
-              class="px-3 py-2 bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
+              class="px-3 py-2 font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px] transition-colors"
+              :class="enableBanners ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white'"
             >
-              {{ notificationPermission === 'granted' ? 'Active ✓' : 'Enable' }}
+              {{ enableBanners ? 'Enabled ✓' : 'Disabled' }}
             </button>
           </div>
 

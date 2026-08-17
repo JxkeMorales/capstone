@@ -3,10 +3,12 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Moon, CheckCircle2, AlertCircle, X, ShieldCheck, FileText, Smartphone, Award, Cpu, Eye, EyeOff } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 
 const router = useRouter()
 const store = useMainStore()
+const uiStore = useUIStore()
 
 const activeTab = ref('signin') // 'signin' or 'signup'
 const isDark = ref(true)
@@ -179,7 +181,7 @@ const handleResetPassword = async () => {
     resetSent.value = true
   } catch (err) {
     console.error('Reset password error:', err)
-    alert(err?.message || 'Failed to send password reset email.')
+    uiStore.addToast({ title: 'Reset Failed', message: err?.message || 'Failed to send password reset email.', type: 'error' })
   } finally {
     resetLoading.value = false
   }
