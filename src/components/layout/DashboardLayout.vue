@@ -32,7 +32,7 @@ const pendingCount = ref(0)
 // Pre-Event Call-Time Alarm Engine State
 let callTimeMonitorTimer = null
 let audioCtx = null
-const activeAlarmModal = ref(null) // Holds event details when 5s alarm fires
+const activeAlarmModal = ref(null)
 
 const checkPwaInstalled = () => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
@@ -93,12 +93,11 @@ const playAlarmSiren = (durationSeconds = 5) => {
     const osc = audioCtx.createOscillator()
     const gain = audioCtx.createGain()
 
-    osc.type = 'sawtooth' // Rich trumpet/brass alarm tone
+    osc.type = 'sawtooth'
 
-    // Alternating attention-grabbing high-low pulses
     for (let t = 0; t < durationSeconds; t += 0.5) {
-      osc.frequency.setValueAtTime(880, now + t) // A5 High
-      osc.frequency.setValueAtTime(1320, now + t + 0.25) // E6 High
+      osc.frequency.setValueAtTime(880, now + t)
+      osc.frequency.setValueAtTime(1320, now + t + 0.25)
     }
 
     gain.gain.setValueAtTime(0.35, now)
@@ -226,7 +225,6 @@ const checkUpcomingCallTimes = async () => {
     const diffMs = evTime - now
     const diffMinutes = Math.round(diffMs / (60 * 1000))
 
-    // 10–15 MINUTE PRE-CALLTIME ALARM TRIGGER
     if (diffMs > 0 && diffMinutes <= 15) {
       const notifKey15 = `smartband_alarm_15m_${ev.id}`
       if (!localStorage.getItem(notifKey15)) {
@@ -253,7 +251,6 @@ const checkUpcomingCallTimes = async () => {
       }
     }
 
-    // EXACT START TIME ALARM TRIGGER
     if (diffMs <= 0 && diffMs >= -2 * 60 * 1000) {
       const notifKey0 = `smartband_alarm_0m_${ev.id}`
       if (!localStorage.getItem(notifKey0)) {
@@ -340,10 +337,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#090a0f] text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
+  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
     
-    <!-- DESKTOP LEFT NAVIGATION SIDEBAR -->
-    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-white dark:bg-[#121522] border-r border-slate-200 dark:border-slate-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <!-- DESKTOP LEFT NAVIGATION SIDEBAR (Neutral Matte Charcoal) -->
+    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-white dark:bg-[#1c1c1e] border-r border-slate-200 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
       
       <!-- Brand Logo -->
       <div class="flex items-center justify-between">
@@ -353,7 +350,7 @@ onUnmounted(() => {
           </div>
           <div>
             <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
-            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Enterprise PWA</span>
+            <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Enterprise PWA</span>
           </div>
         </div>
 
@@ -361,7 +358,7 @@ onUnmounted(() => {
         <button 
           @click="toggleTheme" 
           type="button"
-          class="p-2 rounded-xl bg-slate-100 dark:bg-[#181d2f] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-transparent dark:border-slate-800 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+          class="p-2 rounded-xl bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
           :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
           title="Toggle Light/Dark Theme"
         >
@@ -378,7 +375,7 @@ onUnmounted(() => {
           class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-home' 
             ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f]'"
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <Home class="w-5 h-5 flex-shrink-0" />
           <span>Home Dashboard</span>
@@ -389,7 +386,7 @@ onUnmounted(() => {
           class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-schedule' 
             ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f]'"
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <Calendar class="w-5 h-5 flex-shrink-0" />
           <span>Schedule & Events</span>
@@ -400,7 +397,7 @@ onUnmounted(() => {
           class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-members' 
             ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f]'"
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <Users class="w-5 h-5 flex-shrink-0" />
           <span>Band Directory & Ranks</span>
@@ -413,7 +410,7 @@ onUnmounted(() => {
           class="flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold text-xs transition-all cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-admin' 
             ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f]'"
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <div class="flex items-center space-x-3">
             <ShieldCheck class="w-5 h-5 flex-shrink-0 text-blue-400" />
@@ -429,7 +426,7 @@ onUnmounted(() => {
           class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-profile' 
             ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f]'"
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <User class="w-5 h-5 flex-shrink-0" />
           <span>My Profile</span>
@@ -443,7 +440,7 @@ onUnmounted(() => {
           <Download class="w-4 h-4" />
           <span>Install SmartBand PWA</span>
         </div>
-        <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">Install SmartBand directly on your device for instant offline access.</p>
+        <p class="text-[11px] text-slate-600 dark:text-neutral-400 leading-tight">Install SmartBand directly on your device for instant offline access.</p>
         <button @click="handleInstallPWA" type="button" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]">
           Install App
         </button>
@@ -456,10 +453,10 @@ onUnmounted(() => {
       </div>
 
       <!-- User Profile Summary & Sign Out -->
-      <div class="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
+      <div class="pt-4 border-t border-slate-200 dark:border-neutral-800/80 flex items-center justify-between">
         <div class="min-w-0 pr-2">
           <p class="font-black text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
-          <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-extrabold">{{ store.profile?.role || 'Member' }}</p>
+          <p class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider font-extrabold">{{ store.profile?.role || 'Member' }}</p>
         </div>
         <button @click="handleSignOut" type="button" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" title="Sign Out">
           <LogOut class="w-4 h-4" />
@@ -471,8 +468,8 @@ onUnmounted(() => {
     <!-- MAIN RESPONSIVE CANVAS AREA -->
     <div class="flex-1 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
       
-      <!-- MATTE OBSIDIAN MOBILE TOP HEADER -->
-      <header class="sticky top-0 z-40 bg-white/90 dark:bg-[#090a0f]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
+      <!-- MATTE BLACK MOBILE TOP HEADER -->
+      <header class="sticky top-0 z-40 bg-white/90 dark:bg-[#121214]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
           <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
             <Music class="w-5 h-5" stroke-width="2.5" />
@@ -496,7 +493,7 @@ onUnmounted(() => {
           <button 
             @click="toggleTheme" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#181d2f] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-transparent dark:border-slate-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
             :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
             title="Toggle Light/Dark Theme"
           >
@@ -508,7 +505,7 @@ onUnmounted(() => {
           <button 
             @click="showSettingsDrawer = true"
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#181d2f] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-transparent dark:border-slate-800 min-w-[44px] min-h-[44px] flex items-center justify-center relative cursor-pointer"
+            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[44px] min-h-[44px] flex items-center justify-center relative cursor-pointer"
             aria-label="Open App Settings & Alerts Drawer"
             title="Open App Settings"
           >
@@ -555,7 +552,7 @@ onUnmounted(() => {
       <Transition name="toast">
         <div 
           v-if="networkToastMsg"
-          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-[#121522] text-white px-4 py-3 rounded-2xl shadow-2xl border border-blue-500/40 flex items-center justify-between font-extrabold text-xs"
+          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-[#1c1c1e] text-white px-4 py-3 rounded-2xl shadow-2xl border border-neutral-700/80 flex items-center justify-between font-extrabold text-xs"
         >
           <div class="flex items-center space-x-2">
             <CheckCircle class="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -569,9 +566,9 @@ onUnmounted(() => {
         <RouterView />
       </main>
 
-      <!-- MOBILE BOTTOM NAVIGATION BAR -->
+      <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal) -->
       <nav 
-        class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-[#121522]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
+        class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-xl border-t border-slate-200 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
         aria-label="Bottom Navigation Bar"
       >
         <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
@@ -581,7 +578,7 @@ onUnmounted(() => {
             role="menuitem"
             aria-label="Home Dashboard Tab"
             class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-home' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'"
+            :class="route.name === 'dashboard-home' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <Home class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-home' ? 2.5 : 2" />
             <span class="text-[9px] sm:text-[10px] font-bold">Home</span>
@@ -592,7 +589,7 @@ onUnmounted(() => {
             role="menuitem"
             aria-label="Events Schedule Tab"
             class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-schedule' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'"
+            :class="route.name === 'dashboard-schedule' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <Calendar class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-schedule' ? 2.5 : 2" />
             <span class="text-[9px] sm:text-[10px] font-bold">Events</span>
@@ -603,7 +600,7 @@ onUnmounted(() => {
             role="menuitem"
             aria-label="Band Member Directory Tab"
             class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-members' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'"
+            :class="route.name === 'dashboard-members' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <Users class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-members' ? 2.5 : 2" />
             <span class="text-[9px] sm:text-[10px] font-bold">Roster</span>
@@ -615,7 +612,7 @@ onUnmounted(() => {
             role="menuitem"
             aria-label="Admin Operations Hub Tab"
             class="flex flex-col items-center justify-center flex-1 h-full transition-colors group relative min-h-[44px]"
-            :class="route.name === 'dashboard-admin' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'"
+            :class="route.name === 'dashboard-admin' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <ShieldCheck class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform text-blue-500" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
             <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : 'Secretary' }}</span>
@@ -627,7 +624,7 @@ onUnmounted(() => {
             role="menuitem"
             aria-label="User Profile Tab"
             class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-profile' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'"
+            :class="route.name === 'dashboard-profile' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <User class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-profile' ? 2.5 : 2" />
             <span class="text-[9px] sm:text-[10px] font-bold">Profile</span>
@@ -676,11 +673,11 @@ onUnmounted(() => {
       </div>
     </Transition>
 
-    <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL -->
+    <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (Neutral Matte Black) -->
     <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
             <Bell class="w-5 h-5" />
             <h3 class="font-black text-lg text-slate-900 dark:text-white">App Settings & Alerts</h3>
@@ -690,7 +687,7 @@ onUnmounted(() => {
 
         <div class="space-y-3">
           <!-- Network Sync Badge -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div class="flex items-center space-x-2">
               <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-500" />
               <WifiOff v-else class="w-4 h-4 text-rose-500" />
@@ -700,10 +697,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Test Alarm Tone Button -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div>
               <p class="font-bold text-xs text-slate-900 dark:text-white">Band Call-Time Siren</p>
-              <p class="text-[10px] text-slate-400 dark:text-slate-500">5-second brass alarm tone</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">5-second brass alarm tone</p>
             </div>
             <button 
               @click="testAlarmTone"
@@ -715,10 +712,10 @@ onUnmounted(() => {
           </div>
 
           <!-- PWA Install Status in Drawer -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div>
               <p class="font-bold text-xs text-slate-900 dark:text-white">App Installation</p>
-              <p class="text-[10px] text-slate-400 dark:text-slate-500">
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500">
                 {{ isAppInstalled ? 'Installed as standalone app' : 'Install for offline home screen launch' }}
               </p>
             </div>
@@ -739,22 +736,22 @@ onUnmounted(() => {
           </div>
 
           <!-- Push Notifications Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div>
               <p class="font-bold text-xs text-slate-900 dark:text-white">10–15m Call-Time Alerts</p>
-              <p class="text-[10px] text-slate-400 dark:text-slate-500 capitalize">Status: {{ notificationPermission }}</p>
+              <p class="text-[10px] text-slate-400 dark:text-neutral-500 capitalize">Status: {{ notificationPermission }}</p>
             </div>
             <button 
               @click="requestNotificationPermission"
               type="button"
-              class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
+              class="px-3 py-2 bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
             >
               {{ notificationPermission === 'granted' ? 'Active ✓' : 'Enable' }}
             </button>
           </div>
 
           <!-- Theme Mode Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
             <div class="flex items-center space-x-2">
               <Sun v-if="isDark" class="w-4 h-4 text-amber-400" />
               <Moon v-else class="w-4 h-4 text-blue-600" />
@@ -763,7 +760,7 @@ onUnmounted(() => {
             <button 
               @click="toggleTheme"
               type="button"
-              class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
+              class="px-3 py-2 bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
             >
               {{ isDark ? 'Dark Mode' : 'Light Mode' }}
             </button>
@@ -773,14 +770,14 @@ onUnmounted(() => {
           <button 
             @click="showTermsModal = true"
             type="button"
-            class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer"
+            class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 text-xs font-bold text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
           >
             <span class="flex items-center"><FileText class="w-4 h-4 mr-2 text-blue-500" /> View Terms & Conditions</span>
             <span class="text-slate-400">→</span>
           </button>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex justify-end">
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 pb-1 flex justify-end">
           <button @click="showSettingsDrawer = false" type="button" class="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl min-h-[44px] cursor-pointer">
             Close Settings
           </button>
@@ -789,10 +786,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- TERMS & CONDITIONS MODAL -->
+    <!-- TERMS & CONDITIONS MODAL (Neutral Matte Black) -->
     <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
             <FileText class="w-5 h-5" />
             <h3 class="font-black text-lg text-slate-900 dark:text-white">Terms & Conditions</h3>
@@ -800,7 +797,7 @@ onUnmounted(() => {
           <button @click="showTermsModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-slate-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-medium">
           <div>
             <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
             <p>All sign-ups are provisional until physically verified by the IT Super Admin against the official municipal band registry.</p>
@@ -827,7 +824,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button @click="showTermsModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
             Close
           </button>

@@ -491,7 +491,7 @@ onUnmounted(() => {
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div v-for="acc in pendingAccounts" :key="acc.id" class="bg-white dark:bg-[#121214] p-3 rounded-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
+        <div v-for="acc in pendingAccounts" :key="acc.id" class="bg-white dark:bg-[#1c1c1e] p-3 rounded-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
           <div>
             <p class="font-bold text-xs text-slate-900 dark:text-white">{{ acc.full_name }} ({{ acc.instrument }})</p>
             <p class="text-[11px] text-slate-400 dark:text-neutral-500">{{ acc.email }}</p>
@@ -504,8 +504,8 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Member Profile Summary Card -->
-    <div class="bg-white dark:bg-[#121522] rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
+    <!-- Member Profile Summary Card (Lighter Matte Black) -->
+    <div class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between">
       <div class="flex items-center space-x-3.5">
         <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
           <ShieldCheck class="w-7 h-7" />
@@ -518,7 +518,7 @@ onUnmounted(() => {
             <span v-if="store.profile?.is_verified" class="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border dark:border-emerald-800/40">VERIFIED</span>
             <span v-else class="text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border dark:border-amber-800/40">PENDING</span>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center mt-1 font-medium capitalize">
+          <p class="text-xs text-slate-500 dark:text-neutral-400 flex items-center mt-1 font-medium capitalize">
             <TrendingUp class="w-3.5 h-3.5 mr-1 text-emerald-500 flex-shrink-0" />
             {{ store.profile?.rank || 'Junior' }} Rank • {{ store.profile?.reliability_score || 100 }}% Reliability
           </p>
@@ -533,14 +533,14 @@ onUnmounted(() => {
       <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
           <!-- Upcoming vs Past Gigs Tab Pill Toggle -->
-          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#181d2f] rounded-xl text-xs font-bold">
+          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold">
             <button 
               @click="activeEventsTab = 'upcoming'"
               type="button"
               class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
               :class="activeEventsTab === 'upcoming' 
                 ? 'bg-blue-600 text-white shadow-xs font-black' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
             >
               <Calendar class="w-3.5 h-3.5 mr-1 text-white" />
               <span>Upcoming ({{ upcomingEvents.length }})</span>
@@ -552,7 +552,7 @@ onUnmounted(() => {
               class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
               :class="activeEventsTab === 'past' 
                 ? 'bg-blue-600 text-white shadow-xs font-black' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
             >
               <History class="w-3.5 h-3.5 mr-1 text-slate-400" />
               <span>Past Gigs ({{ pastEvents.length }})</span>
@@ -632,7 +632,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else class="bg-white dark:bg-[#121214] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
+          <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
             <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
             <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No upcoming events scheduled right now.</p>
             <p class="text-xs text-slate-400 dark:text-neutral-500 mt-1">Past events have been automatically archived to the Past Gigs tab.</p>
@@ -645,12 +645,12 @@ onUnmounted(() => {
             <div 
               v-for="ev in pastEvents" 
               :key="ev.id"
-              class="bg-white dark:bg-[#121214] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+              class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
             >
               <div class="flex items-start justify-between">
                 <div>
                   <div class="flex items-center space-x-2">
-                    <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400">
+                    <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400">
                       {{ ev.type }}
                     </span>
                     <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
@@ -664,7 +664,7 @@ onUnmounted(() => {
                   <button 
                     v-if="store.canConductRollCall || store.canManageEvents" 
                     @click="openAttendanceTracker(ev)" 
-                    class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#1c1c1e] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 flex items-center cursor-pointer min-h-[36px]"
+                    class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#27272a] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 flex items-center cursor-pointer min-h-[36px]"
                   >
                     <Users class="w-3.5 h-3.5 mr-1" /> Log
                   </button>
@@ -679,7 +679,7 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-neutral-300 bg-slate-50 dark:bg-[#1c1c1e] p-2.5 rounded-xl">
+              <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-neutral-300 bg-slate-50 dark:bg-[#27272a] p-2.5 rounded-xl">
                 <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
                 <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
                 <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
@@ -687,7 +687,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else class="bg-white dark:bg-[#121214] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
+          <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
             <History class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
             <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No past gigs recorded yet.</p>
           </div>
@@ -697,7 +697,7 @@ onUnmounted(() => {
       <!-- Announcements Section -->
       <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
-          <h2 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
             Announcements ({{ announcements.length }})
           </h2>
           <button v-if="store.canManageAnnouncements" @click="showAnnouncementModal = true" type="button" class="text-xs font-black text-blue-600 dark:text-blue-400 flex items-center hover:underline cursor-pointer min-h-[44px]">
@@ -709,31 +709,31 @@ onUnmounted(() => {
           <article 
             v-for="post in announcements" 
             :key="post.id"
-            class="bg-white dark:bg-[#121522] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800/80 hover:border-blue-500/50 transition-colors"
+            class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 hover:border-blue-500/50 transition-colors"
           >
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">{{ post.title }}</h3>
               <div class="flex items-center space-x-2">
-                <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 whitespace-nowrap">{{ post.date }}</span>
+                <span class="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
                 <button v-if="store.canManageAnnouncements" @click="promptDeleteAnnouncement(post.id)" class="text-rose-500 hover:text-rose-700 cursor-pointer p-1" title="Delete Announcement">
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <p class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm line-clamp-3 mb-3 leading-relaxed">
+            <p class="text-slate-600 dark:text-neutral-300 text-xs sm:text-sm line-clamp-3 mb-3 leading-relaxed">
               {{ post.content }}
             </p>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center">
-                <User class="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-400" />
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-neutral-800">
+              <span class="text-xs font-semibold text-slate-500 dark:text-neutral-400 flex items-center">
+                <User class="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-neutral-500" />
                 {{ post.author }}
               </span>
             </div>
           </article>
         </div>
 
-        <div v-else class="bg-white dark:bg-[#121522] rounded-2xl p-6 text-center border border-slate-200/80 dark:border-slate-800/80">
-          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No announcements posted yet.</p>
+        <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 text-center border border-slate-200/80 dark:border-neutral-800">
+          <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No announcements posted yet.</p>
         </div>
       </section>
 
@@ -741,8 +741,8 @@ onUnmounted(() => {
 
     <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER MODAL -->
     <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div>
             <span class="text-[10px] font-black text-blue-500 uppercase">RSVP Attendance Tracker</span>
             <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedEventForAttendance?.title }}</h3>
@@ -784,7 +784,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button @click="showAttendanceModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
             Close
           </button>
@@ -792,65 +792,65 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- CREATE ANNOUNCEMENT MODAL -->
+    <!-- CREATE ANNOUNCEMENT MODAL (Lighter Matte Black) -->
     <div v-if="showAnnouncementModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <h3 class="font-black text-lg text-slate-900 dark:text-white">Post Announcement</h3>
           <button @click="showAnnouncementModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
         </div>
         <div class="space-y-3 text-left">
           <div>
-            <label for="ann-title-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Title</label>
-            <input id="ann-title-in" v-model="newAnnTitle" type="text" placeholder="e.g. Call Time for Town Procession" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+            <label for="ann-title-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Title</label>
+            <input id="ann-title-in" v-model="newAnnTitle" type="text" placeholder="e.g. Call Time for Town Procession" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
           </div>
           <div>
-            <label for="ann-content-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Content</label>
-            <textarea id="ann-content-in" v-model="newAnnContent" rows="4" placeholder="Write full details..." class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-white"></textarea>
+            <label for="ann-content-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Content</label>
+            <textarea id="ann-content-in" v-model="newAnnContent" rows="4" placeholder="Write full details..." class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-white"></textarea>
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showAnnouncementModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#181d2f] font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showAnnouncementModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="handleCreateAnnouncement" :disabled="isSubmitting" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Post</button>
         </div>
       </div>
     </div>
 
-    <!-- CREATE EVENT MODAL -->
+    <!-- CREATE EVENT MODAL (Lighter Matte Black) -->
     <div v-if="showEventModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <h3 class="font-black text-lg text-slate-900 dark:text-white">Schedule Event</h3>
           <button @click="showEventModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
         </div>
         <div class="space-y-3 text-left">
           <div>
-            <label for="ev-title-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Event Title</label>
-            <input id="ev-title-in" v-model="newEvTitle" type="text" placeholder="e.g. Town Fiesta Parade" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+            <label for="ev-title-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Event Title</label>
+            <input id="ev-title-in" v-model="newEvTitle" type="text" placeholder="e.g. Town Fiesta Parade" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
           </div>
           <div>
-            <label for="ev-type-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Event Type</label>
-            <select id="ev-type-in" v-model="newEvType" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+            <label for="ev-type-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Event Type</label>
+            <select id="ev-type-in" v-model="newEvType" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
               <option v-for="opt in eventTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label for="ev-date-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Date</label>
-              <input id="ev-date-in" v-model="newEvDate" type="date" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+              <label for="ev-date-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Date</label>
+              <input id="ev-date-in" v-model="newEvDate" type="date" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
             </div>
             <div>
-              <label for="ev-time-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Time</label>
-              <input id="ev-time-in" v-model="newEvTime" type="time" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+              <label for="ev-time-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Time</label>
+              <input id="ev-time-in" v-model="newEvTime" type="time" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
             </div>
           </div>
           <div>
-            <label for="ev-loc-in" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Location</label>
-            <input id="ev-loc-in" v-model="newEvLocation" type="text" placeholder="e.g. Town Plaza / Band Hall" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+            <label for="ev-loc-in" class="block text-xs font-bold text-slate-400 dark:text-neutral-400 uppercase mb-1">Location</label>
+            <input id="ev-loc-in" v-model="newEvLocation" type="text" placeholder="e.g. Town Plaza / Band Hall" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showEventModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#181d2f] font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showEventModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="handleCreateEvent" :disabled="isSubmitting" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Schedule</button>
         </div>
       </div>
@@ -858,7 +858,7 @@ onUnmounted(() => {
 
     <!-- CONFIRM MODAL -->
     <div v-if="showConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-center">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>

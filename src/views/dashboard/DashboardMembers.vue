@@ -51,13 +51,11 @@ const paImportanteList = computed(() => {
 
 const filteredMembers = computed(() => {
   return members.value.filter(member => {
-    // 1. Search Query Match
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           member.instrument.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           (member.role && member.role.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
                           (member.executive_title && member.executive_title.toLowerCase().includes(searchQuery.value.toLowerCase()))
     
-    // 2. Instrument Section Filter (Supports dual-instrument players via substring matching!)
     if (activeFilter.value === 'All') return matchesSearch
     
     const filterKey = activeFilter.value.toLowerCase().split('(')[0].trim()
@@ -67,7 +65,6 @@ const filteredMembers = computed(() => {
   })
 })
 
-// Sorted with Executive Officers at the very top, followed by Super Admins and Seniors
 const sortedAndFilteredRoster = computed(() => {
   return [...filteredMembers.value].sort((a, b) => {
     if (a.executive_title && !b.executive_title) return -1
@@ -119,7 +116,6 @@ const fetchRoster = async (skipCache = false) => {
   }
 }
 
-// Open Member Sheet to view their weekly availability & manage officer roles
 const openMemberEdit = async (member) => {
   selectedMember.value = member
   editRank.value = member.rank || 'Junior'
@@ -143,7 +139,6 @@ const openMemberEdit = async (member) => {
   }
 }
 
-// Save Member Rank and Section edits
 const saveMemberEdits = async () => {
   if (!selectedMember.value) return
   isSavingMember.value = true
@@ -176,7 +171,6 @@ const saveMemberEdits = async () => {
   }
 }
 
-// Quick Toggle Member Rank
 const toggleMemberRank = async (member) => {
   const newRank = member.rank === 'Senior' ? 'Junior' : 'Senior'
   const { error } = await supabase
@@ -193,7 +187,6 @@ const toggleMemberRank = async (member) => {
 onMounted(() => {
   fetchRoster()
 
-  // CONNECT SUPABASE REALTIME WEBSOCKET SUBSCRIPTION
   membersChannel = supabase
     .channel('members-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
@@ -214,7 +207,7 @@ onUnmounted(() => {
     
     <header class="pt-1 flex items-center justify-between">
       <div>
-        <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Band Directory & Availability</p>
+        <p class="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Band Directory & Availability</p>
         <h1 class="text-2xl font-black text-slate-900 dark:text-white">Band Roster</h1>
       </div>
       <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-xs">
@@ -224,14 +217,14 @@ onUnmounted(() => {
 
     <!-- Search Bar for All Users -->
     <div class="relative">
-      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-neutral-500">
         <Search class="w-4 h-4" />
       </div>
       <input 
         v-model="searchQuery"
         type="text" 
         placeholder="Search by name, instrument, role, or title..."
-        class="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800/80 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs font-semibold shadow-xs min-h-[44px]"
+        class="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs font-semibold shadow-xs min-h-[44px]"
       >
     </div>
 
@@ -247,12 +240,12 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+      <p class="text-[11px] text-slate-600 dark:text-neutral-400 leading-relaxed">
         Members with reliability scores under 85%. Use for promotion or gig prioritization decisions.
       </p>
 
       <div class="space-y-2">
-        <div v-for="item in paImportanteList" :key="item.id" class="bg-white dark:bg-[#121522] p-3 rounded-2xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
+        <div v-for="item in paImportanteList" :key="item.id" class="bg-white dark:bg-[#1c1c1e] p-3 rounded-2xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
             <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center">
               {{ item.avatar }}
@@ -284,19 +277,19 @@ onUnmounted(() => {
         class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer min-h-[44px] flex items-center"
         :class="activeFilter === sec 
           ? 'bg-blue-600 text-white shadow-xs font-black' 
-          : 'bg-white dark:bg-[#121522] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#181d2f] border border-slate-200/80 dark:border-slate-800/80'"
+          : 'bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a] border border-slate-200/80 dark:border-neutral-800'"
       >
         {{ sec }}
       </button>
     </div>
 
-    <!-- Member Directory List -->
+    <!-- Member Directory List (Lighter Matte Black) -->
     <section class="space-y-3">
       <div v-if="sortedAndFilteredRoster.length > 0" class="grid grid-cols-1 gap-3">
         <div 
           v-for="member in sortedAndFilteredRoster" 
           :key="member.id"
-          class="bg-white dark:bg-[#121522] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between"
+          class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between"
           :class="member.executive_title ? 'border-l-4 border-l-blue-600' : ''"
         >
           <div class="flex items-center space-x-3 min-w-0 pr-2">
@@ -316,7 +309,7 @@ onUnmounted(() => {
                   IT Admin
                 </span>
               </h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center mt-0.5 capitalize">
+              <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium flex items-center mt-0.5 capitalize">
                 <Music class="w-3 h-3 mr-1 text-slate-400" />
                 {{ member.instrument }}
               </p>
@@ -325,7 +318,7 @@ onUnmounted(() => {
 
           <div class="flex items-center space-x-2">
             <div class="text-right flex-shrink-0">
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md" :class="member.rank === 'Senior' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800/40' : 'bg-slate-100 dark:bg-[#181d2f] text-slate-600 dark:text-slate-400'">
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md" :class="member.rank === 'Senior' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800/40' : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400'">
                 {{ member.rank }} Rank
               </span>
               <p class="text-[11px] font-black text-slate-900 dark:text-white mt-1">{{ member.reliability }}% Score</p>
@@ -336,7 +329,7 @@ onUnmounted(() => {
               v-if="store.canPromoteMembers || store.isSuperAdmin"
               @click="openMemberEdit(member)"
               type="button"
-              class="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#181d2f] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+              class="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#27272a] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
               aria-label="Manage Member Details & Availability"
             >
               <MoreVertical class="w-4 h-4" />
@@ -345,16 +338,16 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="bg-white dark:bg-[#121522] rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-800/80">
-        <Users class="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
-        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No verified members found in this search.</p>
+      <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-8 text-center border border-slate-200 dark:border-neutral-800">
+        <Users class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
+        <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No verified members found in this search.</p>
       </div>
     </section>
 
     <!-- SECRETARY / ADMIN MEMBER EDIT & AVAILABILITY OVERVIEW MODAL SHEET -->
     <div v-if="showMemberEditModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div>
             <span class="text-[10px] font-black text-blue-500 uppercase">Member Profile & Availability</span>
             <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedMember?.name }}</h3>
@@ -377,29 +370,29 @@ onUnmounted(() => {
               </span>
             </div>
             
-            <p v-else class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">No free slots specified by member for this week yet.</p>
+            <p v-else class="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">No free slots specified by member for this week yet.</p>
           </div>
 
           <!-- Officer Controls -->
           <div class="space-y-3">
             <div>
-              <label for="mod-rank" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Member Rank</label>
-              <select id="mod-rank" v-model="editRank" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+              <label for="mod-rank" class="block text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">Member Rank</label>
+              <select id="mod-rank" v-model="editRank" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
                 <option value="Junior">Junior Rank</option>
                 <option value="Senior">Senior Rank</option>
               </select>
             </div>
 
             <div>
-              <label for="mod-instrument" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Instrument Section</label>
-              <select id="mod-instrument" v-model="editInstrument" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+              <label for="mod-instrument" class="block text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">Instrument Section</label>
+              <select id="mod-instrument" v-model="editInstrument" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
                 <option v-for="sec in sections.filter(s => s !== 'All')" :key="sec" :value="sec">{{ sec }}</option>
               </select>
             </div>
 
             <div v-if="store.isSuperAdmin">
-              <label for="mod-exec" class="block text-xs font-bold text-slate-400 dark:text-slate-400 uppercase mb-1">Executive Officer Title (IT Admin Only)</label>
-              <select id="mod-exec" v-model="editExecutiveTitle" class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
+              <label for="mod-exec" class="block text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">Executive Officer Title (IT Admin Only)</label>
+              <select id="mod-exec" v-model="editExecutiveTitle" class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]">
                 <option value="">None</option>
                 <option value="president">President</option>
                 <option value="vice_president">Vice President</option>
@@ -410,8 +403,8 @@ onUnmounted(() => {
 
         </div>
 
-        <div class="flex space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-          <button @click="showMemberEditModal = false" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#181d2f] font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 min-h-[44px] cursor-pointer">Cancel</button>
+        <div class="flex space-x-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
+          <button @click="showMemberEditModal = false" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="saveMemberEdits" :disabled="isSavingMember" type="button" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Save Changes</button>
         </div>
       </div>

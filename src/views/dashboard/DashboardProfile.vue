@@ -1,18 +1,18 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Calendar, Clock, CheckCircle2, Phone, LogOut, Activity, Edit3, X, Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-vue-next'
+import { User, Phone, Music, Activity, Clock, CheckCircle2, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
 const router = useRouter()
 const store = useMainStore()
 
-const availability = ref({})
 const isSaving = ref(false)
 const saveSuccess = ref(false)
+const availability = ref({})
 
-// Edit Profile Modal State
+// Profile Editing Modal State
 const showEditProfileModal = ref(false)
 const editFullName = ref('')
 const editPrimaryInstrument = ref('')
@@ -20,16 +20,61 @@ const editSecondaryInstrument = ref('None / N/A')
 const editContactNumber = ref('')
 const isUpdatingProfile = ref(false)
 
-// Password Change State inside Profile
+// Password Change State within Profile
 const showPasswordSection = ref(false)
 const newPassword = ref('')
 const confirmPassword = ref('')
 const showNewPass = ref(false)
 const showConfirmPass = ref(false)
-const passwordChangeError = ref('')
 const passwordChangeSuccess = ref(false)
+const passwordChangeError = ref('')
 
-// Philippine Phone Formatting (09XXXXXXXXX)
+const timeSlots = [
+  'Morning (08:00 AM - 12:00 PM)',
+  'Afternoon (01:00 PM - 05:00 PM)',
+  'Evening (06:00 PM - 10:00 PM)'
+]
+
+// Day Names with Accurate Calculated Dates for Current Week
+const weekDays = computed(() => {
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const now = new Date()
+  const currentDayIndex = now.getDay() === 0 ? 7 : now.getDay() // 1 is Monday, 7 is Sunday
+  
+  return dayNames.map((name, index) => {
+    const dayNumber = index + 1
+    const d = new Date(now)
+    const diff = dayNumber - currentDayIndex
+    d.setDate(now.getDate() + diff)
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return {
+      key: name.toLowerCase(),
+      name: name.slice(0, 3),
+      fullName: name,
+      dateLabel: dateStr
+    }
+  })
+})
+
+const instrumentList = [
+  'Clarinet',
+  'Bass Clarinet',
+  'Flute',
+  'Piccolo',
+  'French Horn',
+  'Tenor Sax',
+  'Sax (Alto Sax)',
+  'Baritone Sax',
+  'Trumpet',
+  'Trombone',
+  'Bass Trombone',
+  'Baritone / Euphonium',
+  'Bass / Tuba',
+  'Bass Drum',
+  'Snare Drum / Drums',
+  'Cymbals'
+]
+
 const handlePhoneEditInput = (e) => {
   let val = e.target.value.replace(/\D/g, '')
   if (val.length > 11) val = val.slice(0, 11)
@@ -41,162 +86,101 @@ const isEditPhoneValid = computed(() => {
   return /^09\d{9}$/.test(editContactNumber.value)
 })
 
-// Complete 16 Instrument Options
-const instrumentList = [
-  'Clarinet', 'Bass Clarinet', 'Flute', 'Piccolo', 'French Horn', 
-  'Tenor Sax', 'Sax (Alto Sax)', 'Baritone Sax', 'Trumpet', 'Trombone', 
-  'Bass Trombone', 'Baritone / Euphonium', 'Bass / Tuba', 'Bass Drum', 
-  'Snare Drum / Drums', 'Cymbals'
-]
-
-// Dynamic Week Days Generator
-const getDynamicWeekDays = () => {
-  const now = new Date()
-  const currentDay = now.getDay()
-  const distanceToMon = currentDay === 0 ? -6 : 1 - currentDay
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMon)
-
-  const days = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
-    const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    days.push({
-      key: dayName,
-      name: dayName,
-      dateLabel: monthDay
-    })
-  }
-  return days
-}
-
-const weekDays = ref(getDynamicWeekDays())
-
-const timeSlots = [
-  'Morning (8am-12pm)',
-  'Afternoon (1pm-5pm)',
-  'Evening (6pm-9pm)'
-]
-
-const toggleSlot = (dayKey, slot) => {
-  const key = `${dayKey}::${slot}`
-  availability.value = {
-    ...availability.value,
-    [key]: !availability.value[key]
-  }
-}
-
-const isSlotFree = (dayKey, slot) => {
-  return !!availability.value[`${dayKey}::${slot}`]
-}
-
 const fetchAvailability = async () => {
   if (!store.user) return
-  const userId = store.user.id
-  
-  // 1. Read from LocalStorage cache for instant offline recovery
-  const localData = localStorage.getItem(`smartband_availability_${userId}`)
-  if (localData) {
-    try {
-      availability.value = JSON.parse(localData)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  // 2. Fetch from Supabase DB
   try {
     const { data } = await supabase
       .from('member_availability')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_free', true)
+      .select('day_of_week, time_slot, is_available')
+      .eq('user_id', store.user.id)
 
     if (data && data.length > 0) {
-      const newMap = {}
+      const map = {}
       data.forEach(item => {
-        newMap[`${item.day_of_week}::${item.time_slot}`] = true
+        const key = `${item.day_of_week}_${item.time_slot}`
+        map[key] = item.is_available
       })
-      availability.value = newMap
-      localStorage.setItem(`smartband_availability_${userId}`, JSON.stringify(newMap))
+      availability.value = map
     }
   } catch (err) {
     console.error('Error fetching availability:', err)
   }
 }
 
+const isSlotFree = (dayKey, slot) => {
+  const shortSlot = slot.split(' ')[0]
+  const key = `${dayKey}_${shortSlot}`
+  return availability.value[key] === true
+}
+
+const toggleSlot = (dayKey, slot) => {
+  const shortSlot = slot.split(' ')[0]
+  const key = `${dayKey}_${shortSlot}`
+  availability.value[key] = !availability.value[key]
+  saveSuccess.value = false
+}
+
 const saveAvailability = async () => {
   if (!store.user) return
-  const userId = store.user.id
   isSaving.value = true
   saveSuccess.value = false
 
-  localStorage.setItem(`smartband_availability_${userId}`, JSON.stringify(availability.value))
-
   try {
-    await supabase.from('member_availability').delete().eq('user_id', userId)
-
-    const insertData = []
-    Object.entries(availability.value).forEach(([key, isFree]) => {
-      if (isFree) {
-        const parts = key.split('::')
-        if (parts.length === 2) {
-          const [dayKey, slot] = parts
-          insertData.push({
-            user_id: userId,
-            day_of_week: dayKey,
-            time_slot: slot,
-            is_free: true
-          })
-        }
+    const rows = []
+    for (const d of weekDays.value) {
+      for (const slot of timeSlots) {
+        const shortSlot = slot.split(' ')[0]
+        const key = `${d.key}_${shortSlot}`
+        const isFree = availability.value[key] === true
+        rows.push({
+          user_id: store.user.id,
+          day_of_week: d.key,
+          time_slot: shortSlot,
+          is_available: isFree
+        })
       }
-    })
-
-    if (insertData.length > 0) {
-      const { error } = await supabase.from('member_availability').insert(insertData)
-      if (error) throw error
     }
+
+    const { error } = await supabase
+      .from('member_availability')
+      .upsert(rows, { onConflict: 'user_id,day_of_week,time_slot' })
+
+    if (error) throw error
 
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
   } catch (err) {
-    console.error('Error saving availability:', err)
-    alert('Failed to save availability to database.')
+    console.error('Save availability error:', err)
+    alert('Failed to save availability.')
   } finally {
     isSaving.value = false
   }
 }
 
-// OPEN EDIT PROFILE MODAL
 const openEditProfile = () => {
   editFullName.value = store.profile?.full_name || ''
-  
-  // Parse existing combined instrument if present
   const currentInst = store.profile?.instrument || ''
   if (currentInst.includes('/')) {
     const parts = currentInst.split('/').map(s => s.trim())
-    editPrimaryInstrument.value = parts[0] || ''
+    editPrimaryInstrument.value = parts[0] || 'Trumpet'
     editSecondaryInstrument.value = parts[1] || 'None / N/A'
   } else {
-    editPrimaryInstrument.value = currentInst
+    editPrimaryInstrument.value = currentInst || 'Trumpet'
     editSecondaryInstrument.value = 'None / N/A'
   }
-
   editContactNumber.value = store.profile?.contact_number || ''
+  showPasswordSection.value = false
   newPassword.value = ''
   confirmPassword.value = ''
-  passwordChangeError.value = ''
   passwordChangeSuccess.value = false
-  showPasswordSection.value = false
+  passwordChangeError.value = ''
   showEditProfileModal.value = true
 }
 
-// SAVE PROFILE EDITS
 const handleUpdateProfile = async () => {
-  if (!store.user) return
   isUpdatingProfile.value = true
   passwordChangeError.value = ''
-
+  
   try {
     if (editContactNumber.value && !/^09\d{9}$/.test(editContactNumber.value.trim())) {
       throw new Error('Contact number must be an 11-digit Philippine number starting with 09.')
@@ -268,8 +252,8 @@ onMounted(() => {
       </button>
     </header>
 
-    <!-- Profile Info Card with Edit Trigger -->
-    <section class="bg-white dark:bg-[#121522] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-slate-800/80">
+    <!-- Profile Info Card with Edit Trigger (Lighter Matte Black) -->
+    <section class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
           <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md flex-shrink-0">
@@ -279,7 +263,7 @@ onMounted(() => {
             <h2 class="text-lg font-black text-slate-900 dark:text-white truncate">
               {{ store.profile?.full_name || 'Member' }}
             </h2>
-            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5 capitalize">
+            <p class="text-xs font-bold text-slate-500 dark:text-neutral-400 mt-0.5 capitalize">
               {{ store.profile?.instrument || 'Musician' }} • {{ store.profile?.rank || 'Junior' }} Rank
             </p>
           </div>
@@ -296,12 +280,12 @@ onMounted(() => {
       </div>
 
       <div class="space-y-2.5">
-        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <Phone class="w-4 h-4 mr-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300">
+          <Phone class="w-4 h-4 mr-3 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
           <span>{{ store.profile?.contact_number || store.profile?.email || 'No contact specified' }}</span>
         </div>
-        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <Activity class="w-4 h-4 mr-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300">
+          <Activity class="w-4 h-4 mr-3 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
           <span>Verification Status: {{ store.profile?.is_verified ? 'Verified Master List' : 'Pending Verification' }}</span>
         </div>
       </div>
@@ -311,10 +295,10 @@ onMounted(() => {
     <section class="space-y-3">
       <div class="flex justify-between items-end px-1">
         <div>
-          <h2 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center">
+          <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider flex items-center">
             <Calendar class="w-3.5 h-3.5 mr-1 text-blue-500" /> Weekly Availability Grid
           </h2>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Tap slots when FREE. Saved directly to database.</p>
+          <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Tap slots when FREE. Saved directly to database.</p>
         </div>
         <button 
           @click="saveAvailability"
@@ -326,20 +310,20 @@ onMounted(() => {
         </button>
       </div>
 
-      <div class="bg-white dark:bg-[#121522] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-slate-800/80 overflow-x-auto">
+      <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>
               <th class="p-2 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">Time Slot</th>
-              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-black text-slate-700 dark:text-slate-200">
+              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-black text-slate-700 dark:text-neutral-200">
                 <div class="uppercase">{{ d.name }}</div>
                 <div class="text-[9px] font-bold text-slate-400 lowercase">{{ d.dateLabel }}</div>
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
             <tr v-for="slot in timeSlots" :key="slot">
-              <td class="p-2 text-left text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+              <td class="p-2 text-left text-xs font-bold text-slate-600 dark:text-neutral-400 whitespace-nowrap">
                 <Clock class="w-3 h-3 inline mr-1 text-slate-400" />
                 {{ slot.split(' ')[0] }}
               </td>
@@ -351,7 +335,7 @@ onMounted(() => {
                   class="w-full py-2.5 rounded-xl font-black text-xs transition-all cursor-pointer min-h-[44px] flex items-center justify-center"
                   :class="isSlotFree(d.key, slot) 
                     ? 'bg-blue-600 text-white shadow-xs scale-95' 
-                    : 'bg-slate-100 dark:bg-[#181d2f] text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'"
+                    : 'bg-slate-100 dark:bg-[#27272a] text-slate-400 hover:bg-slate-200 dark:hover:bg-[#323238]'"
                 >
                   {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
                 </button>
@@ -362,11 +346,11 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- EDIT PROFILE & SECURE PASSWORD CHANGE MODAL -->
+    <!-- EDIT PROFILE & SECURE PASSWORD CHANGE MODAL (Lighter Matte Black) -->
     <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <h3 class="font-black text-base text-slate-900 dark:text-white">Edit Profile & Credentials</h3>
           <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
             <X class="w-5 h-5" />
@@ -376,20 +360,20 @@ onMounted(() => {
         <div class="overflow-y-auto flex-1 space-y-4 pr-1">
           <!-- Full Name -->
           <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">Full Name</label>
+            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Full Name</label>
             <input 
               v-model="editFullName" 
               type="text" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
             >
           </div>
 
           <!-- Primary Instrument -->
           <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">Primary Instrument</label>
+            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Primary Instrument</label>
             <select 
               v-model="editPrimaryInstrument" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
             >
               <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
             </select>
@@ -397,10 +381,10 @@ onMounted(() => {
 
           <!-- Secondary Instrument -->
           <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">Secondary Instrument (Optional)</label>
+            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Secondary Instrument (Optional)</label>
             <select 
               v-model="editSecondaryInstrument" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
             >
               <option value="None / N/A">None / N/A</option>
               <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
@@ -410,42 +394,42 @@ onMounted(() => {
           <!-- Philippine Mobile Number -->
           <div class="space-y-1 text-left">
             <div class="flex justify-between items-center">
-              <label class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">Contact Number (11 digits)</label>
+              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Contact Number (11 digits)</label>
               <span class="text-[10px] font-black" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
                 {{ editContactNumber.length }}/11
               </span>
             </div>
             <input 
               :value="editContactNumber" 
-              @input="handlePhoneEditInput"
+              @input="handlePhoneEditInput" 
               type="tel" 
               maxlength="11"
               placeholder="09123456789"
-              class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-              :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700/80'"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
             >
           </div>
 
           <!-- SECURE PASSWORD CHANGE COLLAPSIBLE SECTION -->
-          <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <div class="pt-2 border-t border-slate-100 dark:border-neutral-800">
             <button 
               type="button" 
               @click="showPasswordSection = !showPasswordSection"
-              class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-[#181d2f] text-xs font-black text-slate-800 dark:text-slate-200 min-h-[44px] cursor-pointer"
+              class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-[#27272a] text-xs font-black text-slate-800 dark:text-neutral-200 min-h-[44px] cursor-pointer"
             >
               <span class="flex items-center"><KeyRound class="w-4 h-4 mr-2 text-blue-500" /> Change Account Password</span>
               <span>{{ showPasswordSection ? '▲' : '▼' }}</span>
             </button>
 
-            <div v-if="showPasswordSection" class="mt-3 space-y-3 p-3 bg-slate-50 dark:bg-[#0f111a] rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div v-if="showPasswordSection" class="mt-3 space-y-3 p-3 bg-slate-50 dark:bg-[#18181b] rounded-2xl border border-slate-200 dark:border-neutral-800">
               <div class="space-y-1">
-                <label class="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase">New Password</label>
+                <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">New Password</label>
                 <div class="relative">
                   <input 
                     v-model="newPassword" 
                     :type="showNewPass ? 'text' : 'password'" 
                     placeholder="Min. 8 characters"
-                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
+                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
                   >
                   <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400">
                     <Eye v-if="!showNewPass" class="w-3.5 h-3.5" />
@@ -455,13 +439,13 @@ onMounted(() => {
               </div>
 
               <div class="space-y-1">
-                <label class="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase">Confirm New Password</label>
+                <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">Confirm New Password</label>
                 <div class="relative">
                   <input 
                     v-model="confirmPassword" 
                     :type="showConfirmPass ? 'text' : 'password'" 
                     placeholder="Re-type new password"
-                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
+                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
                   >
                   <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400">
                     <Eye v-if="!showConfirmPass" class="w-3.5 h-3.5" />
@@ -477,11 +461,11 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button 
             @click="showEditProfileModal = false" 
             type="button" 
-            class="flex-1 py-3 bg-slate-100 dark:bg-[#181d2f] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
+            class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
           >
             Cancel
           </button>

@@ -53,7 +53,7 @@ const signupSuccess = ref(false)
 
 // Philippine Phone Number Formatting & Validation (Starts with 09 and exactly 11 digits)
 const handlePhoneInput = (e) => {
-  let val = e.target.value.replace(/\D/g, '') // remove non-digits
+  let val = e.target.value.replace(/\D/g, '')
   if (val.length > 11) val = val.slice(0, 11)
   contactNumber.value = val
 }
@@ -187,13 +187,13 @@ const handleResetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#f8fafc] dark:bg-[#090a0f] text-slate-900 dark:text-neutral-100 transition-colors duration-300">
+  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 transition-colors duration-300">
     
     <!-- Theme Toggle (Sun / Moon) -->
     <button 
       @click="toggleTheme" 
       type="button"
-      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#121522] text-slate-700 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#181d2f] transition-colors shadow-xs z-10 border border-slate-200 dark:border-slate-800/80 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#1c1c1e] text-slate-700 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#27272a] transition-colors shadow-xs z-10 border border-slate-200 dark:border-neutral-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
       :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
     >
       <Sun v-if="isDark" class="w-5 h-5 text-amber-400" />
@@ -216,7 +216,7 @@ const handleResetPassword = async () => {
             Automated Band Operations & Gig Scheduling
           </h1>
 
-          <p class="text-slate-600 dark:text-slate-300 text-base leading-relaxed font-medium">
+          <p class="text-slate-600 dark:text-neutral-300 text-base leading-relaxed font-medium">
             Streamlining rehearsal call-times, civic parades, funeral processions, and attendance reliability scoring for municipal musicians and band leaders.
           </p>
 
@@ -244,10 +244,10 @@ const handleResetPassword = async () => {
           </div>
         </div>
 
-        <!-- Right Authentication Card -->
+        <!-- Right Authentication Card (Lighter Matte Black) -->
         <div class="w-full">
           
-          <div class="bg-white dark:bg-[#121522] border border-slate-200/90 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
+          <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
             
             <!-- Mobile Brand Header -->
             <div class="text-center md:hidden mb-6 space-y-2">
@@ -255,11 +255,11 @@ const handleResetPassword = async () => {
                 <Music class="w-8 h-8" stroke-width="2.5" />
               </div>
               <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
-              <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Municipal Band Operations System</p>
+              <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">Municipal Band Operations System</p>
             </div>
 
             <!-- Sign In / Sign Up Segmented Tab Bar -->
-            <div class="flex p-1 bg-slate-100 dark:bg-[#181d2f] rounded-2xl mb-6 border border-slate-200/60 dark:border-slate-700/60" role="tablist">
+            <div class="flex p-1 bg-slate-100 dark:bg-[#27272a] rounded-2xl mb-6 border border-slate-200/60 dark:border-neutral-700/60" role="tablist">
               <button 
                 @click="activeTab = 'signin'; errorMessage = ''; signupSuccess = false"
                 type="button" 
@@ -268,7 +268,7 @@ const handleResetPassword = async () => {
                 class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signin' 
                   ? 'bg-blue-600 text-white shadow-xs font-black' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
               >
                 Sign In
               </button>
@@ -280,7 +280,7 @@ const handleResetPassword = async () => {
                 class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
                 :class="activeTab === 'signup' 
                   ? 'bg-blue-600 text-white shadow-xs font-black' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
               >
                 New Musician Register
               </button>
@@ -292,7 +292,7 @@ const handleResetPassword = async () => {
                 <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500" />
                 <span>Registration Submitted!</span>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              <p class="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-medium">
                 Your account is queued for physical verification by the IT Admin against the municipal band master list. You may now sign in.
               </p>
             </div>
@@ -308,12 +308,12 @@ const handleResetPassword = async () => {
               
               <!-- Email Address -->
               <div class="space-y-1.5 text-left">
-                <label for="email-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <label for="email-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Mail class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <Mail class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                   </div>
                   <input 
                     id="email-input"
@@ -321,7 +321,7 @@ const handleResetPassword = async () => {
                     type="email" 
                     placeholder="you@example.com"
                     autocomplete="email"
-                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                     required
                   >
                 </div>
@@ -330,7 +330,7 @@ const handleResetPassword = async () => {
               <!-- Password -->
               <div class="space-y-1.5 text-left">
                 <div class="flex items-center justify-between">
-                  <label for="password-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  <label for="password-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                     Password
                   </label>
                   <button 
@@ -344,7 +344,7 @@ const handleResetPassword = async () => {
                 </div>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Lock class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <Lock class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                   </div>
                   <input 
                     id="password-input"
@@ -352,13 +352,13 @@ const handleResetPassword = async () => {
                     :type="showPassword ? 'text' : 'password'"
                     placeholder="••••••••"
                     autocomplete="current-password"
-                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                     required
                   >
                   <button 
                     type="button" 
                     @click="showPassword = !showPassword"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 cursor-pointer"
                   >
                     <Eye v-if="!showPassword" class="w-4 h-4" />
                     <EyeOff v-else class="w-4 h-4" />
@@ -371,12 +371,12 @@ const handleResetPassword = async () => {
                 
                 <!-- Full Name -->
                 <div class="space-y-1.5 text-left">
-                  <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                     Full Name (As listed on Band Master List)
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <User class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <User class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                     </div>
                     <input 
                       id="fullname-input"
@@ -384,7 +384,7 @@ const handleResetPassword = async () => {
                       type="text" 
                       placeholder="Juan Dela Cruz"
                       autocomplete="name"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
                       required
                     >
                   </div>
@@ -393,37 +393,37 @@ const handleResetPassword = async () => {
                 <!-- Birth Date & Sex (2 columns) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                   <div class="space-y-1.5">
-                    <label for="birthdate-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    <label for="birthdate-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                       Birth Date
                     </label>
                     <div class="relative">
                       <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <Calendar class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Calendar class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                       </div>
                       <input 
                         id="birthdate-input"
                         v-model="birthDate"
                         type="date" 
-                        class="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[44px]"
+                        class="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[44px]"
                         required
                       >
                     </div>
                   </div>
 
                   <div class="space-y-1.5">
-                    <span class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    <span class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                       Sex
                     </span>
                     <div class="flex gap-2">
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
                           Male
                         </div>
                       </label>
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#181d2f] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
                           Female
                         </div>
                       </label>
@@ -434,7 +434,7 @@ const handleResetPassword = async () => {
                 <!-- Strict Philippine Mobile Number (09XXXXXXXXX) -->
                 <div class="space-y-1.5 text-left">
                   <div class="flex items-center justify-between">
-                    <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                       Philippine Mobile Number (11 digits)
                     </label>
                     <span class="text-[10px] font-black" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
@@ -443,7 +443,7 @@ const handleResetPassword = async () => {
                   </div>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Phone class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <Phone class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                     </div>
                     <input 
                       id="phone-input"
@@ -453,8 +453,8 @@ const handleResetPassword = async () => {
                       placeholder="09123456789"
                       maxlength="11"
                       autocomplete="tel"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
-                      :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-slate-700/80'"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                      :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
                       required
                     >
                   </div>
@@ -465,17 +465,17 @@ const handleResetPassword = async () => {
 
                 <!-- Primary Instrument Played -->
                 <div class="space-y-1.5 text-left">
-                  <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                     Primary Instrument (Required)
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Activity class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                     </div>
                     <select 
                       id="primary-instrument-select"
                       v-model="primaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                       required
                     >
                       <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
@@ -487,17 +487,17 @@ const handleResetPassword = async () => {
 
                 <!-- Secondary Instrument -->
                 <div class="space-y-1.5 text-left">
-                  <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
                     Secondary Instrument (Optional / N/A)
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Activity class="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
                     </div>
                     <select 
                       id="secondary-instrument-select"
                       v-model="secondaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                     >
                       <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
                         {{ inst.label }}
@@ -512,10 +512,10 @@ const handleResetPassword = async () => {
                     <input 
                       type="checkbox" 
                       v-model="termsAccepted" 
-                      class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 dark:bg-[#181d2f] border-slate-300 dark:border-slate-700 rounded focus:ring-blue-500 cursor-pointer"
+                      class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 dark:bg-[#27272a] border-slate-300 dark:border-neutral-700 rounded focus:ring-blue-500 cursor-pointer"
                       required
                     >
-                    <span class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                    <span class="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-medium">
                       I agree to the 
                       <button 
                         @click="showTermsModal = true" 
@@ -560,9 +560,9 @@ const handleResetPassword = async () => {
 
     <!-- TERMS & CONDITIONS MODAL -->
     <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
             <FileText class="w-5 h-5" />
             <h3 class="font-black text-lg text-slate-900 dark:text-white">Municipal Band Terms & Conditions</h3>
@@ -572,7 +572,7 @@ const handleResetPassword = async () => {
           </button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-slate-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-medium">
           <div>
             <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
             <p>All sign-up applications are provisional until physically verified by the IT Super Admin against the official municipal band registry. Unverified accounts cannot view private contact rosters or access secretary dispatch controls.</p>
@@ -599,7 +599,7 @@ const handleResetPassword = async () => {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex justify-end">
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-end">
           <button 
             @click="showTermsModal = false; termsAccepted = true" 
             type="button" 
@@ -614,9 +614,9 @@ const handleResetPassword = async () => {
 
     <!-- FORGOT PASSWORD MODAL -->
     <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#121522] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <h3 class="font-black text-base text-slate-900 dark:text-white">Reset Password</h3>
           <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
             <X class="w-5 h-5" />
@@ -628,12 +628,12 @@ const handleResetPassword = async () => {
         </div>
 
         <div v-else class="space-y-3">
-          <p class="text-xs text-slate-600 dark:text-slate-400">Enter your registered email address to receive password reset instructions.</p>
+          <p class="text-xs text-slate-600 dark:text-neutral-400">Enter your registered email address to receive password reset instructions.</p>
           <input 
             v-model="resetEmail" 
             type="email" 
             placeholder="you@example.com" 
-            class="w-full p-3 bg-slate-50 dark:bg-[#181d2f] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+            class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
           >
           <button 
             @click="handleResetPassword" 
