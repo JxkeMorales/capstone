@@ -716,13 +716,14 @@ onUnmounted(() => {
           </button>
         </div>
         
-        <div v-if="announcements.length > 0" class="space-y-3">
+        <div v-if="announcements.length > 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-neutral-800 flex flex-col">
           <article 
-            v-for="post in announcements" 
+            v-for="(post, index) in announcements" 
             :key="post.id"
-            class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 hover:border-blue-500/50 transition-colors"
+            class="py-4 first:pt-0 last:pb-0"
+            :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== announcements.length - 1 }"
           >
-            <div class="flex justify-between items-start mb-2">
+            <div class="flex justify-between items-start mb-1.5">
               <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">{{ post.title }}</h3>
               <div class="flex items-center space-x-2">
                 <span class="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
@@ -731,12 +732,12 @@ onUnmounted(() => {
                 </button>
               </div>
             </div>
-            <p class="text-slate-600 dark:text-neutral-300 text-xs sm:text-sm line-clamp-3 mb-3 leading-relaxed">
+            <p class="text-slate-600 dark:text-neutral-300 text-sm mb-2.5 leading-relaxed whitespace-pre-wrap">
               {{ post.content }}
             </p>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-neutral-800">
+            <div class="flex items-center justify-between mt-1">
               <span class="text-xs font-semibold text-slate-500 dark:text-neutral-400 flex items-center">
-                <User class="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-neutral-500" />
+                <User class="w-3.5 h-3.5 mr-1.5 text-slate-400 dark:text-neutral-500" />
                 {{ post.author }}
               </span>
             </div>

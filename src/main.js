@@ -26,6 +26,26 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   }
 })
 
+// GLOBAL AUTO-PROPER CASING: Capitalize first letter of words on input blur
+document.addEventListener('blur', (e) => {
+  const el = e.target
+  if (
+    (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'search')) ||
+    el.tagName === 'TEXTAREA'
+  ) {
+    if (el.value && typeof el.value === 'string') {
+      // Ignore text that's already uppercase or seems to be a URL
+      if (el.value.startsWith('http') || el.value.startsWith('www')) return
+      
+      const newVal = el.value.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
+      if (el.value !== newVal) {
+        el.value = newVal
+        el.dispatchEvent(new Event('input')) // Trigger Vue v-model update
+      }
+    }
+  }
+}, true) // Use capture phase so it triggers before other blurs
+
 app.mount('#app')
 
 if ('serviceWorker' in navigator) {
