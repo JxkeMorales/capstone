@@ -8,12 +8,18 @@
     @apply bg-slate-50 text-slate-900 dark:bg-[#121214] dark:text-neutral-100 transition-colors duration-300;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.slate.300') transparent;
+  }
+
+  .dark body {
+    scrollbar-color: theme('colors.neutral.700') transparent;
   }
 
   /* Sleek Scrollbar Styling */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -21,7 +27,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-neutral-800 rounded-full border-2 border-slate-50 dark:border-[#121214];
+    @apply bg-slate-300 dark:bg-neutral-700 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {

@@ -716,7 +716,7 @@ onUnmounted(() => {
           </button>
         </div>
         
-        <div v-if="announcements.length > 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-neutral-800 flex flex-col">
+        <div v-if="announcements.length > 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[300px] overflow-y-auto">
           <article 
             v-for="(post, index) in announcements" 
             :key="post.id"
