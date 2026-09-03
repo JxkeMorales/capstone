@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Phone, Music, Activity, Clock, CheckCircle2, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle } from 'lucide-vue-next'
+import { User, Phone, Music, Activity, Clock, CheckCircle2, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -273,6 +273,67 @@ const handleSignOut = async () => {
 onMounted(() => {
   fetchAvailability()
 })
+// ==========================================
+// AVATAR UPLOAD LOGIC
+// ==========================================
+const fileInput = ref(null)
+const isUploading = ref(false)
+
+const triggerFileUpload = () => {
+  if (fileInput.value) fileInput.value.click()
+}
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.addToast({ title: 'File too large', message: 'Please upload an image smaller than 5MB.', type: 'error' })
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${store.user.id}.${fileExt}`
+    
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { upsert: true })
+
+    if (uploadError) throw uploadError
+
+    const { data: publicUrlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName)
+      
+    // Cache bust URL
+    const finalUrl = publicUrlData.publicUrl + '?t=' + Date.now()
+      
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        profile_picture: finalUrl, 
+        profile_picture_status: 'pending' 
+      })
+      .eq('id', store.user.id)
+
+    if (updateError) throw updateError
+
+    if (store.profile) {
+      store.profile.profile_picture = finalUrl
+      store.profile.profile_picture_status = 'pending'
+    }
+    
+    uiStore.addToast({ title: 'Photo Uploaded', message: 'Your picture was sent for Admin approval.', type: 'info' })
+  } catch (error) {
+    console.error('Avatar upload error:', error)
+    uiStore.addToast({ title: 'Upload Failed', message: error.message || 'Could not upload image.', type: 'error' })
+  } finally {
+    isUploading.value = false
+    event.target.value = ''
+  }
+}
 </script>
 
 <template>
@@ -294,9 +355,28 @@ onMounted(() => {
     <section class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
-          <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md flex-shrink-0">
-            {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
+          
+          <div class="relative w-16 h-16 flex-shrink-0 group cursor-pointer" @click="triggerFileUpload">
+            <input type="file" accept="image/jpeg, image/png, image/webp" @change="handleFileUpload" class="hidden" ref="fileInput" />
+            
+            <template v-if="store.profile?.profile_picture">
+              <img :src="store.profile.profile_picture" alt="Avatar" class="w-full h-full object-cover rounded-2xl shadow-md border border-slate-200 dark:border-neutral-800" />
+              <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-2 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Pending</div>
+              <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-2 -right-1 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Declined</div>
+            </template>
+            <template v-else>
+              <div class="w-full h-full rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md">
+                {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
+              </div>
+            </template>
+            
+            <!-- Hover Overlay -->
+            <div class="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+               <Camera v-if="!isUploading" class="w-6 h-6 text-white" />
+               <Loader2 v-else class="w-6 h-6 text-white animate-spin" />
+            </div>
           </div>
+
           <div class="min-w-0">
             <h2 class="text-lg font-black text-slate-900 dark:text-white truncate">
               {{ store.profile?.full_name || 'Member' }}

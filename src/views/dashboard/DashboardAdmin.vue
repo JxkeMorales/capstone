@@ -7,6 +7,7 @@ import { supabase } from '@/supabase'
 const store = useMainStore()
 
 const pendingAccounts = ref([])
+const pendingAvatars = ref([])
 const memberRoster = ref([])
 const notification = ref('')
 const isDispatchGenerated = ref(false)
@@ -61,16 +62,57 @@ const fetchPendingAccounts = async () => {
   }
 }
 
+// 2. FETCH ROSTER
 const fetchRoster = async () => {
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, role, instrument, is_verified, rank, executive_title, reliability_score, profile_picture')
       .eq('is_verified', true)
       .order('full_name', { ascending: true })
-    if (data) memberRoster.value = data
+    
+    if (error) throw error
+    memberRoster.value = data || []
   } catch (err) {
-    console.error('Error fetching roster:', err)
+    console.error('Fetch roster error:', err)
+  }
+}
+
+// 2B. FETCH PENDING AVATARS
+const fetchPendingAvatars = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, profile_picture')
+      .eq('profile_picture_status', 'pending')
+    
+    if (error) throw error
+    pendingAvatars.value = data || []
+  } catch (err) {
+    console.error('Fetch pending avatars error:', err)
+  }
+}
+
+// 2C. AVATAR MODERATION
+const approveAvatar = async (id, name) => {
+  try {
+    await supabase.from('profiles').update({ profile_picture_status: 'approved' }).eq('id', id)
+    showToast(`Approved ${name}'s avatar.`)
+    fetchPendingAvatars()
+    fetchRoster()
+  } catch (err) {
+    showToast('Failed to approve avatar.')
+  }
+}
+
+const declineAvatar = async (id, name) => {
+  try {
+    await supabase.from('profiles').update({ profile_picture_status: 'declined', profile_picture: null }).eq('id', id)
+    showToast(`Declined ${name}'s avatar.`)
+    fetchPendingAvatars()
+    fetchRoster()
+  } catch (err) {
+    showToast('Failed to decline avatar.')
   }
 }
 
@@ -219,12 +261,14 @@ const triggerReNotifications = () => {
 
 onMounted(() => {
   fetchPendingAccounts()
+  fetchPendingAvatars()
   fetchRoster()
 
   adminChannel = supabase
     .channel('admin-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
       fetchPendingAccounts()
+      fetchPendingAvatars()
       fetchRoster()
     })
     .subscribe()
@@ -298,8 +342,8 @@ onUnmounted(() => {
           </div>
 
           <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#27272a] p-2.5 rounded-xl text-slate-600 dark:text-neutral-300">
-            <div><span class="text-slate-400">Instrument:</span> {{ user.instrument }}</div>
-            <div><span class="text-slate-400">Sex:</span> {{ user.sex }}</div>
+            <div><span class="text-slate-400">Inst:</span> {{ user.instrument || 'None' }}</div>
+            <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
           </div>
 
           <div class="flex space-x-2 pt-1">
@@ -320,9 +364,34 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-if="pendingAccounts.length === 0" class="text-center py-6 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-neutral-800">
-          <CheckCircle2 class="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-          <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">All sign-ups processed!</p>
+        <div v-if="pendingAccounts.length === 0" class="text-center p-6 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+          <CheckCircle2 class="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-50" />
+          <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AVATAR MODERATION QUEUE -->
+    <section v-if="pendingAvatars.length > 0" class="space-y-3" aria-label="Avatar Moderation Queue">
+      <div class="flex items-center space-x-2 px-1">
+        <AlertCircle class="w-4 h-4 text-amber-500" />
+        <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+          Pending Avatar Approvals ({{ pendingAvatars.length }})
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        <div 
+          v-for="user in pendingAvatars" 
+          :key="user.id"
+          class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-3 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-3"
+        >
+          <img :src="user.profile_picture" alt="Avatar Review" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-200 dark:border-neutral-700" />
+          <p class="text-xs font-black text-slate-900 dark:text-white line-clamp-1 w-full">{{ user.full_name }}</p>
+          <div class="flex space-x-1 w-full">
+            <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 rounded-xl cursor-pointer text-[10px] uppercase">Approve</button>
+            <button @click="declineAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl cursor-pointer text-[10px] uppercase">Decline</button>
+          </div>
         </div>
       </div>
     </section>

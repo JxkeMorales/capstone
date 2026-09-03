@@ -104,7 +104,8 @@ const fetchRoster = async (skipCache = false) => {
         role: m.role || 'member',
         executive_title: m.executive_title || null,
         reliability: m.reliability_score || 100,
-        avatar: m.full_name ? m.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB'
+        avatar: m.full_name ? m.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB',
+        profile_picture: m.profile_picture || null
       }))
 
       localStorage.setItem('smartband_members_roster_cache', JSON.stringify(members.value))
@@ -294,6 +295,14 @@ onUnmounted(() => {
         >
           <div class="flex items-center space-x-3 min-w-0 pr-2">
             <div 
+              v-if="member.profile_picture"
+              class="w-11 h-11 rounded-2xl flex-shrink-0 overflow-hidden shadow-xs border"
+              :class="member.executive_title ? 'border-blue-500 shadow-md' : 'border-slate-200 dark:border-neutral-700'"
+            >
+              <img :src="member.profile_picture" alt="Avatar" class="w-full h-full object-cover" />
+            </div>
+            <div 
+              v-else
               class="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm flex-shrink-0 border"
               :class="member.executive_title ? 'bg-blue-600 text-white border-blue-500 shadow-md' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'"
             >

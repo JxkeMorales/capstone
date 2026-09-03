@@ -24,7 +24,8 @@ const fetchLeaderboard = async () => {
         section: m.instrument || 'Musician',
         score: m.reliability_score || 100,
         rank: m.rank || 'Junior',
-        avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'MB'
+        avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'MB',
+        profile_picture: m.profile_picture || null
       }))
 
       // Flag "Pa-Importante" behavior: Members with reliability score < 80% or low attendance
@@ -112,7 +113,8 @@ onMounted(() => {
       <div class="space-y-2">
         <div v-for="item in paImportanteList" :key="item.id" class="bg-white dark:bg-[#121212] p-3 rounded-2xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center">
+            <img v-if="item.profile_picture" :src="item.profile_picture" class="w-8 h-8 rounded-full object-cover border border-red-200 dark:border-red-900/50 flex-shrink-0" />
+            <div v-else class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
               {{ item.avatar }}
             </div>
             <div>
@@ -151,7 +153,8 @@ onMounted(() => {
             </div>
             
             <!-- Avatar -->
-            <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1c1c1e] flex items-center justify-center font-bold text-sm text-slate-700 dark:text-neutral-200 mr-3 flex-shrink-0 border border-slate-200/60 dark:border-neutral-800">
+            <img v-if="member.profile_picture" :src="member.profile_picture" class="w-10 h-10 rounded-full object-cover mr-3 flex-shrink-0 border border-slate-200/60 dark:border-neutral-800 shadow-xs" />
+            <div v-else class="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1c1c1e] flex items-center justify-center font-bold text-sm text-slate-700 dark:text-neutral-200 mr-3 flex-shrink-0 border border-slate-200/60 dark:border-neutral-800 shadow-xs">
               {{ member.avatar }}
             </div>
             
