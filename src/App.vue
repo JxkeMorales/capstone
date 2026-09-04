@@ -8,12 +8,32 @@ const store = useMainStore()
 
 onMounted(() => {
   store.fetchSession()
-  // Initialize theme based on preference or default to dark
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+  // Initialize theme globally based on localStorage
+  const savedTheme = localStorage.getItem('smartband_theme')
+  if (savedTheme === 'light') {
     document.documentElement.classList.remove('dark')
   } else {
     document.documentElement.classList.add('dark')
   }
+
+  // ANTI-LOGOUT SLEEPING TAB FIX
+  // Prevents Supabase from revoking sessions when a PC wakes up from sleep and tries to use an old token
+  let hiddenTime = 0
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      hiddenTime = Date.now()
+    } else {
+      // If tab was hidden/sleeping for more than 45 minutes, hard refresh to grab latest state & connect to Wi-Fi
+      if (hiddenTime && (Date.now() - hiddenTime > 2700000)) {
+        window.location.reload()
+      } else {
+        // Just sync memory with localStorage to prevent cross-tab out-of-sync tokens
+        import('@/supabase').then(({ supabase }) => {
+          supabase.auth.getSession()
+        })
+      }
+    }
+  })
 })
 </script>
 
