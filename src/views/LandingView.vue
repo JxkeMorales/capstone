@@ -1,3 +1,4 @@
+<script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Music, ArrowRight, ShieldCheck, Calendar, Users, Cpu, Sun, Moon } from 'lucide-vue-next'
