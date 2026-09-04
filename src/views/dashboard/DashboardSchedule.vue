@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History } from 'lucide-vue-next'
+import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
@@ -314,22 +314,23 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <!-- Filter Pills -->
-    <div class="flex items-center space-x-2 overflow-x-auto pb-1" role="tablist" aria-label="Event Filter Options">
-      <button 
-        v-for="filter in filterCategories" 
-        :key="filter"
-        @click="activeFilter = filter"
-        type="button"
-        role="tab"
-        :aria-selected="activeFilter === filter"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer min-h-[44px] flex items-center"
-        :class="activeFilter === filter 
-          ? 'bg-blue-600 text-white shadow-xs font-black' 
-          : 'bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a] border border-slate-200/80 dark:border-neutral-800'"
+    <!-- Filter Dropdown -->
+    <div class="relative z-10 inline-block w-auto mt-1 mb-2">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <Filter class="w-4 h-4 text-slate-400" />
+      </div>
+      <select 
+        v-model="activeFilter"
+        class="w-auto min-w-[200px] sm:min-w-[220px] bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800 text-slate-900 dark:text-white text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block pl-10 pr-10 p-2.5 appearance-none cursor-pointer shadow-xs min-h-[44px]"
+        aria-label="Filter events"
       >
-        {{ filter }}
-      </button>
+        <option v-for="filter in filterCategories" :key="filter" :value="filter">
+          {{ filter === 'All' ? 'All Events' : filter }}
+        </option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+        <ChevronDown class="w-4 h-4 text-slate-400" />
+      </div>
     </div>
 
     <!-- Events List -->

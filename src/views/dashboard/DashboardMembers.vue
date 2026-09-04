@@ -267,13 +267,13 @@ onUnmounted(() => {
     </section>
 
     <!-- Section Filter Dropdown -->
-    <div class="relative z-10">
+    <div class="relative z-10 inline-block w-auto mt-1 mb-2">
       <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
         <Filter class="w-4 h-4 text-slate-400" />
       </div>
       <select 
         v-model="activeFilter"
-        class="w-full bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800 text-slate-900 dark:text-white text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3 appearance-none cursor-pointer shadow-xs min-h-[44px]"
+        class="w-auto min-w-[200px] bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800 text-slate-900 dark:text-white text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block pl-10 pr-10 p-2.5 appearance-none cursor-pointer shadow-xs min-h-[44px]"
         aria-label="Filter members by section"
       >
         <option v-for="sec in sections" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
