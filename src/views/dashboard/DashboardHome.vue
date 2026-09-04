@@ -10,7 +10,8 @@ const pendingAccounts = ref([])
 const rawEvents = ref([])
 const announcements = ref([])
 const isLoading = ref(true)
-const activeEventsTab = ref('upcoming') // 'upcoming' | 'past'
+const activeEventsTab = ref('upcoming')
+const activeAnnouncementTab = ref('recent') // 'upcoming' | 'past'
 
 // Realtime Channel & Sync References
 let homeChannel = null
@@ -77,6 +78,20 @@ const upcomingEvents = computed(() => {
 })
 
 // Past events (completed), sorted chronologically descending (most recent first)
+const recentAnnouncements = computed(() => {
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  return announcements.value.filter(a => new Date(a.rawDate).getTime() >= sevenDaysAgo)
+})
+
+const archivedAnnouncements = computed(() => {
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  return announcements.value.filter(a => new Date(a.rawDate).getTime() < sevenDaysAgo)
+})
+
+const displayedAnnouncements = computed(() => {
+  return activeAnnouncementTab.value === 'recent' ? recentAnnouncements.value : archivedAnnouncements.value
+})
+
 const pastEvents = computed(() => {
   const todayStart = getTodayStart()
   return rawEvents.value
@@ -151,6 +166,7 @@ const fetchHomeData = async (skipCache = false) => {
         author: a.author?.full_name || 'Band Officer',
         date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         title: a.title,
+        rawDate: a.created_at,
         content: a.content
       }))
       localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
@@ -708,20 +724,44 @@ onUnmounted(() => {
       <!-- Announcements Section -->
       <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
-          <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
-            Announcements ({{ announcements.length }})
-          </h2>
+          <!-- Announcements Tab Pill Toggle -->
+          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold">
+            <button 
+              @click="activeAnnouncementTab = 'recent'"
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
+              :class="activeAnnouncementTab === 'recent' 
+                ? 'bg-blue-600 text-white shadow-xs font-black' 
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+            >
+              <Bell class="w-3.5 h-3.5 mr-1" :class="activeAnnouncementTab === 'recent' ? 'text-white' : 'text-blue-600 dark:text-blue-400'" />
+              <span>Recent ({{ recentAnnouncements.length }})</span>
+            </button>
+
+            <button 
+              @click="activeAnnouncementTab = 'archived'"
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
+              :class="activeAnnouncementTab === 'archived' 
+                ? 'bg-blue-600 text-white shadow-xs font-black' 
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+            >
+              <History class="w-3.5 h-3.5 mr-1" :class="activeAnnouncementTab === 'archived' ? 'text-white' : 'text-slate-400'" />
+              <span>Archived ({{ archivedAnnouncements.length }})</span>
+            </button>
+          </div>
+
           <button v-if="store.canManageAnnouncements" @click="showAnnouncementModal = true" type="button" class="text-xs font-black text-blue-600 dark:text-blue-400 flex items-center hover:underline cursor-pointer min-h-[44px]">
-            <Plus class="w-3.5 h-3.5 mr-0.5" /> Post Announcement
+            <Plus class="w-3.5 h-3.5 mr-0.5" /> Post
           </button>
         </div>
         
-        <div v-if="announcements.length > 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[300px] overflow-y-auto">
+        <div v-if="displayedAnnouncements.length > 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[300px] overflow-y-auto">
           <article 
-            v-for="(post, index) in announcements" 
+            v-for="(post, index) in displayedAnnouncements" 
             :key="post.id"
             class="py-4 first:pt-0 last:pb-0"
-            :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== announcements.length - 1 }"
+            :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== displayedAnnouncements.length - 1 }"
           >
             <div class="flex justify-between items-start mb-1.5">
               <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">{{ post.title }}</h3>

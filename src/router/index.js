@@ -7,16 +7,17 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('../views/HomeView.vue')
+      name: 'landing',
+      component: () => import('../views/LandingView.vue')
     },
     {
       path: '/home',
-      redirect: '/'
+      redirect: '/dashboard'
     },
     {
       path: '/login',
-      redirect: '/'
+      name: 'login',
+      component: () => import('../views/HomeView.vue')
     },
     {
       path: '/dashboard',
@@ -86,8 +87,8 @@ router.beforeEach(async (to, from, next) => {
         return next()
       }
     } else {
-      // If user is already authenticated and visits public landing '/' or '/home', forward to '/dashboard'
-      if (session && (to.path === '/' || to.path === '/home' || to.path === '/login')) {
+      // If user is already authenticated and visits public landing '/' or '/login', forward to '/dashboard'
+      if (session && (to.path === '/' || to.path === '/login')) {
         if (!store.user) {
           store.user = session.user
           await store.fetchProfile()
