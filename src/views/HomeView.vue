@@ -205,13 +205,13 @@ const handleResetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 transition-colors duration-300">
+  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#edf1f5] dark:bg-[#121214] text-slate-800 dark:text-neutral-100 transition-colors duration-300">
     
     <!-- Theme Toggle (Sun / Moon) -->
     <button 
       @click="toggleTheme" 
       type="button"
-      class="absolute top-4 right-4 p-3 rounded-2xl bg-white dark:bg-[#1c1c1e] text-slate-700 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#27272a] transition-colors shadow-xs z-10 border border-slate-200 dark:border-neutral-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+      class="absolute top-4 right-4 p-3 rounded-2xl bg-[#f8fafc] dark:bg-[#1c1c1e] text-slate-700 dark:text-blue-400 hover:bg-slate-200/80 dark:hover:bg-[#27272a] transition-colors shadow-xs z-10 border border-slate-300/80 dark:border-neutral-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
       :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
     >
       <Sun v-if="isDark" class="w-5 h-5 text-amber-400" />
@@ -265,7 +265,7 @@ const handleResetPassword = async () => {
         <!-- Right Authentication Card (Lighter Matte Black) -->
         <div class="w-full">
           
-          <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
+          <div class="bg-[#f8fafc] dark:bg-[#1c1c1e] border border-slate-300/90 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
             
             <!-- Mobile Brand Header -->
             <div class="text-center md:hidden mb-6 space-y-2">

@@ -447,10 +447,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
+  <div class="min-h-screen bg-[#edf1f5] dark:bg-[#121214] text-slate-800 dark:text-neutral-100 flex transition-colors duration-300">
     
     <!-- DESKTOP LEFT NAVIGATION SIDEBAR (Neutral Matte Charcoal) -->
-    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-white dark:bg-[#1c1c1e] border-r border-slate-200 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-[#f8fafc] dark:bg-[#1c1c1e] border-r border-slate-300/80 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
       
       <!-- Brand Logo -->
       <div class="flex items-center justify-between">
@@ -579,7 +579,7 @@ onUnmounted(() => {
     <div class="flex-1 min-w-0 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
       
       <!-- MATTE BLACK MOBILE TOP HEADER -->
-      <header class="sticky top-0 z-40 bg-white dark:bg-[#121214] border-b border-slate-200 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
+      <header class="sticky top-0 z-40 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-300/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
           <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
             <Music class="w-5 h-5" stroke-width="2.5" />
@@ -678,7 +678,7 @@ onUnmounted(() => {
 
       <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal) -->
       <nav 
-        class="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-[#1c1c1e] border-t border-slate-200 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
+        class="md:hidden fixed bottom-0 left-0 w-full bg-[#f8fafc] dark:bg-[#1c1c1e] border-t border-slate-300/80 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
         aria-label="Bottom Navigation Bar"
       >
         <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
