@@ -12,8 +12,14 @@ onMounted(() => {
   const savedTheme = localStorage.getItem('smartband_theme')
   if (savedTheme === 'light') {
     document.documentElement.classList.remove('dark')
-  } else {
+  } else if (savedTheme === 'dark') {
     document.documentElement.classList.add('dark')
+  } else {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }
 
   // ANTI-LOGOUT SLEEPING TAB FIX
