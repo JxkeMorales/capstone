@@ -7,7 +7,35 @@ import { supabase } from '@/supabase'
 const store = useMainStore()
 
 const searchQuery = ref('')
-const activeFilter = ref('All')
+const activeFilters = ref(['All'])
+const tempFilters = ref(['All'])
+const showFilterMenu = ref(false)
+
+const openFilter = () => {
+  tempFilters.value = [...activeFilters.value]
+  showFilterMenu.value = true
+}
+
+const toggleTempFilter = (sec) => {
+  if (sec === 'All') {
+    tempFilters.value = ['All']
+    return
+  }
+  if (tempFilters.value.includes('All')) {
+    tempFilters.value = tempFilters.value.filter(f => f !== 'All')
+  }
+  if (tempFilters.value.includes(sec)) {
+    tempFilters.value = tempFilters.value.filter(f => f !== sec)
+    if (tempFilters.value.length === 0) tempFilters.value = ['All']
+  } else {
+    tempFilters.value.push(sec)
+  }
+}
+
+const applyFilters = () => {
+  activeFilters.value = [...tempFilters.value]
+  showFilterMenu.value = false
+}
 const members = ref([])
 const isLoading = ref(true)
 
@@ -206,27 +234,69 @@ onUnmounted(() => {
 <template>
   <div class="p-4 sm:p-5 space-y-6">
     
-    <header class="pt-1 flex items-center justify-between">
-      <div>
-        <p class="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Band Directory & Availability</p>
-        <h1 class="text-2xl font-black text-slate-900 dark:text-white">Band Roster</h1>
-      </div>
-      <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-xs">
+    <header class="pt-1 flex items-center space-x-3.5 mb-2">
+      <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-xs flex-shrink-0">
         <Users class="w-5 h-5" />
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider leading-tight mb-0.5">Band Directory & Availability</p>
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight truncate">Band Roster</h1>
       </div>
     </header>
 
-    <!-- Search Bar for All Users -->
-    <div class="relative">
-      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-neutral-500">
-        <Search class="w-4 h-4" />
+    <!-- Search & Filter Bar -->
+    <div class="flex items-center space-x-2 w-full md:max-w-md lg:max-w-lg relative z-20">
+      <!-- Filter Button -->
+      <div class="relative">
+        <button 
+          @click="openFilter"
+          type="button"
+          class="flex items-center justify-center w-[44px] h-[44px] bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-[#27272a] transition-all shadow-xs cursor-pointer"
+          aria-label="Filter"
+        >
+          <Filter class="w-5 h-5" :class="{ 'text-blue-600 dark:text-blue-400': !activeFilters.includes('All') }" />
+          <div v-if="!activeFilters.includes('All')" class="absolute top-2.5 right-2.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white dark:border-[#1c1c1e]"></div>
+        </button>
+
+        <!-- Filter Dropdown Menu -->
+        <div v-if="showFilterMenu" class="absolute left-0 mt-2 w-56 bg-white dark:bg-[#27272a] rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+          <div class="p-3 bg-slate-50 dark:bg-[#1c1c1e] border-b border-slate-200 dark:border-neutral-800">
+            <h3 class="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">Filter by Section</h3>
+          </div>
+          <div class="max-h-60 overflow-y-auto p-2 space-y-1">
+            <label 
+              v-for="sec in sections" 
+              :key="sec"
+              class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1e] cursor-pointer transition-colors"
+            >
+              <input 
+                type="checkbox" 
+                :checked="tempFilters.includes(sec)"
+                @change="toggleTempFilter(sec)"
+                class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 cursor-pointer"
+              >
+              <span class="text-sm font-semibold text-slate-700 dark:text-neutral-300">{{ sec === 'All' ? 'Select All' : sec }}</span>
+            </label>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-[#1c1c1e] border-t border-slate-200 dark:border-neutral-800 flex items-center justify-end space-x-2">
+            <button @click="showFilterMenu = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer">Cancel</button>
+            <button @click="applyFilters" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-colors shadow-xs cursor-pointer">Apply</button>
+          </div>
+        </div>
       </div>
-      <input 
-        v-model="searchQuery"
-        type="text" 
-        placeholder="Search by name, instrument, role, or title..."
-        class="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs font-semibold shadow-xs min-h-[44px]"
-      >
+
+      <!-- Search Input -->
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-neutral-500">
+          <Search class="w-4 h-4" />
+        </div>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Search by name, role, title..."
+          class="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs font-semibold shadow-xs min-h-[44px]"
+        >
+      </div>
     </div>
 
     <!-- "PA-IMPORTANTE" ATTENDANCE BEHAVIOR MONITOR -->
@@ -266,22 +336,7 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Section Filter Dropdown -->
-    <div class="relative z-10 inline-block w-auto mt-1 mb-2">
-      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-        <Filter class="w-4 h-4 text-slate-400" />
-      </div>
-      <select 
-        v-model="activeFilter"
-        class="w-auto min-w-[200px] bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800 text-slate-900 dark:text-white text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block pl-10 pr-10 p-2.5 appearance-none cursor-pointer shadow-xs min-h-[44px]"
-        aria-label="Filter members by section"
-      >
-        <option v-for="sec in sections" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
-      </select>
-      <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-        <ChevronDown class="w-4 h-4 text-slate-400" />
-      </div>
-    </div>
+    
 
     <!-- Member Directory List (Lighter Matte Black) -->
     <section class="space-y-3">

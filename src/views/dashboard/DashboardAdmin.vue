@@ -284,17 +284,17 @@ onUnmounted(() => {
 <template>
   <div class="p-4 sm:p-5 space-y-6 relative">
     
-    <header class="pt-1 flex items-center justify-between">
-      <div>
-        <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+    <header class="pt-1 flex items-center space-x-3.5 mb-2">
+      <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex-shrink-0">
+        <Shield class="w-6 h-6" />
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider leading-tight mb-0.5">
           {{ store.isSuperAdmin ? 'IT Super Admin Caretaker' : 'Band Secretary Operations Hub' }}
         </p>
-        <h1 class="text-2xl font-black text-slate-900 dark:text-white">
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight truncate">
           {{ store.isSuperAdmin ? 'System & Accounts Admin' : 'Secretary Management Hub' }}
         </h1>
-      </div>
-      <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-        <Shield class="w-6 h-6" />
       </div>
     </header>
 
