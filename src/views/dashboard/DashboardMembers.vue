@@ -84,10 +84,13 @@ const filteredMembers = computed(() => {
                           (member.role && member.role.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
                           (member.executive_title && member.executive_title.toLowerCase().includes(searchQuery.value.toLowerCase()))
     
-    if (activeFilter.value === 'All') return matchesSearch
+    if (activeFilters.value.includes('All')) return matchesSearch
     
-    const filterKey = activeFilter.value.toLowerCase().split('(')[0].trim()
-    const matchesSection = member.instrument.toLowerCase().includes(filterKey)
+    // Check if the member's instrument matches ANY of the selected activeFilters
+    const matchesSection = activeFilters.value.some(filterItem => {
+      const filterKey = filterItem.toLowerCase().split('(')[0].trim()
+      return member.instrument && member.instrument.toLowerCase().includes(filterKey)
+    })
     
     return matchesSearch && matchesSection
   })

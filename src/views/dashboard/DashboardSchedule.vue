@@ -102,9 +102,14 @@ const pastEvents = computed(() => {
 
 const displayedEvents = computed(() => {
   const targetList = activeScheduleTab.value === 'upcoming' ? upcomingEvents.value : pastEvents.value
-  if (activeFilter.value === 'All') return targetList
-  const key = activeFilter.value.toLowerCase().split('/')[0].split('(')[0].trim()
-  return targetList.filter(e => e.type.toLowerCase().includes(key))
+  if (activeFilters.value.includes('All')) return targetList
+  
+  return targetList.filter(e => {
+    return activeFilters.value.some(filterItem => {
+      const key = filterItem.toLowerCase().split('/')[0].split('(')[0].trim()
+      return e.type.toLowerCase().includes(key)
+    })
+  })
 })
 
 const notifyOtherTabs = (eventType) => {
