@@ -469,7 +469,7 @@ onUnmounted(() => {
         role="status"
         aria-live="polite"
       >
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{{ toastMsg }}</span>
         </div>
@@ -492,7 +492,7 @@ onUnmounted(() => {
     <!-- PENDING APPROVALS QUEUE (Super Admin Only) -->
     <section v-if="store.canApproveAccounts && pendingAccounts.length > 0" class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-4 space-y-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <ShieldAlert class="w-5 h-5 text-amber-600 dark:text-amber-400" />
           <h2 class="font-extrabold text-sm text-slate-900 dark:text-amber-200">Pending Master List Approvals</h2>
         </div>
@@ -522,7 +522,7 @@ onUnmounted(() => {
           <ShieldCheck class="w-7 h-7" />
         </div>
         <div>
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1">
             <span class="font-bold text-slate-900 dark:text-white text-base lg:text-lg leading-tight">
               {{ store.profile?.full_name || 'Band Member' }}
             </span>
@@ -660,7 +660,7 @@ onUnmounted(() => {
             >
               <div class="flex items-start justify-between">
                 <div>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-1">
                     <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400">
                       {{ ev.type }}
                     </span>
@@ -725,7 +725,7 @@ onUnmounted(() => {
           >
             <div class="flex justify-between items-start mb-1.5">
               <h3 class="font-bold text-base text-slate-900 dark:text-white leading-snug">{{ post.title }}</h3>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center space-x-1">
                 <span class="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
                 <button v-if="store.canManageAnnouncements" @click="promptDeleteAnnouncement(post.id)" class="text-rose-500 hover:text-rose-700 cursor-pointer p-1" title="Delete Announcement">
                   <Trash2 class="w-3.5 h-3.5" />
@@ -822,7 +822,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showAnnouncementModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showAnnouncementModal = false" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="handleCreateAnnouncement" :disabled="isSubmitting" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Post</button>
         </div>
       </div>
@@ -862,7 +862,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showEventModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showEventModal = false" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="handleCreateEvent" :disabled="isSubmitting" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Schedule</button>
         </div>
       </div>
@@ -881,7 +881,7 @@ onUnmounted(() => {
           </p>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showConfirmModal = false; confirmTargetId = null" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showConfirmModal = false; confirmTargetId = null" type="button" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="executeConfirmedAction" type="button" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Proceed</button>
         </div>
       </div>

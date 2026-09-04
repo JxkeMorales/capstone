@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Users, Search, Award, TrendingUp, Music, Shield, MoreVertical, X, Calendar, CheckCircle2, UserX, AlertTriangle } from 'lucide-vue-next'
+import { Users, Search, Award, TrendingUp, Music, Shield, MoreVertical, X, Calendar, CheckCircle2, UserX, AlertTriangle, Filter, ChevronDown } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
@@ -266,22 +266,21 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Section Filter Pills -->
-    <div class="flex overflow-x-auto hide-scrollbar space-x-2 pb-1" role="tablist">
-      <button 
-        v-for="sec in sections" 
-        :key="sec"
-        @click="activeFilter = sec"
-        type="button"
-        role="tab"
-        :aria-selected="activeFilter === sec"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer min-h-[44px] flex items-center"
-        :class="activeFilter === sec 
-          ? 'bg-blue-600 text-white shadow-xs font-black' 
-          : 'bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a] border border-slate-200/80 dark:border-neutral-800'"
+    <!-- Section Filter Dropdown -->
+    <div class="relative z-10">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <Filter class="w-4 h-4 text-slate-400" />
+      </div>
+      <select 
+        v-model="activeFilter"
+        class="w-full bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-neutral-800 text-slate-900 dark:text-white text-sm font-bold rounded-2xl focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3 appearance-none cursor-pointer shadow-xs min-h-[44px]"
+        aria-label="Filter members by section"
       >
-        {{ sec }}
-      </button>
+        <option v-for="sec in sections" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+        <ChevronDown class="w-4 h-4 text-slate-400" />
+      </div>
     </div>
 
     <!-- Member Directory List (Lighter Matte Black) -->
@@ -325,7 +324,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1">
             <div class="text-right flex-shrink-0">
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md" :class="member.rank === 'Senior' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800/40' : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400'">
                 {{ member.rank }} Rank
@@ -413,7 +412,7 @@ onUnmounted(() => {
         </div>
 
         <div class="flex space-x-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
-          <button @click="showMemberEditModal = false" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showMemberEditModal = false" type="button" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="saveMemberEdits" :disabled="isSavingMember" type="button" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Save Changes</button>
         </div>
       </div>

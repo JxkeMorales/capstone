@@ -261,7 +261,7 @@ onUnmounted(() => {
         role="status"
         aria-live="polite"
       >
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
           <span>{{ toastMessage }}</span>
         </div>
@@ -342,7 +342,7 @@ onUnmounted(() => {
         >
           <div class="flex justify-between items-start">
             <div>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center space-x-1">
                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   {{ ev.type }}
                 </span>
@@ -481,7 +481,7 @@ onUnmounted(() => {
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="showRollCallModal = false" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showRollCallModal = false" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="saveRollCall" :disabled="isSavingRollCall" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Save Roll Call</button>
         </div>
       </div>
@@ -500,7 +500,7 @@ onUnmounted(() => {
           </p>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer">Cancel</button>
+          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
           <button @click="executeDeleteEvent" type="button" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Delete</button>
         </div>
       </div>

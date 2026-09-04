@@ -11,7 +11,8 @@ const store = useMainStore()
 const uiStore = useUIStore()
 
 const activeTab = ref('signin') // 'signin' or 'signup'
-const isDark = ref(true)
+const savedTheme = localStorage.getItem('smartband_theme')
+const isDark = ref(savedTheme !== 'light')
 
 // Password Visibility Toggles
 const showPassword = ref(false)
@@ -20,13 +21,19 @@ const toggleTheme = () => {
   isDark.value = !isDark.value
   if (isDark.value) {
     document.documentElement.classList.add('dark')
+    localStorage.setItem('smartband_theme', 'dark')
   } else {
     document.documentElement.classList.remove('dark')
+    localStorage.setItem('smartband_theme', 'light')
   }
 }
 
 onMounted(() => {
-  isDark.value = document.documentElement.classList.contains('dark')
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
 })
 
 // Form State

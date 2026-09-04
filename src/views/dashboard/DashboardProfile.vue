@@ -295,7 +295,7 @@ const handleFileUpload = async (event) => {
   isUploading.value = true
   try {
     const fileExt = file.name.split('.').pop()
-    const fileName = `${store.user.id}.${fileExt}`
+    const fileName = `${store.user.id}/avatar.${fileExt}`
     
     const { error: uploadError } = await supabase.storage
       .from('avatars')

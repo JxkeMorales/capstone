@@ -11,7 +11,9 @@ const route = useRoute()
 const router = useRouter()
 const store = useMainStore()
 const uiStore = useUIStore()
-const isDark = ref(true)
+
+const savedTheme = localStorage.getItem('smartband_theme')
+const isDark = ref(savedTheme !== 'light')
 
 // User Notification Settings (LocalStorage)
 const enableBanners = ref(localStorage.getItem('smartband_banners_enabled') !== 'false')
@@ -74,8 +76,10 @@ const toggleTheme = () => {
   isDark.value = !isDark.value
   if (isDark.value) {
     document.documentElement.classList.add('dark')
+    localStorage.setItem('smartband_theme', 'dark')
   } else {
     document.documentElement.classList.remove('dark')
+    localStorage.setItem('smartband_theme', 'light')
   }
 }
 
@@ -375,7 +379,12 @@ const handleSignOut = async () => {
 }
 
 onMounted(() => {
-  isDark.value = document.documentElement.classList.contains('dark')
+  // Apply initial theme from localStorage
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
 
   checkPwaInstalled()
 
@@ -578,7 +587,7 @@ onUnmounted(() => {
           <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
         </div>
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <!-- Install App Header Trigger -->
           <button 
             v-if="!isAppInstalled"
@@ -655,7 +664,7 @@ onUnmounted(() => {
           v-if="networkToastMsg"
           class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-[#1c1c1e] text-white px-4 py-3 rounded-2xl shadow-2xl border border-neutral-700/80 flex items-center justify-between font-extrabold text-xs"
         >
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1">
             <CheckCircle class="w-4 h-4 text-emerald-400 flex-shrink-0" />
             <span>{{ networkToastMsg }}</span>
           </div>
@@ -789,7 +798,7 @@ onUnmounted(() => {
         <div class="space-y-3">
           <!-- Network Sync Badge -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1">
               <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-500" />
               <WifiOff v-else class="w-4 h-4 text-rose-500" />
               <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">{{ isOnline ? 'PWA Online Sync' : 'Offline Countdown Mode' }}</span>
@@ -803,7 +812,7 @@ onUnmounted(() => {
               <p class="font-bold text-xs text-slate-900 dark:text-white">Call-Time Siren</p>
               <p class="text-[10px] text-slate-400 dark:text-neutral-500">5-second brass alarm tone</p>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1">
               <button 
                 @click="testAlarmTone"
                 type="button"
@@ -865,7 +874,7 @@ onUnmounted(() => {
 
           <!-- Theme Mode Toggle -->
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1">
               <Sun v-if="isDark" class="w-4 h-4 text-amber-400" />
               <Moon v-else class="w-4 h-4 text-blue-600" />
               <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">Theme Mode</span>

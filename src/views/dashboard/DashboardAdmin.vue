@@ -304,7 +304,7 @@ onUnmounted(() => {
         v-if="notification" 
         class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-extrabold text-xs"
       >
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
           <span>{{ notification }}</span>
         </div>
@@ -317,7 +317,7 @@ onUnmounted(() => {
     <!-- PENDING APPROVALS QUEUE (IT Super Admin) -->
     <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Pending Approvals Section">
       <div class="flex items-center justify-between px-1">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <ShieldAlert class="w-4 h-4 text-amber-500" />
           <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
             Pending Master List Approvals ({{ pendingAccounts.length }})
@@ -400,7 +400,7 @@ onUnmounted(() => {
     <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
       <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1">
             <Calendar class="w-5 h-5 text-blue-500" />
             <h2 class="font-black text-base text-slate-900 dark:text-white">Check Member Availability</h2>
           </div>
@@ -458,7 +458,7 @@ onUnmounted(() => {
 
         <div class="space-y-2">
           <div v-for="m in matchedDispatchRoster" :key="m.id" class="p-2.5 bg-slate-50 dark:bg-[#27272a] rounded-xl flex items-center justify-between text-xs">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1">
               <span class="font-bold text-slate-900 dark:text-white">{{ m.full_name }} ({{ m.instrument }})</span>
               <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">
                 ✓ Free {{ selectedDayNeeded }}
