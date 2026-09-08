@@ -365,6 +365,7 @@ const dismissActiveAlarm = () => {
 }
 
 let announceSub = null
+let userProfileSub = null
 
 const fetchPendingCount = async () => {
   if (store.isSuperAdmin) {
@@ -433,6 +434,34 @@ onMounted(() => {
     })
     .subscribe()
 
+  // Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
+  if (store.user?.id) {
+    userProfileSub = supabase.channel(`user_profile_${store.user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${store.user.id}`
+      }, payload => {
+        if (payload.new) {
+          store.profile = payload.new
+          store.currentRole = payload.new.role || 'member'
+          store.executiveTitle = payload.new.executive_title || null
+          try {
+            localStorage.setItem('smartband_user_profile_cache', JSON.stringify(payload.new))
+          } catch (e) {}
+          if (payload.new.profile_picture_status === 'approved' && payload.old?.profile_picture_status === 'pending') {
+            uiStore.addToast({
+              title: 'Photo Approved! 📸',
+              message: 'Your profile picture has been approved by the admin.',
+              type: 'success'
+            })
+          }
+        }
+      })
+      .subscribe()
+  }
+
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     syncPushSubscription()
   }
@@ -443,6 +472,7 @@ onUnmounted(() => {
   window.removeEventListener('offline', updateNetworkStatus)
   if (callTimeMonitorTimer) clearInterval(callTimeMonitorTimer)
   if (announceSub) supabase.removeChannel(announceSub)
+  if (userProfileSub) supabase.removeChannel(userProfileSub)
 })
 </script>
 
@@ -564,9 +594,20 @@ onUnmounted(() => {
 
       <!-- User Profile Summary & Sign Out -->
       <div class="pt-4 border-t border-slate-200 dark:border-neutral-800/80 flex items-center justify-between">
-        <div class="min-w-0 pr-2">
-          <p class="font-black text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
-          <p class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider font-extrabold">{{ store.profile?.role || 'Member' }}</p>
+        <div class="flex items-center space-x-2.5 min-w-0 pr-2">
+          <div class="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 shadow-xs">
+            <img v-if="store.profile?.profile_picture" 
+                 :src="store.profile.profile_picture" 
+                 alt="Avatar" 
+                 class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+              {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
+            </div>
+          </div>
+          <div class="min-w-0">
+            <p class="font-black text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
+            <p class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider font-extrabold">{{ store.profile?.role || 'Member' }}</p>
+          </div>
         </div>
         <button @click="handleSignOut" type="button" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" title="Sign Out">
           <LogOut class="w-4 h-4" />

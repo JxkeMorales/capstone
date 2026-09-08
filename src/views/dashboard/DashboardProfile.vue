@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Phone, Music, Activity, Clock, CheckCircle2, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2 } from 'lucide-vue-next'
+import { User, Phone, Music, Activity, Clock, CheckCircle2, Check, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -270,8 +270,12 @@ const handleSignOut = async () => {
   router.push('/')
 }
 
-onMounted(() => {
+const imgLoadError = ref(false)
+
+onMounted(async () => {
   fetchAvailability()
+  imgLoadError.value = false
+  await store.fetchProfile(true)
 })
 // ==========================================
 // AVATAR UPLOAD LOGIC
@@ -293,6 +297,7 @@ const handleFileUpload = async (event) => {
   }
 
   isUploading.value = true
+  imgLoadError.value = false
   try {
     const fileExt = file.name.split('.').pop()
     const fileName = `${store.user.id}/avatar.${fileExt}`
@@ -323,6 +328,9 @@ const handleFileUpload = async (event) => {
     if (store.profile) {
       store.profile.profile_picture = finalUrl
       store.profile.profile_picture_status = 'pending'
+      try {
+        localStorage.setItem('smartband_user_profile_cache', JSON.stringify(store.profile))
+      } catch (e) {}
     }
     
     uiStore.addToast({ title: 'Photo Uploaded', message: 'Your picture was sent for Admin approval.', type: 'info' })
@@ -359,10 +367,13 @@ const handleFileUpload = async (event) => {
           <div class="relative w-16 h-16 flex-shrink-0 group cursor-pointer" @click="triggerFileUpload">
             <input type="file" accept="image/jpeg, image/png, image/webp" @change="handleFileUpload" class="hidden" ref="fileInput" />
             
-            <template v-if="store.profile?.profile_picture">
-              <img :src="store.profile.profile_picture" alt="Avatar" class="w-full h-full object-cover rounded-2xl shadow-md border border-slate-200 dark:border-neutral-800" />
+            <template v-if="store.profile?.profile_picture && !imgLoadError">
+              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-2xl shadow-md border border-slate-200 dark:border-neutral-800" />
               <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-2 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Pending</div>
               <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-2 -right-1 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Declined</div>
+              <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1.5 -right-1 bg-emerald-500 text-white p-0.5 rounded-full border-2 border-white dark:border-[#1c1c1e] shadow-xs" title="Approved">
+                <Check class="w-3 h-3 stroke-[3]" />
+              </div>
             </template>
             <template v-else>
               <div class="w-full h-full rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md">

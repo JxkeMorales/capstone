@@ -63,7 +63,7 @@ export const useMainStore = defineStore('main', {
         const { data: { session } } = await supabase.auth.getSession()
         this.user = session?.user || null
         if (this.user) {
-          await this.fetchProfile()
+          await this.fetchProfile(true)
         }
       } catch (err) {
         console.warn('Supabase auth session check offline/fallback mode')
@@ -75,23 +75,26 @@ export const useMainStore = defineStore('main', {
     async fetchProfile(force = false) {
       if (!this.user) return null
 
-      // If profile is already in memory and force is false, return immediately (0ms, 0 network calls!)
+      // If profile is already in memory and force is false, return immediately
       if (this.profile && !force) {
         return this.profile
       }
 
-      // If a fetch request is already in flight, reuse the same pending Promise (Deduplicate concurrent requests)
+      // If a fetch request is already in flight and not forcing a new one, reuse it
       if (this._profilePromise && !force) {
         return this._profilePromise
       }
 
       this._profilePromise = (async () => {
         try {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', this.user.id)
             .single()
+
+          if (error) throw error
+
           if (data) {
             this.profile = data
             this.currentRole = data.role || 'member'

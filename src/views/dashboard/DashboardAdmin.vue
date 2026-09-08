@@ -100,6 +100,14 @@ const approveAvatar = async (id, name) => {
     showToast(`Approved ${name}'s avatar.`)
     fetchPendingAvatars()
     fetchRoster()
+    if (store.user && store.user.id === id) {
+      if (store.profile) {
+        store.profile.profile_picture_status = 'approved'
+        try {
+          localStorage.setItem('smartband_user_profile_cache', JSON.stringify(store.profile))
+        } catch (e) {}
+      }
+    }
   } catch (err) {
     showToast('Failed to approve avatar.')
   }
@@ -111,6 +119,15 @@ const declineAvatar = async (id, name) => {
     showToast(`Declined ${name}'s avatar.`)
     fetchPendingAvatars()
     fetchRoster()
+    if (store.user && store.user.id === id) {
+      if (store.profile) {
+        store.profile.profile_picture_status = 'declined'
+        store.profile.profile_picture = null
+        try {
+          localStorage.setItem('smartband_user_profile_cache', JSON.stringify(store.profile))
+        } catch (e) {}
+      }
+    }
   } catch (err) {
     showToast('Failed to decline avatar.')
   }

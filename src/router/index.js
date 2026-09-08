@@ -82,7 +82,7 @@ router.beforeEach(async (to, from, next) => {
       } else {
         if (!store.user) {
           store.user = session.user
-          await store.fetchProfile()
+          await store.fetchProfile(true)
         }
         return next()
       }
@@ -91,7 +91,7 @@ router.beforeEach(async (to, from, next) => {
       if (session && (to.path === '/' || to.path === '/login')) {
         if (!store.user) {
           store.user = session.user
-          await store.fetchProfile()
+          await store.fetchProfile(true)
         }
         return next('/dashboard')
       }

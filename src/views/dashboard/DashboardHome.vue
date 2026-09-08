@@ -534,8 +534,14 @@ onUnmounted(() => {
     <!-- Member Profile Summary Card (Lighter Matte Black) -->
     <div class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between">
       <div class="flex items-center space-x-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-          <ShieldCheck class="w-7 h-7" />
+        <div class="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 shadow-xs relative">
+          <img v-if="store.profile?.profile_picture" 
+               :src="store.profile.profile_picture" 
+               alt="Avatar" 
+               class="w-full h-full object-cover" />
+          <div v-else class="w-full h-full bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+            {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
+          </div>
         </div>
         <div>
           <div class="flex items-center space-x-1">

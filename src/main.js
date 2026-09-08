@@ -18,11 +18,14 @@ const store = useMainStore()
 supabase.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     store.user = session.user
-    await store.fetchProfile()
+    await store.fetchProfile(true)
   } else {
     store.user = null
     store.profile = null
     store.currentRole = 'member'
+    try {
+      localStorage.removeItem('smartband_user_profile_cache')
+    } catch (e) {}
   }
 })
 
