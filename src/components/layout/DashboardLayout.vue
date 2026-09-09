@@ -52,6 +52,13 @@ let callTimeMonitorTimer = null
 let audioCtx = null
 const activeAlarmModal = ref(null)
 
+// Realtime & Inter-Tab Broadcast References
+let announceSub = null
+let eventsSub = null
+let broadcastSub = null
+let syncBroadcast = null
+let userProfileSub = null
+
 const checkPwaInstalled = () => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
   isAppInstalled.value = isStandalone
@@ -366,9 +373,6 @@ const dismissActiveAlarm = () => {
   activeAlarmModal.value = null
 }
 
-let announceSub = null
-let userProfileSub = null
-
 const fetchPendingCount = async () => {
   if (store.isSuperAdmin) {
     const { data } = await supabase.from('profiles').select('id').eq('is_verified', false)
@@ -441,7 +445,7 @@ onMounted(() => {
   checkUpcomingCallTimes()
   callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 30000)
 
-  // Realtime subscription for new announcements
+  // 1. Realtime subscription for new announcements
   announceSub = supabase.channel('public:announcements')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
       if (enableBanners.value) {
@@ -456,7 +460,135 @@ onMounted(() => {
     })
     .subscribe()
 
-  // Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
+  // 2. Realtime subscription for new events with Availability Grid Matching
+  eventsSub = supabase.channel('public:events_realtime_layout')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, async (payload) => {
+      const newEv = payload.new
+      if (!newEv) return
+
+      let isMemberFree = false
+      let matchDay = ''
+      let matchSlot = ''
+
+      if (store.user?.id && newEv.event_date) {
+        try {
+          const evDate = new Date(newEv.event_date)
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+          matchDay = dayNames[evDate.getDay()]
+          const hr = evDate.getHours()
+          matchSlot = hr < 12 ? 'Morning' : (hr < 18 ? 'Afternoon' : 'Evening')
+
+          const { data } = await supabase
+            .from('member_availability')
+            .select('is_free')
+            .eq('user_id', store.user.id)
+            .eq('day_of_week', matchDay)
+            .eq('time_slot', matchSlot)
+            .maybeSingle()
+
+          if (data && data.is_free === true) {
+            isMemberFree = true
+          }
+        } catch (e) {
+          console.warn('Availability check error for new event:', e)
+        }
+      }
+
+      if (enableBanners.value) {
+        uiStore.playChime()
+        if (isMemberFree) {
+          uiStore.addToast({
+            title: `🎯 Gig Matches Your Availability: ${newEv.title}`,
+            message: `You marked yourself free on ${matchDay} (${matchSlot}). Please confirm your attendance!`,
+            type: 'success',
+            duration: 12000
+          })
+        } else {
+          uiStore.addToast({
+            title: `🎷 New Event Scheduled: ${newEv.title}`,
+            message: `${newEv.event_type || 'Band Gig'} on ${new Date(newEv.event_date).toLocaleDateString()}. Please confirm RSVP.`,
+            type: 'info',
+            duration: 10000
+          })
+        }
+      }
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const notifTitle = isMemberFree ? `🎯 Matching Gig: ${newEv.title}` : `🎷 New Event: ${newEv.title}`
+        const notifBody = isMemberFree 
+          ? `You are free on ${matchDay} (${matchSlot})! Confirm attendance at ${newEv.location}.` 
+          : `${newEv.event_type} at ${newEv.location} on ${new Date(newEv.event_date).toLocaleDateString()}`
+        
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(notifTitle, {
+              body: notifBody,
+              icon: '/favicon.svg',
+              vibrate: [200, 100, 200]
+            })
+          }).catch(() => {})
+        } else {
+          try { new Notification(notifTitle, { body: notifBody, icon: '/favicon.svg' }) } catch(e){}
+        }
+      }
+    })
+    .subscribe()
+
+  // 3. Supabase Realtime Broadcast Alerts (Immediate RSVP Re-notifications)
+  broadcastSub = supabase.channel('smartband-broadcast-alerts')
+    .on('broadcast', { event: 'rsvp_reminder' }, (payload) => {
+      const p = payload.payload || {}
+      if (enableBanners.value) {
+        uiStore.playChime()
+        uiStore.addToast({
+          title: p.title || '🚨 Urgent: RSVP Attendance Confirmation Required',
+          message: p.message || 'The Band Secretary requests you confirm attendance for upcoming gigs.',
+          type: 'warning',
+          duration: 10000
+        })
+      }
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const title = p.title || '🚨 RSVP Attendance Reminder'
+        const body = p.message || 'Please confirm your attendance for upcoming band events.'
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, { body, icon: '/favicon.svg', vibrate: [300, 100, 300] })
+          }).catch(() => {})
+        } else {
+          try { new Notification(title, { body, icon: '/favicon.svg' }) } catch(e){}
+        }
+      }
+    })
+    .subscribe()
+
+  // 4. Inter-Tab / Local BroadcastChannel Sync
+  if ('BroadcastChannel' in window) {
+    syncBroadcast = new BroadcastChannel('smartband_live_sync')
+    syncBroadcast.onmessage = (e) => {
+      if (e.data?.type === 'RSVP_REMINDER_BROADCAST') {
+        if (enableBanners.value) {
+          uiStore.playChime()
+          uiStore.addToast({
+            title: e.data.title || '🚨 Urgent RSVP Call-to-Action!',
+            message: e.data.message || 'The Band Secretary requests attendance confirmation for upcoming gigs.',
+            type: 'warning',
+            duration: 10000
+          })
+        }
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          try {
+            new Notification('🚨 RSVP Reminder: Confirm Attendance', {
+              body: 'The Band Secretary requests you confirm your attendance for upcoming events.',
+              icon: '/favicon.svg'
+            })
+          } catch(e){}
+        }
+      }
+    }
+  }
+
+  // 5. Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
   const setupUserProfileSub = (userId) => {
     if (!userId) return
     if (userProfileSub) {
@@ -509,6 +641,9 @@ onUnmounted(() => {
   window.removeEventListener('offline', updateNetworkStatus)
   if (callTimeMonitorTimer) clearInterval(callTimeMonitorTimer)
   if (announceSub) supabase.removeChannel(announceSub)
+  if (eventsSub) supabase.removeChannel(eventsSub)
+  if (broadcastSub) supabase.removeChannel(broadcastSub)
+  if (syncBroadcast) syncBroadcast.close()
   if (userProfileSub) supabase.removeChannel(userProfileSub)
 })
 </script>
@@ -580,9 +715,9 @@ onUnmounted(() => {
           <span>Band Directory & Ranks</span>
         </RouterLink>
 
-        <!-- Dynamic Admin / Secretary Tab Labeling -->
+        <!-- Dynamic Admin / Secretary / Executive Analytics Tab Labeling -->
         <RouterLink 
-          v-if="store.isSuperAdmin || store.isSecretaryAdmin"
+          v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
           to="/dashboard/admin" 
           class="flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold text-xs transition-all cursor-pointer min-h-[44px]"
           :class="route.name === 'dashboard-admin' 
@@ -591,9 +726,9 @@ onUnmounted(() => {
         >
           <div class="flex items-center space-x-3">
             <ShieldCheck class="w-5 h-5 flex-shrink-0 text-blue-400" />
-            <span>{{ store.isSuperAdmin ? 'Admin Operations' : 'Band Operations' }}</span>
+            <span>{{ store.isSuperAdmin ? 'Admin Operations' : store.isSecretaryAdmin ? 'Band Operations' : 'Executive Analytics' }}</span>
           </div>
-          <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px]">
+          <span v-if="pendingCount > 0 && store.isSuperAdmin" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px]">
             {{ pendingCount }}
           </span>
         </RouterLink>
@@ -794,7 +929,7 @@ onUnmounted(() => {
           </RouterLink>
 
           <RouterLink 
-            v-if="store.isSuperAdmin || store.isSecretaryAdmin"
+            v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
             to="/dashboard/admin" 
             role="menuitem"
             aria-label="Admin Operations Hub Tab"
@@ -802,8 +937,8 @@ onUnmounted(() => {
             :class="route.name === 'dashboard-admin' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <ShieldCheck class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform text-blue-500" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : 'Operations' }}</span>
-            <span v-if="pendingCount > 0" class="absolute top-2 right-3 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+            <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : store.isSecretaryAdmin ? 'Operations' : 'Analytics' }}</span>
+            <span v-if="pendingCount > 0 && store.isSuperAdmin" class="absolute top-2 right-3 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
           </RouterLink>
 
           <RouterLink 

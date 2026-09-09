@@ -18,13 +18,6 @@ let homeChannel = null
 let syncBroadcast = null
 let pollTimer = null
 
-// Attendance Tracker Modal State (Secretary / Admin)
-const showAttendanceModal = ref(false)
-const selectedEventForAttendance = ref(null)
-const attendingMembersList = ref([])
-const declinedMembersList = ref([])
-const isLoadingAttendance = ref(false)
-
 // Modal States
 const showAnnouncementModal = ref(false)
 const showEventModal = ref(false)
@@ -187,37 +180,195 @@ const fetchHomeData = async (skipCache = false) => {
   }
 }
 
-// OPEN EVENT ATTENDANCE TRACKER
+// Attendance Roll-Call Roster State (Secretary / Admin)
+const showAttendanceModal = ref(false)
+const selectedEventForAttendance = ref(null)
+const rollCallRoster = ref([])
+const isLoadingAttendance = ref(false)
+const isBatchMarking = ref(false)
+const attendanceTabFilter = ref('all') // 'all' | 'attending' | 'declined' | 'unconfirmed'
+
+const filteredRollCallRoster = computed(() => {
+  if (attendanceTabFilter.value === 'attending') {
+    return rollCallRoster.value.filter(m => m.initialRsvp === 'attending' || m.currentStatus === 'present' || m.currentStatus === 'absent')
+  }
+  if (attendanceTabFilter.value === 'declined') {
+    return rollCallRoster.value.filter(m => m.initialRsvp === 'declined')
+  }
+  if (attendanceTabFilter.value === 'unconfirmed') {
+    return rollCallRoster.value.filter(m => m.initialRsvp === 'none')
+  }
+  return rollCallRoster.value
+})
+
+const attendanceCounts = computed(() => {
+  const total = rollCallRoster.value.length
+  const attending = rollCallRoster.value.filter(m => m.initialRsvp === 'attending' || m.currentStatus === 'present' || m.currentStatus === 'absent').length
+  const declined = rollCallRoster.value.filter(m => m.initialRsvp === 'declined').length
+  const unconfirmed = rollCallRoster.value.filter(m => m.initialRsvp === 'none').length
+  const present = rollCallRoster.value.filter(m => m.currentStatus === 'present').length
+  const absent = rollCallRoster.value.filter(m => m.currentStatus === 'absent').length
+  const excused = rollCallRoster.value.filter(m => m.currentStatus === 'excused').length
+  return { total, attending, declined, unconfirmed, present, absent, excused }
+})
+
+// RECALCULATE MEMBER RELIABILITY SCORE UPON ATTENDANCE UPDATE
+const updateMemberReliabilityScore = async (userId) => {
+  try {
+    const { data: pastRsvps } = await supabase
+      .from('event_rsvps')
+      .select('status, events(event_date)')
+      .eq('user_id', userId)
+
+    if (!pastRsvps) return
+
+    // Flakes: Events where member RSVP'd or was expected, but marked 'absent'
+    const flakes = pastRsvps.filter(r => r.status === 'absent').length
+    const calculatedScore = Math.max(0, 100 - (flakes * 10))
+
+    await supabase
+      .from('profiles')
+      .update({ reliability_score: calculatedScore })
+      .eq('id', userId)
+  } catch (err) {
+    console.warn('Reliability update notice:', err)
+  }
+}
+
+// OPEN EVENT ATTENDANCE ROLL-CALL TRACKER
 const openAttendanceTracker = async (ev) => {
   selectedEventForAttendance.value = ev
   showAttendanceModal.value = true
   isLoadingAttendance.value = true
-  attendingMembersList.value = []
-  declinedMembersList.value = []
+  attendanceTabFilter.value = 'all'
+  rollCallRoster.value = []
 
   try {
-    const { data: rsvps } = await supabase
+    // 1. Fetch all verified roster members
+    const { data: members, error: memErr } = await supabase
+      .from('profiles')
+      .select('id, full_name, instrument, rank, role, profile_picture')
+      .eq('is_verified', true)
+      .order('full_name', { ascending: true })
+
+    if (memErr) throw memErr
+
+    // 2. Fetch existing RSVPs / roll-call records for this event
+    const { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('status, profiles:user_id(full_name, instrument)')
+      .select('id, user_id, status')
       .eq('event_id', ev.id)
 
+    if (rsvpErr) throw rsvpErr
+
+    const rsvpMap = new Map()
     if (rsvps) {
-      rsvps.forEach(r => {
-        const memberInfo = {
-          name: r.profiles?.full_name || 'Member',
-          instrument: r.profiles?.instrument || 'Musician'
-        }
-        if (r.status === 'attending' || r.status === 'present') {
-          attendingMembersList.value.push(memberInfo)
-        } else if (r.status === 'declined' || r.status === 'absent') {
-          declinedMembersList.value.push(memberInfo)
-        }
-      })
+      rsvps.forEach(r => rsvpMap.set(r.user_id, r.status))
     }
-  } catch (e) {
-    console.error('Error fetching attendance:', e)
+
+    rollCallRoster.value = (members || []).map(m => {
+      const st = rsvpMap.get(m.id) || 'none'
+      let initRsvp = 'none'
+      if (st === 'attending' || st === 'present' || st === 'absent') {
+        initRsvp = 'attending'
+      } else if (st === 'declined') {
+        initRsvp = 'declined'
+      }
+      return {
+        userId: m.id,
+        name: m.full_name,
+        instrument: m.instrument || 'Musician',
+        rank: m.rank || 'Junior',
+        role: m.role || 'member',
+        avatar: m.full_name ? m.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB',
+        profile_picture: m.profile_picture,
+        initialRsvp: initRsvp,
+        currentStatus: st, // 'attending' | 'declined' | 'present' | 'absent' | 'excused' | 'none'
+        isSaving: false
+      }
+    }).sort((a, b) => {
+      const order = { attending: 0, declined: 1, none: 2 }
+      return (order[a.initialRsvp] ?? 3) - (order[b.initialRsvp] ?? 3)
+    })
+  } catch (err) {
+    console.error('Error fetching attendance roster:', err)
+    showToast('Failed to load attendance roster.')
   } finally {
     isLoadingAttendance.value = false
+  }
+}
+
+// TOGGLE OR SET ATTENDANCE STATUS FOR A SINGLE MUSICIAN
+const setMemberAttendance = async (member, newStatus) => {
+  if (member.isSaving || !selectedEventForAttendance.value) return
+  member.isSaving = true
+  const prevStatus = member.currentStatus
+  member.currentStatus = newStatus
+
+  try {
+    const { error } = await supabase
+      .from('event_rsvps')
+      .upsert({
+        event_id: selectedEventForAttendance.value.id,
+        user_id: member.userId,
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'event_id,user_id' })
+
+    if (error) throw error
+
+    await updateMemberReliabilityScore(member.userId)
+    notifyOtherTabs('ATTENDANCE_UPDATED')
+    showToast(`✓ Marked ${member.name} as ${newStatus.toUpperCase()}`)
+  } catch (err) {
+    console.error('Error setting attendance:', err)
+    member.currentStatus = prevStatus
+    showToast(`Failed to update attendance: ${err.message || 'Database error'}`)
+  } finally {
+    member.isSaving = false
+  }
+}
+
+// BATCH QUICK-ACTION: MARK ALL ATTENDING AS PRESENT
+const markAllAttendingAsPresent = async () => {
+  if (isBatchMarking.value || !selectedEventForAttendance.value) return
+  isBatchMarking.value = true
+
+  try {
+    const targetMembers = rollCallRoster.value.filter(m => 
+      m.initialRsvp === 'attending' && m.currentStatus !== 'present'
+    )
+
+    if (targetMembers.length === 0) {
+      showToast('All attending members are already marked Present.')
+      return
+    }
+
+    const updates = targetMembers.map(m => ({
+      event_id: selectedEventForAttendance.value.id,
+      user_id: m.userId,
+      status: 'present',
+      updated_at: new Date().toISOString()
+    }))
+
+    const { error } = await supabase
+      .from('event_rsvps')
+      .upsert(updates, { onConflict: 'event_id,user_id' })
+
+    if (error) throw error
+
+    targetMembers.forEach(m => {
+      m.currentStatus = 'present'
+    })
+
+    await Promise.all(targetMembers.map(m => updateMemberReliabilityScore(m.userId)))
+    notifyOtherTabs('ATTENDANCE_UPDATED')
+    showToast(`✓ Marked ${targetMembers.length} attending members as Present!`)
+  } catch (err) {
+    console.error('Batch attendance error:', err)
+    showToast('Failed to batch-update attendance.')
+  } finally {
+    isBatchMarking.value = false
   }
 }
 
@@ -827,54 +978,212 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER MODAL -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div>
-            <span class="text-[10px] font-black text-blue-500 uppercase">RSVP Attendance Tracker</span>
-            <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedEventForAttendance?.title }}</h3>
+    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL -->
+    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[90vh] flex flex-col">
+        
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+          <div class="min-w-0 pr-2">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400">
+                {{ selectedEventForAttendance?.type || 'Event' }}
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">Roll-Call Log</span>
+            </div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-white truncate">
+              {{ selectedEventForAttendance?.title }}
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+              {{ selectedEventForAttendance?.date }} at {{ selectedEventForAttendance?.time }} • {{ selectedEventForAttendance?.location }}
+            </p>
           </div>
-          <button @click="showAttendanceModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
+          <button @click="showAttendanceModal = false" class="text-slate-400 hover:text-white min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
         </div>
 
-        <div v-if="isLoadingAttendance" class="py-6 text-center text-xs font-bold text-slate-400">Loading attendee responses...</div>
-
-        <div v-else class="overflow-y-auto flex-1 space-y-4 pr-1">
-          <!-- Attending List -->
-          <div class="space-y-2">
-            <div class="flex items-center space-x-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400">
-              <UserCheck class="w-4 h-4" />
-              <span>Confirmed Attending / Present ({{ attendingMembersList.length }})</span>
+        <!-- Quick Summary Metrics & Batch Action -->
+        <div class="bg-slate-50 dark:bg-[#27272a] p-3 rounded-2xl border border-slate-200/80 dark:border-neutral-700/80 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-600 dark:text-neutral-300">Turnout Tally</span>
+            <div class="flex items-center space-x-2 font-black text-[11px]">
+              <span class="text-emerald-600 dark:text-emerald-400">{{ attendanceCounts.present }} Present</span>
+              <span>•</span>
+              <span class="text-rose-600 dark:text-rose-400">{{ attendanceCounts.absent }} Absent (No-Show)</span>
+              <span>•</span>
+              <span class="text-amber-600 dark:text-amber-400">{{ attendanceCounts.excused }} Excused</span>
             </div>
-            <div v-if="attendingMembersList.length > 0" class="space-y-1.5">
-              <div v-for="m in attendingMembersList" :key="m.name" class="p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-xl text-xs flex justify-between">
-                <span class="font-bold text-emerald-700 dark:text-emerald-400">{{ m.name }}</span>
-                <span class="text-slate-500 capitalize">{{ m.instrument }}</span>
-              </div>
-            </div>
-            <p v-else class="text-[11px] text-slate-400">No members confirmed attending yet.</p>
           </div>
 
-          <!-- Declined List -->
-          <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
-            <div class="flex items-center space-x-1.5 text-xs font-black text-rose-600 dark:text-rose-400">
-              <UserX class="w-4 h-4" />
-              <span>Declined / Absent ({{ declinedMembersList.length }})</span>
-            </div>
-            <div v-if="declinedMembersList.length > 0" class="space-y-1.5">
-              <div v-for="m in declinedMembersList" :key="m.name" class="p-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl text-xs flex justify-between">
-                <span class="font-bold text-rose-700 dark:text-rose-400">{{ m.name }}</span>
-                <span class="text-slate-500 capitalize">{{ m.instrument }}</span>
+          <button 
+            v-if="store.canConductRollCall"
+            @click="markAllAttendingAsPresent" 
+            :disabled="isBatchMarking"
+            type="button" 
+            class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
+          >
+            <CheckCircle class="w-4 h-4" />
+            <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark All Attending as Present' }}</span>
+          </button>
+        </div>
+
+        <!-- Filter Sub-Tabs -->
+        <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#27272a] rounded-xl text-[11px] font-bold overflow-x-auto">
+          <button 
+            @click="attendanceTabFilter = 'all'"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'all' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+          >
+            All ({{ attendanceCounts.total }})
+          </button>
+          <button 
+            @click="attendanceTabFilter = 'attending'"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#1c1c1e] text-emerald-600 dark:text-emerald-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+          >
+            RSVP Attending ({{ attendanceCounts.attending }})
+          </button>
+          <button 
+            @click="attendanceTabFilter = 'declined'"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'declined' ? 'bg-white dark:bg-[#1c1c1e] text-rose-600 dark:text-rose-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+          >
+            Declined ({{ attendanceCounts.declined }})
+          </button>
+          <button 
+            @click="attendanceTabFilter = 'unconfirmed'"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-white shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+          >
+            No Response ({{ attendanceCounts.unconfirmed }})
+          </button>
+        </div>
+
+        <!-- Attendance Roster List -->
+        <div v-if="isLoadingAttendance" class="py-12 text-center text-xs font-bold text-slate-400">
+          Loading band attendance roster...
+        </div>
+
+        <div v-else class="overflow-y-auto flex-1 space-y-2 pr-1">
+          <div 
+            v-for="member in filteredRollCallRoster" 
+            :key="member.userId"
+            class="p-3 bg-white dark:bg-[#27272a] rounded-2xl border border-slate-200/80 dark:border-neutral-700/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-xs transition-colors"
+            :class="{
+              'border-l-4 border-l-emerald-500': member.currentStatus === 'present',
+              'border-l-4 border-l-rose-500': member.currentStatus === 'absent',
+              'border-l-4 border-l-amber-500': member.currentStatus === 'excused'
+            }"
+          >
+            <!-- Member Details -->
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-xl overflow-hidden bg-blue-600 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
+                <img v-if="member.profile_picture" :src="member.profile_picture" alt="" class="w-full h-full object-cover" />
+                <span v-else>{{ member.avatar }}</span>
+              </div>
+              <div class="min-w-0">
+                <p class="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                  {{ member.name }}
+                </p>
+                <div class="flex items-center space-x-1.5 mt-0.5">
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-neutral-400 capitalize">
+                    {{ member.instrument }}
+                  </span>
+                  <span>•</span>
+                  <!-- Initial RSVP Tag -->
+                  <span 
+                    class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded"
+                    :class="{
+                      'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300': member.initialRsvp === 'attending',
+                      'bg-slate-200 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400': member.initialRsvp === 'declined',
+                      'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
+                    }"
+                  >
+                    {{ member.initialRsvp === 'attending' ? 'RSVP: Attending' : member.initialRsvp === 'declined' ? 'RSVP: Declined' : 'No RSVP' }}
+                  </span>
+                </div>
               </div>
             </div>
-            <p v-else class="text-[11px] text-slate-400">No members declined.</p>
+
+            <!-- Roll-Call Action Controls -->
+            <div v-if="store.canConductRollCall" class="flex items-center space-x-1.5 flex-shrink-0 self-end sm:self-center">
+              <!-- Present Button -->
+              <button 
+                @click="setMemberAttendance(member, 'present')"
+                :disabled="member.isSaving"
+                type="button"
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer min-h-[34px] flex items-center"
+                :class="member.currentStatus === 'present' 
+                  ? 'bg-emerald-600 text-white shadow-xs' 
+                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-300 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/40'"
+                title="Mark Present"
+              >
+                <CheckCircle class="w-3.5 h-3.5 mr-1" /> Present
+              </button>
+
+              <!-- Absent / Flake Button -->
+              <button 
+                @click="setMemberAttendance(member, 'absent')"
+                :disabled="member.isSaving"
+                type="button"
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer min-h-[34px] flex items-center"
+                :class="member.currentStatus === 'absent' 
+                  ? 'bg-rose-600 text-white shadow-xs' 
+                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40'"
+                title="Mark Absent / No-Show"
+              >
+                <XCircle class="w-3.5 h-3.5 mr-1" /> Absent
+              </button>
+
+              <!-- Excused Button -->
+              <button 
+                @click="setMemberAttendance(member, 'excused')"
+                :disabled="member.isSaving"
+                type="button"
+                class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center"
+                :class="member.currentStatus === 'excused' 
+                  ? 'bg-amber-500 text-white shadow-xs font-black' 
+                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-500 dark:text-neutral-400 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40'"
+                title="Mark Excused Absence"
+              >
+                Excused
+              </button>
+            </div>
+
+            <!-- Read-Only Status Tag for Regular Viewers -->
+            <div v-else class="flex items-center space-x-1">
+              <span 
+                class="px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider"
+                :class="{
+                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': member.currentStatus === 'present',
+                  'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': member.currentStatus === 'absent',
+                  'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': member.currentStatus === 'excused',
+                  'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400': !['present', 'absent', 'excused'].includes(member.currentStatus)
+                }"
+              >
+                {{ member.currentStatus }}
+              </span>
+            </div>
+
+          </div>
+
+          <div v-if="filteredRollCallRoster.length === 0" class="py-8 text-center text-xs text-slate-400">
+            No musicians match this filter category.
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
-          <button @click="showAttendanceModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
-            Close
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-end">
+          <button 
+            @click="showAttendanceModal = false" 
+            type="button" 
+            class="w-full py-3 bg-slate-900 hover:bg-black dark:bg-neutral-800 dark:hover:bg-neutral-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
+          >
+            Done / Close Roster
           </button>
         </div>
       </div>

@@ -81,17 +81,17 @@ define(['./workbox-970124e6'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "/index.html",
-    "revision": "0.00u11mh5i7g"
+    "revision": "0.5vcrtgib7us"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
     allowlist: [/^\/$/]
   }));
   workbox.registerRoute(/^https:\/\/.*\.supabase\.co\/.*/i, new workbox.NetworkFirst({
-    "cacheName": "supabase-cache",
+    "cacheName": "supabase-api-cache",
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 100,
-      maxAgeSeconds: 604800
+      maxEntries: 200,
+      maxAgeSeconds: 2592000
     }), new workbox.CacheableResponsePlugin({
       statuses: [0, 200]
     })]

@@ -14,7 +14,20 @@ import {
   BarChart3, 
   FileText,
   Activity,
-  Sparkles
+  Sparkles,
+  Printer,
+  TrendingUp,
+  AlertTriangle,
+  Award,
+  Crown,
+  Search,
+  CheckCircle,
+  XCircle,
+  Users,
+  Clock,
+  MapPin,
+  Filter,
+  Download
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
@@ -237,15 +250,374 @@ const runAvailabilityCheck = async () => {
   }
 }
 
-// 8. RE-NOTIFICATION DISPATCH
-const triggerReNotifications = () => {
+// 8. RE-NOTIFICATION DISPATCH WITH BROADCAST SYNC
+const triggerReNotifications = async () => {
+  // Local inter-tab broadcast
+  if ('BroadcastChannel' in window) {
+    const ch = new BroadcastChannel('smartband_live_sync')
+    ch.postMessage({ 
+      type: 'RSVP_REMINDER_BROADCAST', 
+      title: '🚨 Urgent RSVP Call-to-Action!',
+      message: 'The Band Secretary requests all musicians confirm attendance for upcoming gigs.',
+      timestamp: Date.now() 
+    })
+    ch.close()
+  }
+
+  // Supabase Realtime Broadcast to notify any remote devices/clients in real-time
+  try {
+    const alertChan = supabase.channel('smartband-broadcast-alerts')
+    alertChan.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await alertChan.send({
+          type: 'broadcast',
+          event: 'rsvp_reminder',
+          payload: {
+            title: '🚨 Urgent RSVP Call-to-Action!',
+            message: 'The Band Secretary requests all musicians confirm attendance for upcoming gigs immediately.',
+            sender: store.profile?.full_name || 'Band Secretary'
+          }
+        })
+        supabase.removeChannel(alertChan)
+      }
+    })
+  } catch (e) {
+    console.warn('Realtime broadcast error:', e)
+  }
+
   showToast('✓ RSVP reminder notifications dispatched to unconfirmed musicians.')
 }
 
+// 9. DATA ANALYTICS & MASTER REPORT GENERATION ENGINE
+const allEvents = ref([])
+const allRsvps = ref([])
+const allProfiles = ref([])
+const isLoadingAnalytics = ref(false)
+
+const analyticsSearchQuery = ref('')
+const analyticsSectionFilter = ref('All')
+const analyticsSortBy = ref('flakes_desc') // 'flakes_desc' | 'reliability_asc' | 'reliability_desc' | 'name'
+
+// Report Generator Configuration (Super Admin Only)
+const selectedReportType = ref('all_members')
+const selectedRoleFilter = ref('member')
+const selectedEventTypeFilter = ref('Practice & Rehearsal (Ensayo)')
+
+const reportTypeOptions = [
+  { id: 'all_members', label: '1. List of All Band Members' },
+  { id: 'active_members', label: '2. List of All Active Band Members' },
+  { id: 'inactive_members', label: '3. List of All Inactive Band Members' },
+  { id: 'members_by_role', label: '4. List of All Band Members Filtered by Roles' },
+  { id: 'officers', label: '5. List of Band Leadership & Officers' },
+  { id: 'all_schedules', label: '6. List of All Band Schedules & Gigs' },
+  { id: 'schedules_by_type', label: '7. List of Schedules Filtered by Types' }
+]
+
+const eventTypeOptions = [
+  'Practice & Rehearsal (Ensayo)',
+  'Civic Parade (Parada)',
+  'Feast Procession (Prusisyon)',
+  'Funeral March (Libing)',
+  'Wake & Vigil (Bantay / Lamay)',
+  'Band Meeting (Pulong)'
+]
+
+const sectionOptions = [
+  'All',
+  'Clarinet',
+  'Saxophone',
+  'Trumpet',
+  'Trombone',
+  'Flute',
+  'Horn',
+  'Tuba',
+  'Percussion'
+]
+
+const fetchAnalyticsAndReportsData = async () => {
+  isLoadingAnalytics.value = true
+  try {
+    const [eventsRes, rsvpsRes, profilesRes] = await Promise.all([
+      supabase.from('events').select('*').order('event_date', { ascending: false }),
+      supabase.from('event_rsvps').select('*'),
+      supabase.from('profiles').select('*').order('full_name', { ascending: true })
+    ])
+
+    if (eventsRes.data) allEvents.value = eventsRes.data
+    if (rsvpsRes.data) allRsvps.value = rsvpsRes.data
+    if (profilesRes.data) allProfiles.value = profilesRes.data
+  } catch (err) {
+    console.error('Error loading analytics dataset:', err)
+  } finally {
+    isLoadingAnalytics.value = false
+  }
+}
+
+// MEMBER ATTENDANCE MATRIX & FLAKE DETECTION (Math Calculation)
+const memberAnalyticsMatrix = computed(() => {
+  const rsvpByMember = new Map()
+  allRsvps.value.forEach(r => {
+    if (!rsvpByMember.has(r.user_id)) rsvpByMember.set(r.user_id, [])
+    rsvpByMember.get(r.user_id).push(r)
+  })
+
+  return memberRoster.value.map(m => {
+    const userRsvps = rsvpByMember.get(m.id) || []
+    
+    // Promised: records where member committed to attend
+    const promised = userRsvps.filter(r => r.status === 'attending' || r.status === 'present' || r.status === 'absent')
+    const promisedCount = promised.length
+    
+    // Attended: verified present
+    const attendedCount = userRsvps.filter(r => r.status === 'present').length
+    
+    // Flakes / Unexcused No-Shows: committed 'attending' but verified 'absent'
+    const flakeCount = userRsvps.filter(r => r.status === 'absent').length
+    
+    // Follow-Through Rate %: (Attended / Promised) * 100
+    const followThroughRate = promisedCount > 0 ? Math.round((attendedCount / promisedCount) * 100) : 100
+    
+    // Reliability Score calculation
+    const calculatedScore = Math.max(0, 100 - (flakeCount * 10))
+    const score = m.reliability_score !== undefined && m.reliability_score !== null ? m.reliability_score : calculatedScore
+
+    let riskTier = 'Exemplary'
+    let riskColor = 'emerald'
+    if (flakeCount >= 2 || score < 75) {
+      riskTier = 'High Flake Risk'
+      riskColor = 'rose'
+    } else if (flakeCount === 1 || score < 90) {
+      riskTier = 'Moderate'
+      riskColor = 'amber'
+    }
+
+    return {
+      id: m.id,
+      name: m.full_name,
+      instrument: m.instrument || 'Clarinet',
+      rank: m.rank || 'Junior',
+      role: m.role || 'member',
+      executive_title: m.executive_title,
+      promisedCount,
+      attendedCount,
+      flakeCount,
+      followThroughRate,
+      reliabilityScore: score,
+      riskTier,
+      riskColor
+    }
+  })
+})
+
+const filteredAnalyticsMatrix = computed(() => {
+  let list = memberAnalyticsMatrix.value
+
+  if (analyticsSearchQuery.value.trim()) {
+    const q = analyticsSearchQuery.value.toLowerCase()
+    list = list.filter(m => m.name.toLowerCase().includes(q) || m.instrument.toLowerCase().includes(q))
+  }
+
+  if (analyticsSectionFilter.value !== 'All') {
+    const sec = analyticsSectionFilter.value.toLowerCase()
+    list = list.filter(m => m.instrument.toLowerCase().includes(sec))
+  }
+
+  return [...list].sort((a, b) => {
+    if (analyticsSortBy.value === 'flakes_desc') {
+      return (b.flakeCount - a.flakeCount) || (a.reliabilityScore - b.reliabilityScore)
+    }
+    if (analyticsSortBy.value === 'reliability_asc') {
+      return a.reliabilityScore - b.reliabilityScore
+    }
+    if (analyticsSortBy.value === 'reliability_desc') {
+      return b.reliabilityScore - a.reliabilityScore
+    }
+    if (analyticsSortBy.value === 'name') {
+      return a.name.localeCompare(b.name)
+    }
+    return 0
+  })
+})
+
+const analyticsSummary = computed(() => {
+  const list = memberAnalyticsMatrix.value
+  if (list.length === 0) {
+    return { avgReliability: 100, totalFlakes: 0, avgFollowThrough: 100, highRiskCount: 0 }
+  }
+  const totalFlakes = list.reduce((sum, m) => sum + m.flakeCount, 0)
+  const avgReliability = Math.round(list.reduce((sum, m) => sum + m.reliabilityScore, 0) / list.length)
+  const avgFollowThrough = Math.round(list.reduce((sum, m) => sum + m.followThroughRate, 0) / list.length)
+  const highRiskCount = list.filter(m => m.flakeCount >= 2 || m.reliabilityScore < 75).length
+  return { avgReliability, totalFlakes, avgFollowThrough, highRiskCount }
+})
+
+// SECTION TURNOUT BREAKDOWN
+const sectionStats = computed(() => {
+  const list = memberAnalyticsMatrix.value
+  const woodwindNames = ['clarinet', 'flute', 'sax', 'piccolo']
+  const brassNames = ['trumpet', 'trombone', 'horn', 'tuba', 'baritone', 'euphonium']
+  const percussionNames = ['drum', 'cymbals', 'snare', 'bass drum']
+
+  const getStats = (matchers) => {
+    const members = list.filter(m => matchers.some(term => m.instrument.toLowerCase().includes(term)))
+    const promised = members.reduce((sum, m) => sum + m.promisedCount, 0)
+    const attended = members.reduce((sum, m) => sum + m.attendedCount, 0)
+    const flakes = members.reduce((sum, m) => sum + m.flakeCount, 0)
+    const rate = promised > 0 ? Math.round((attended / promised) * 100) : 100
+    return { count: members.length, promised, attended, flakes, rate }
+  }
+
+  return {
+    woodwinds: getStats(woodwindNames),
+    brass: getStats(brassNames),
+    percussion: getStats(percussionNames)
+  }
+})
+
+// GENERATED PDF REPORT DATA (Matched exactly to user requirements)
+const generatedReportData = computed(() => {
+  const type = selectedReportType.value
+  
+  if (type === 'all_members') {
+    return {
+      title: 'LIST OF ALL BAND MEMBERS',
+      subtitle: 'Complete official registry of all registered musicians and accounts',
+      columns: ['#', 'Full Name', 'Instrument / Section', 'Rank', 'Appointed Role', 'Verification Status'],
+      rows: allProfiles.value.map((m, idx) => [
+        idx + 1,
+        m.full_name,
+        m.instrument || 'Clarinet',
+        m.rank || 'Junior',
+        m.executive_title ? `Executive (${m.executive_title.replace('_', ' ').toUpperCase()})` : m.role === 'secretary_admin' ? 'Band Secretary' : m.role === 'super_admin' ? 'IT Super Admin' : 'Musician',
+        m.is_verified ? 'Active & Verified' : 'Pending Physical Verification'
+      ])
+    }
+  }
+
+  if (type === 'active_members') {
+    const active = allProfiles.value.filter(m => m.is_verified)
+    return {
+      title: 'LIST OF ALL ACTIVE BAND MEMBERS',
+      subtitle: 'Official roster of verified musicians currently in active service',
+      columns: ['#', 'Full Name', 'Instrument / Section', 'Rank', 'Reliability Score (%)'],
+      rows: active.map((m, idx) => [
+        idx + 1,
+        m.full_name,
+        m.instrument || 'Clarinet',
+        m.rank || 'Junior',
+        `${m.reliability_score || 100}%`
+      ])
+    }
+  }
+
+  if (type === 'inactive_members') {
+    const inactive = allProfiles.value.filter(m => !m.is_verified)
+    return {
+      title: 'LIST OF INACTIVE / PENDING BAND MEMBERS',
+      subtitle: 'Unverified registrants pending physical verification and Super Admin approval',
+      columns: ['#', 'Full Name', 'Email Contact', 'Instrument', 'Registration Date', 'Status'],
+      rows: inactive.map((m, idx) => [
+        idx + 1,
+        m.full_name,
+        m.email || 'N/A',
+        m.instrument || 'N/A',
+        new Date(m.created_at).toLocaleDateString(),
+        'Pending Super Admin Approval'
+      ])
+    }
+  }
+
+  if (type === 'members_by_role') {
+    const targetRole = selectedRoleFilter.value
+    const filtered = allProfiles.value.filter(m => m.role === targetRole)
+    const roleLabels = {
+      super_admin: 'IT Super Admin',
+      secretary_admin: 'Band Secretary',
+      executive: 'Executive Officers',
+      member: 'Regular Musicians'
+    }
+    return {
+      title: `LIST OF BAND MEMBERS FILTERED BY ROLE: ${roleLabels[targetRole]?.toUpperCase() || targetRole.toUpperCase()}`,
+      subtitle: `Roster members categorized by appointed operational tier`,
+      columns: ['#', 'Full Name', 'Instrument', 'Rank', 'Officer Title', 'Status'],
+      rows: filtered.map((m, idx) => [
+        idx + 1,
+        m.full_name,
+        m.instrument || 'Clarinet',
+        m.rank || 'Junior',
+        m.executive_title ? m.executive_title.replace('_', ' ').toUpperCase() : 'None',
+        m.is_verified ? 'Active' : 'Pending'
+      ])
+    }
+  }
+
+  if (type === 'officers') {
+    const officers = allProfiles.value.filter(m => 
+      m.role === 'super_admin' || m.role === 'secretary_admin' || m.role === 'executive'
+    )
+    return {
+      title: 'LIST OF BAND LEADERSHIP & EXECUTIVE OFFICERS',
+      subtitle: 'Official roster of appointed municipal band administrators and executives',
+      columns: ['#', 'Officer Name', 'Official Appointed Post', 'Instrument', 'Rank', 'Contact Line'],
+      rows: officers.map((m, idx) => [
+        idx + 1,
+        m.full_name,
+        m.role === 'super_admin' ? 'IT Super Admin' : m.role === 'secretary_admin' ? 'Band Secretary' : `Band ${m.executive_title ? m.executive_title.replace('_', ' ').toUpperCase() : 'Executive'}`,
+        m.instrument || 'Clarinet',
+        m.rank || 'Senior',
+        m.contact_number || 'Official Record'
+      ])
+    }
+  }
+
+  if (type === 'all_schedules') {
+    return {
+      title: 'LIST OF ALL BAND SCHEDULES & GIGS',
+      subtitle: 'Complete official calendar log of rehearsals, parades, processions, and gigs',
+      columns: ['#', 'Event Title', 'Event Category', 'Date & Time', 'Location', 'Turnout Status'],
+      rows: allEvents.value.map((e, idx) => [
+        idx + 1,
+        e.title,
+        e.event_type,
+        new Date(e.event_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        e.location,
+        new Date(e.event_date) < new Date() ? 'Completed' : 'Scheduled'
+      ])
+    }
+  }
+
+  if (type === 'schedules_by_type') {
+    const targetType = selectedEventTypeFilter.value
+    const filtered = allEvents.value.filter(e => e.event_type === targetType)
+    return {
+      title: `LIST OF SCHEDULES FILTERED BY TYPE: ${targetType.toUpperCase()}`,
+      subtitle: `Master log of events strictly matching category "${targetType}"`,
+      columns: ['#', 'Event Title', 'Date & Time', 'Location', 'Status'],
+      rows: filtered.map((e, idx) => [
+        idx + 1,
+        e.title,
+        new Date(e.event_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        e.location,
+        new Date(e.event_date) < new Date() ? 'Completed' : 'Scheduled'
+      ])
+    }
+  }
+
+  return { title: 'OFFICIAL REPORT', subtitle: '', columns: [], rows: [] }
+})
+
+const printReport = () => {
+  window.print()
+}
+
 onMounted(() => {
+  if (store.isExecutive) {
+    activeTab.value = 'reports'
+  }
   fetchPendingAccounts()
   fetchPendingAvatars()
   fetchRoster()
+  fetchAnalyticsAndReportsData()
 
   adminChannel = supabase
     .channel('admin-realtime')
@@ -253,6 +625,13 @@ onMounted(() => {
       fetchPendingAccounts()
       fetchPendingAvatars()
       fetchRoster()
+      fetchAnalyticsAndReportsData()
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'event_rsvps' }, () => {
+      fetchAnalyticsAndReportsData()
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+      fetchAnalyticsAndReportsData()
     })
     .subscribe()
 })
@@ -518,34 +897,552 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- TAB 2: REPORTS & ANALYTICS (BLANK STAGING PLACEHOLDER AS REQUESTED) -->
-    <div v-else-if="activeTab === 'reports'" class="space-y-6">
-      <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-8 sm:p-12 text-center border border-slate-200/80 dark:border-neutral-800 space-y-4 shadow-xs">
-        <div class="w-16 h-16 rounded-3xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto shadow-xs">
-          <BarChart3 class="w-8 h-8" />
+    <!-- TAB 2: REPORTS & ANALYTICS -->
+    <div v-else-if="activeTab === 'reports'" class="space-y-8">
+      
+      <!-- 1. EXECUTIVE ATTENDANCE & FLAKE ANALYTICS DASHBOARD -->
+      <section class="space-y-6 no-print">
+        <!-- Section Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/80 dark:border-neutral-800 pb-3">
+          <div>
+            <div class="flex items-center space-x-2">
+              <BarChart3 class="w-5 h-5 text-blue-500" />
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">Band Attendance & Reliability Analytics</h2>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+              Live calculated follow-through metrics, section turnout rates, and unexcused no-show flake penalties.
+            </p>
+          </div>
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider self-start sm:self-auto">
+            <Sparkles class="w-3.5 h-3.5" />
+            <span>Executive Insights</span>
+          </span>
         </div>
 
-        <div class="max-w-md mx-auto space-y-2">
-          <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
-            <Sparkles class="w-3.5 h-3.5" />
-            <span>Reports & Analytics Module</span>
+        <!-- 4 KPI Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- KPI 1: Band Reliability Score -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+              <span>Avg Reliability</span>
+              <Award class="w-4 h-4 text-emerald-500" />
+            </div>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                {{ analyticsSummary.avgReliability }}%
+              </span>
+              <span class="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">Roster Avg</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div 
+                class="h-full rounded-full transition-all duration-500" 
+                :class="analyticsSummary.avgReliability >= 85 ? 'bg-emerald-500' : analyticsSummary.avgReliability >= 70 ? 'bg-amber-500' : 'bg-rose-500'"
+                :style="{ width: `${analyticsSummary.avgReliability}%` }"
+              ></div>
+            </div>
           </div>
 
-          <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-            Operational Reporting & Metrics
-          </h2>
+          <!-- KPI 2: Total Flakes / No-Shows -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+              <span>Total Flakes / No-Shows</span>
+              <AlertTriangle class="w-4 h-4 text-rose-500" />
+            </div>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+                {{ analyticsSummary.totalFlakes }}
+              </span>
+              <span class="text-[10px] font-bold text-slate-400">Promised vs Absent</span>
+            </div>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-neutral-400">
+              -10% penalty per unexcused no-show
+            </p>
+          </div>
 
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 leading-relaxed font-medium">
-            This module is staged for upcoming analytics releases. Rehearsal attendance logs, gig reliability scores, section turnout summaries, and downloadable PDF reports will be rendered here.
-          </p>
+          <!-- KPI 3: Follow-Through Rate -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+              <span>Commitment Rate</span>
+              <TrendingUp class="w-4 h-4 text-blue-500" />
+            </div>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">
+                {{ analyticsSummary.avgFollowThrough }}%
+              </span>
+              <span class="text-[10px] font-extrabold text-blue-600 dark:text-blue-400">Turnout</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div 
+                class="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                :style="{ width: `${analyticsSummary.avgFollowThrough}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- KPI 4: High Flake Risk Members -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+              <span>High Flake Risk</span>
+              <ShieldAlert class="w-4 h-4 text-amber-500" />
+            </div>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+                {{ analyticsSummary.highRiskCount }}
+              </span>
+              <span class="text-[10px] font-bold text-slate-400">Flagged Musicians</span>
+            </div>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-neutral-400">
+              Members with multiple misses
+            </p>
+          </div>
         </div>
 
-        <div class="pt-4 flex items-center justify-center space-x-3 text-xs font-bold text-slate-400 dark:text-neutral-500">
-          <span class="flex items-center"><FileText class="w-4 h-4 mr-1.5" /> Gig Attendance Summaries</span>
-          <span>•</span>
-          <span class="flex items-center"><Activity class="w-4 h-4 mr-1.5" /> Turnout Analytics</span>
+        <!-- Section Turnout Breakdown Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <!-- Woodwinds -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Woodwinds Section</span>
+              <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                {{ sectionStats.woodwinds.count }} Members
+              </span>
+            </div>
+            <div class="flex items-baseline justify-between text-xs">
+              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.woodwinds.rate }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-blue-500 h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate}%` }"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+              <span>Attended: {{ sectionStats.woodwinds.attended }} / {{ sectionStats.woodwinds.promised }}</span>
+              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
+                {{ sectionStats.woodwinds.flakes }} Flakes
+              </span>
+            </div>
+          </div>
+
+          <!-- Brass -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Brass Section</span>
+              <span class="text-[10px] font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                {{ sectionStats.brass.count }} Members
+              </span>
+            </div>
+            <div class="flex items-baseline justify-between text-xs">
+              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.brass.rate }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${sectionStats.brass.rate}%` }"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+              <span>Attended: {{ sectionStats.brass.attended }} / {{ sectionStats.brass.promised }}</span>
+              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
+                {{ sectionStats.brass.flakes }} Flakes
+              </span>
+            </div>
+          </div>
+
+          <!-- Percussion -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Percussion Section</span>
+              <span class="text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                {{ sectionStats.percussion.count }} Members
+              </span>
+            </div>
+            <div class="flex items-baseline justify-between text-xs">
+              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.percussion.rate }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate}%` }"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+              <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>
+              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
+                {{ sectionStats.percussion.flakes }} Flakes
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <!-- Interactive Excel-Style Attendance Matrix Table -->
+        <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 class="font-black text-base text-slate-900 dark:text-white">Musician Attendance & Flake Matrix</h3>
+              <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+                Detailed individual attendance track record, unexcused no-show flags, and reliability standings.
+              </p>
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Search -->
+              <div class="relative min-w-[160px]">
+                <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  v-model="analyticsSearchQuery" 
+                  type="text" 
+                  placeholder="Search musician..."
+                  class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl text-xs border border-slate-200 dark:border-neutral-700 font-bold focus:outline-none focus:border-blue-500 min-h-[38px]"
+                />
+              </div>
+
+              <!-- Section Filter -->
+              <select 
+                v-model="analyticsSectionFilter" 
+                class="bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[38px]"
+              >
+                <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
+              </select>
+
+              <!-- Sort Order -->
+              <select 
+                v-model="analyticsSortBy" 
+                class="bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[38px]"
+              >
+                <option value="flakes_desc">Sort: Highest Flakes First</option>
+                <option value="reliability_asc">Sort: Lowest Reliability First</option>
+                <option value="reliability_desc">Sort: Highest Reliability First</option>
+                <option value="name">Sort: Musician Name (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-neutral-700/80">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-[#27272a] text-slate-600 dark:text-neutral-300 font-black uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-neutral-700">
+                <tr>
+                  <th class="px-3 py-3 w-10 text-center">#</th>
+                  <th class="px-4 py-3">Musician</th>
+                  <th class="px-3 py-3">Role / Post</th>
+                  <th class="px-3 py-3 text-center">Promised</th>
+                  <th class="px-3 py-3 text-center">Attended</th>
+                  <th class="px-3 py-3 text-center">Flakes (No-Show)</th>
+                  <th class="px-3 py-3 text-center">Follow-Through</th>
+                  <th class="px-3 py-3 text-center">Reliability Score</th>
+                  <th class="px-3 py-3 text-center">Risk Tier</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-neutral-800">
+                <tr 
+                  v-for="(member, idx) in filteredAnalyticsMatrix" 
+                  :key="member.id"
+                  class="hover:bg-slate-50/80 dark:hover:bg-neutral-800/50 transition-colors"
+                  :class="{ 'bg-rose-50/40 dark:bg-rose-950/20': member.flakeCount >= 2 }"
+                >
+                  <td class="px-3 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
+                  
+                  <!-- Musician & Instrument -->
+                  <td class="px-4 py-3">
+                    <div class="font-black text-slate-900 dark:text-white leading-tight">
+                      {{ member.name }}
+                    </div>
+                    <div class="flex items-center space-x-1.5 mt-0.5 text-[11px] font-bold text-slate-500 dark:text-neutral-400 capitalize">
+                      <span>{{ member.instrument }}</span>
+                      <span>•</span>
+                      <span>{{ member.rank }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Role / Title -->
+                  <td class="px-3 py-3 font-bold text-slate-600 dark:text-neutral-300 whitespace-nowrap">
+                    <span v-if="member.role === 'super_admin'" class="text-blue-600 dark:text-blue-400 font-black">IT Super Admin</span>
+                    <span v-else-if="member.role === 'secretary_admin'" class="text-amber-600 dark:text-amber-400 font-black">Band Secretary</span>
+                    <span v-else-if="member.executive_title" class="text-purple-600 dark:text-purple-400 font-black capitalize">
+                      {{ member.executive_title.replace('_', ' ') }}
+                    </span>
+                    <span v-else class="text-slate-500 dark:text-neutral-400">Musician</span>
+                  </td>
+
+                  <!-- Promised Gigs -->
+                  <td class="px-3 py-3 text-center font-bold text-slate-700 dark:text-neutral-300">
+                    <span class="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-extrabold">
+                      {{ member.promisedCount }}
+                    </span>
+                  </td>
+
+                  <!-- Attended Gigs -->
+                  <td class="px-3 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-extrabold">
+                      {{ member.attendedCount }}
+                    </span>
+                  </td>
+
+                  <!-- Flakes (Promised vs Absent) -->
+                  <td class="px-3 py-3 text-center font-extrabold">
+                    <span 
+                      class="px-2 py-0.5 rounded-full font-black text-xs inline-flex items-center space-x-1"
+                      :class="member.flakeCount > 0 ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300' : 'bg-slate-100 dark:bg-[#27272a] text-slate-500'"
+                    >
+                      <AlertTriangle v-if="member.flakeCount > 0" class="w-3 h-3 text-rose-500 inline mr-0.5" />
+                      <span>{{ member.flakeCount }}</span>
+                    </span>
+                  </td>
+
+                  <!-- Follow-Through % -->
+                  <td class="px-3 py-3 text-center font-black text-slate-800 dark:text-neutral-200">
+                    {{ member.followThroughRate }}%
+                  </td>
+
+                  <!-- Reliability Score -->
+                  <td class="px-3 py-3 text-center">
+                    <div class="inline-flex flex-col items-center">
+                      <span 
+                        class="font-black text-xs"
+                        :class="member.reliabilityScore >= 85 ? 'text-emerald-600 dark:text-emerald-400' : member.reliabilityScore >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'"
+                      >
+                        {{ member.reliabilityScore }}%
+                      </span>
+                      <div class="w-14 bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden mt-1">
+                        <div 
+                          class="h-full rounded-full"
+                          :class="member.reliabilityScore >= 85 ? 'bg-emerald-500' : member.reliabilityScore >= 70 ? 'bg-amber-500' : 'bg-rose-500'"
+                          :style="{ width: `${member.reliabilityScore}%` }"
+                        ></div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Risk Badge -->
+                  <td class="px-3 py-3 text-center whitespace-nowrap">
+                    <span 
+                      class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full"
+                      :class="{
+                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400': member.riskTier === 'Exemplary',
+                        'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400': member.riskTier === 'Moderate',
+                        'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400': member.riskTier === 'High Flake Risk'
+                      }"
+                    >
+                      {{ member.riskTier }}
+                    </span>
+                  </td>
+                </tr>
+
+                <tr v-if="filteredAnalyticsMatrix.length === 0">
+                  <td colspan="9" class="py-8 text-center text-slate-400 font-bold">
+                    No musicians matched your search or section filters.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. OFFICIAL PDF REPORTS GENERATOR (DEDICATED TO SUPER ADMIN) -->
+      <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-neutral-800">
+        
+        <!-- Controls & Header (Hidden when printing) -->
+        <div class="no-print bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <FileText class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <h3 class="font-black text-lg text-slate-900 dark:text-white">Official Band Administrative Reports</h3>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+                Generate and print standardized official PDF documents with municipal letterheads, data tables, and signatories.
+              </p>
+            </div>
+
+            <!-- Print / Save as PDF Button -->
+            <button 
+              @click="printReport" 
+              type="button" 
+              class="px-5 py-3 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px]"
+            >
+              <Printer class="w-4 h-4" />
+              <span>Print / Save as PDF</span>
+            </button>
+          </div>
+
+          <!-- Report Selector & Sub-Filters -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <!-- Report Type Selection -->
+            <div class="sm:col-span-2">
+              <label for="report-type-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                Select Report Document
+              </label>
+              <select 
+                id="report-type-select"
+                v-model="selectedReportType" 
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+              >
+                <option v-for="opt in reportTypeOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
+              </select>
+            </div>
+
+            <!-- Sub-Filter for Role (If report 4 selected) -->
+            <div v-if="selectedReportType === 'members_by_role'">
+              <label for="role-filter-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                Filter by Role
+              </label>
+              <select 
+                id="role-filter-select"
+                v-model="selectedRoleFilter" 
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+              >
+                <option value="member">Regular Musicians</option>
+                <option value="executive">Executive Officers</option>
+                <option value="secretary_admin">Band Secretary</option>
+                <option value="super_admin">IT Super Admin</option>
+              </select>
+            </div>
+
+            <!-- Sub-Filter for Event Category (If report 7 selected) -->
+            <div v-if="selectedReportType === 'schedules_by_type'">
+              <label for="event-filter-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                Filter by Event Category
+              </label>
+              <select 
+                id="event-filter-select"
+                v-model="selectedEventTypeFilter" 
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+              >
+                <option v-for="t in eventTypeOptions" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRINTABLE OFFICIAL PDF SHEET PREVIEW -->
+        <div 
+          id="printable-report" 
+          class="bg-white text-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl space-y-6 max-w-5xl mx-auto printable-sheet"
+        >
+          <!-- Official Letterhead Header -->
+          <div class="text-center border-b-2 border-slate-900 pb-4 space-y-1">
+            <div class="flex items-center justify-center space-x-3 mb-1">
+              <div class="p-2 rounded-xl bg-slate-900 text-white flex-shrink-0">
+                <Shield class="w-6 h-6" />
+              </div>
+              <div class="text-left">
+                <p class="text-[10px] uppercase font-black tracking-widest text-slate-500 leading-tight">
+                  Republic of the Philippines • Municipal Administration
+                </p>
+                <h2 class="text-lg sm:text-xl font-black text-slate-950 tracking-tight leading-tight">
+                  BANDA SAN JOSE ENTERPRISE REGISTRY
+                </h2>
+              </div>
+            </div>
+            <p class="text-[10px] uppercase font-extrabold tracking-wider text-slate-600">
+              Office of the IT Super Admin & Executive Band Council
+            </p>
+          </div>
+
+          <!-- Document Title & Subtitle -->
+          <div class="text-center space-y-1 pt-1">
+            <span class="inline-block px-3 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-widest border border-slate-300">
+              Official Master Document
+            </span>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight uppercase">
+              {{ generatedReportData.title }}
+            </h3>
+            <p class="text-xs text-slate-600 font-medium italic">
+              {{ generatedReportData.subtitle }}
+            </p>
+          </div>
+
+          <!-- Document Metadata Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+            <div>
+              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Date Generated</span>
+              <span>{{ new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Document Control No.</span>
+              <span class="font-mono">SB-REP-{{ new Date().getFullYear() }}-{{ generatedReportData.rows.length }}R</span>
+            </div>
+            <div class="col-span-2 sm:col-span-1">
+              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Generated By</span>
+              <span class="truncate block">{{ store.profile?.full_name || 'IT Super Admin' }} (Super Admin)</span>
+            </div>
+          </div>
+
+          <!-- Official Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-900 border-y-2 border-slate-900 text-[11px] font-black uppercase tracking-wider">
+                  <th v-for="col in generatedReportData.columns" :key="col" class="py-2.5 px-3 border-x border-slate-200">
+                    {{ col }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 font-medium">
+                <tr 
+                  v-for="(row, rIdx) in generatedReportData.rows" 
+                  :key="rIdx"
+                  class="even:bg-slate-50/50 hover:bg-slate-100/60 transition-colors"
+                >
+                  <td 
+                    v-for="(cell, cIdx) in row" 
+                    :key="cIdx" 
+                    class="py-2.5 px-3 border-x border-slate-200 font-bold text-slate-900"
+                    :class="{ 'text-center': cIdx === 0 }"
+                  >
+                    {{ cell }}
+                  </td>
+                </tr>
+
+                <tr v-if="generatedReportData.rows.length === 0">
+                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-bold">
+                    No matching records found in database registry for this report query.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total Count & Authenticity Notes -->
+          <div class="flex items-center justify-between text-xs font-bold text-slate-600 border-t border-slate-200 pt-3">
+            <span>Total Records Listed: <strong>{{ generatedReportData.rows.length }}</strong></span>
+            <span class="text-[10px] uppercase tracking-wider text-slate-400">Authentic System-Generated Registry Document</span>
+          </div>
+
+          <!-- Signatories Block -->
+          <div class="pt-8 grid grid-cols-2 gap-8 text-center border-t border-slate-300">
+            <div class="space-y-1">
+              <div class="w-48 mx-auto border-b-2 border-slate-900 pb-1">
+                <p class="font-black text-sm text-slate-900 uppercase">
+                  {{ store.profile?.full_name || 'IT Super Admin' }}
+                </p>
+              </div>
+              <p class="text-[10px] uppercase font-bold text-slate-500">IT Super Admin / System Registrar</p>
+              <p class="text-[9px] text-slate-400">Prepared & Exported</p>
+            </div>
+
+            <div class="space-y-1">
+              <div class="w-48 mx-auto border-b-2 border-slate-900 pb-1">
+                <p class="font-black text-sm text-slate-900 uppercase">
+                  Executive Band Council
+                </p>
+              </div>
+              <p class="text-[10px] uppercase font-bold text-slate-500">President / Resident Conductor</p>
+              <p class="text-[9px] text-slate-400">Attested & Approved</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Non-Super-Admin Notice for Reports Section -->
+      <section v-else class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs text-center space-y-2 no-print">
+        <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+          <Shield class="w-5 h-5" />
+        </div>
+        <h4 class="font-black text-sm text-slate-900 dark:text-white">Super Admin Official Reports Generator</h4>
+        <p class="text-xs text-slate-500 dark:text-neutral-400 max-w-md mx-auto">
+          Official printable master administrative reports generation is restricted to the Super Admin. Executives and Section Leaders have full interactive access to the Attendance & Flake Analytics Matrix above.
+        </p>
+      </section>
+
     </div>
 
     <!-- CUSTOM CONFIRMATION MODAL -->
@@ -593,5 +1490,70 @@ onUnmounted(() => {
 .toast-leave-to {
   opacity: 0;
   transform: translate(-50%, -12px);
+}
+
+/* Dedicated Clean Print Styles for Official PDF Export */
+@media print {
+  /* Hide all dashboard chrome, sidebar, navbars, buttons, headers, search inputs, toasts */
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+
+  :global(aside),
+  :global(header),
+  :global(nav),
+  :global(.no-print),
+  .no-print,
+  button,
+  select,
+  input {
+    display: none !important;
+  }
+
+  /* Expand printable report sheet */
+  #printable-report {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  #printable-report * {
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+
+  #printable-report table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #printable-report th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #475569 !important;
+    padding: 8px 10px !important;
+    font-weight: 800 !important;
+    font-size: 10pt !important;
+    text-transform: uppercase !important;
+  }
+
+  #printable-report td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 10px !important;
+    font-size: 9.5pt !important;
+  }
+
+  #printable-report tr {
+    page-break-inside: avoid !important;
+  }
 }
 </style>
