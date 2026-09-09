@@ -15,7 +15,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Crown,
-  Eye
+  Eye,
+  Edit2
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
@@ -54,7 +55,7 @@ const executivePositions = [
   { key: 'band_manager', title: 'Band Manager', shortTitle: 'Manager' },
 ]
 
-// FULL MUNICIPAL BAND SECTION LIST FOR DIRECTORY FILTERING
+// FULL MUNICIPAL BAND SECTION LIST FOR DIRECTORY FILTERING & ADMIN INSTRUMENT SELECTION
 const sections = [
   'All', 
   'Clarinet', 
@@ -78,6 +79,20 @@ const sections = [
 const showToast = (msg) => {
   toastMessage.value = msg
   setTimeout(() => { toastMessage.value = '' }, 3500)
+}
+
+// TITLE NORMALIZER (Tolerates uppercase, spaces, or prefixed titles in DB)
+const normalizeTitle = (str) => {
+  if (!str) return ''
+  const s = str.toLowerCase().trim()
+  if (s.includes('vice')) return 'vice_president'
+  if (s.includes('pres')) return 'president'
+  if (s.includes('sec')) return 'secretary'
+  if (s.includes('treas')) return 'treasurer'
+  if (s.includes('audit')) return 'auditor'
+  if (s.includes('conduct')) return 'resident_conductor'
+  if (s.includes('manag')) return 'band_manager'
+  return s.replace(/\s+/g, '_')
 }
 
 // FILTER HANDLERS
@@ -112,20 +127,22 @@ const paImportanteList = computed(() => {
   return members.value.filter(m => (m.reliability || 100) < 85)
 })
 
-// PINNED 7 EXECUTIVE OFFICERS COMPUTED
+// PINNED EXECUTIVE OFFICERS COMPUTED (STRICTLY ACTIVE ONLY - NO BLANK TABS)
 const pinnedLeadership = computed(() => {
-  return executivePositions.map(pos => {
-    let officer = null
-    if (pos.key === 'secretary') {
-      officer = members.value.find(m => m.executive_title === 'secretary' || (m.role === 'secretary_admin' && !m.executive_title))
-    } else {
-      officer = members.value.find(m => m.executive_title === pos.key)
-    }
-    return {
-      ...pos,
-      officer: officer || null
-    }
-  })
+  return executivePositions
+    .map(pos => {
+      const officer = members.value.find(m => {
+        if (pos.key === 'secretary') {
+          return normalizeTitle(m.executive_title) === 'secretary' || m.role === 'secretary_admin'
+        }
+        return normalizeTitle(m.executive_title) === pos.key
+      })
+      return {
+        ...pos,
+        officer: officer || null
+      }
+    })
+    .filter(pos => pos.officer !== null) // Strictly filters out vacant positions so no blank cards appear
 })
 
 // FILTERED MEMBERS ROSTER
@@ -152,13 +169,14 @@ const filteredMembers = computed(() => {
 const sortedRoster = computed(() => {
   const getRankPriority = (m) => {
     if (m.role === 'super_admin') return 1
-    if (m.executive_title === 'president') return 2
-    if (m.executive_title === 'vice_president') return 3
-    if (m.role === 'secretary_admin' || m.executive_title === 'secretary') return 4
-    if (m.executive_title === 'treasurer') return 5
-    if (m.executive_title === 'auditor') return 6
-    if (m.executive_title === 'resident_conductor') return 7
-    if (m.executive_title === 'band_manager') return 8
+    const t = normalizeTitle(m.executive_title)
+    if (t === 'president') return 2
+    if (t === 'vice_president') return 3
+    if (m.role === 'secretary_admin' || t === 'secretary') return 4
+    if (t === 'treasurer') return 5
+    if (t === 'auditor') return 6
+    if (t === 'resident_conductor') return 7
+    if (t === 'band_manager') return 8
     if (m.executive_title) return 9
     if (m.rank === 'Senior') return 10
     return 11
@@ -197,7 +215,7 @@ const fetchRoster = async (skipCache = false) => {
       members.value = data.map(m => ({
         id: m.id,
         name: m.full_name || 'Unnamed Musician',
-        instrument: m.instrument || 'Musician',
+        instrument: m.instrument || 'Clarinet',
         rank: m.rank || 'Junior',
         role: m.role || 'member',
         executive_title: m.executive_title || null,
@@ -218,40 +236,40 @@ const fetchRoster = async (skipCache = false) => {
 // SUPER ADMIN: CHANGE SYSTEM ROLE
 const changeRole = async (member, newRole) => {
   try {
+    const prevRole = member.role
+    const prevTitle = member.executive_title
+
     if (newRole === 'secretary_admin') {
-      // Demote previous secretary if any
-      const prevSec = members.value.find(m => m.id !== member.id && (m.role === 'secretary_admin' || m.executive_title === 'secretary'))
-      if (prevSec) {
-        await supabase
-          .from('profiles')
-          .update({ role: 'member', executive_title: null })
-          .eq('id', prevSec.id)
-        prevSec.role = 'member'
-        prevSec.executive_title = null
-      }
-
-      await supabase
-        .from('profiles')
-        .update({ role: 'secretary_admin', executive_title: 'secretary' })
-        .eq('id', member.id)
-
+      // Demote previous secretary if any in local state
+      members.value.forEach(m => {
+        if (m.id !== member.id && (m.role === 'secretary_admin' || normalizeTitle(m.executive_title) === 'secretary')) {
+          m.role = 'member'
+          m.executive_title = null
+        }
+      })
       member.role = 'secretary_admin'
       member.executive_title = 'secretary'
     } else if (newRole === 'member') {
-      await supabase
-        .from('profiles')
-        .update({ role: 'member', executive_title: null })
-        .eq('id', member.id)
-
       member.role = 'member'
       member.executive_title = null
     } else {
-      await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', member.id)
-
       member.role = newRole
+    }
+
+    // Force reactive re-render immediately
+    members.value = [...members.value]
+
+    // Sync to Supabase in background
+    if (newRole === 'secretary_admin') {
+      const prevSec = members.value.find(m => m.id !== member.id && (m.role === 'secretary_admin' || normalizeTitle(m.executive_title) === 'secretary'))
+      if (prevSec) {
+        await supabase.from('profiles').update({ role: 'member', executive_title: null }).eq('id', prevSec.id)
+      }
+      await supabase.from('profiles').update({ role: 'secretary_admin', executive_title: 'secretary' }).eq('id', member.id)
+    } else if (newRole === 'member') {
+      await supabase.from('profiles').update({ role: 'member', executive_title: null }).eq('id', member.id)
+    } else {
+      await supabase.from('profiles').update({ role: newRole }).eq('id', member.id)
     }
 
     showToast(`Updated ${member.name}'s role to ${newRole.replace('_', ' ')}.`)
@@ -259,60 +277,54 @@ const changeRole = async (member, newRole) => {
   } catch (err) {
     console.error('Role update error:', err)
     showToast('Failed to change role.')
+    await fetchRoster(true)
   }
 }
 
-// SUPER ADMIN: ASSIGN EXECUTIVE TITLE (Single Officer Appointment)
+// SUPER ADMIN: ASSIGN EXECUTIVE TITLE (Single Officer Appointment + Instant Reactive Sync)
 const assignExecutiveTitle = async (member, newTitle) => {
   try {
-    const formattedTitle = newTitle || null
+    const formattedTitle = newTitle ? normalizeTitle(newTitle) : null
 
+    // 1. Optimistically update local state immediately so pinnedLeadership updates in 0ms!
     if (formattedTitle) {
-      // Clear previous holder of this title if any
-      const prevHolder = members.value.find(m => m.id !== member.id && m.executive_title === formattedTitle)
-      if (prevHolder) {
-        const revertRole = prevHolder.role === 'secretary_admin' || prevHolder.role === 'executive' ? 'member' : prevHolder.role
-        await supabase
-          .from('profiles')
-          .update({ executive_title: null, role: revertRole })
-          .eq('id', prevHolder.id)
-
-        prevHolder.executive_title = null
-        prevHolder.role = revertRole
-      }
-
-      // Auto-assign role based on title
-      let targetRole = member.role
-      if (formattedTitle === 'secretary') {
-        targetRole = 'secretary_admin'
-      } else if (['president', 'vice_president', 'treasurer', 'auditor', 'resident_conductor', 'band_manager'].includes(formattedTitle)) {
-        if (member.role !== 'super_admin') {
-          targetRole = 'executive'
+      members.value.forEach(m => {
+        if (m.id !== member.id && normalizeTitle(m.executive_title) === formattedTitle) {
+          m.executive_title = null
+          if (m.role === 'secretary_admin' || m.role === 'executive') m.role = 'member'
         }
-      }
-
-      await supabase
-        .from('profiles')
-        .update({ executive_title: formattedTitle, role: targetRole })
-        .eq('id', member.id)
-
-      member.executive_title = formattedTitle
-      member.role = targetRole
-    } else {
-      // Cleared title
-      let targetRole = member.role
-      if (member.role === 'secretary_admin' || member.role === 'executive') {
-        targetRole = 'member'
-      }
-
-      await supabase
-        .from('profiles')
-        .update({ executive_title: null, role: targetRole })
-        .eq('id', member.id)
-
-      member.executive_title = null
-      member.role = targetRole
+      })
     }
+
+    let targetRole = member.role
+    if (formattedTitle === 'secretary') {
+      targetRole = 'secretary_admin'
+    } else if (['president', 'vice_president', 'treasurer', 'auditor', 'resident_conductor', 'band_manager'].includes(formattedTitle)) {
+      if (member.role !== 'super_admin') {
+        targetRole = 'executive'
+      }
+    } else if (!formattedTitle && (member.role === 'secretary_admin' || member.role === 'executive')) {
+      targetRole = 'member'
+    }
+
+    member.executive_title = formattedTitle
+    member.role = targetRole
+    members.value = [...members.value] // Force Vue reactivity trigger
+
+    // 2. Persist to Supabase
+    if (formattedTitle) {
+      const prevHolder = members.value.find(m => m.id !== member.id && normalizeTitle(m.executive_title) === formattedTitle)
+      if (prevHolder) {
+        await supabase.from('profiles').update({ executive_title: null, role: prevHolder.role }).eq('id', prevHolder.id)
+      }
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ executive_title: formattedTitle, role: targetRole })
+      .eq('id', member.id)
+
+    if (error) throw error
 
     const titleLabel = formattedTitle ? formattedTitle.replace('_', ' ').toUpperCase() : 'Regular Musician'
     showToast(`Assigned ${member.name} as ${titleLabel}.`)
@@ -320,6 +332,34 @@ const assignExecutiveTitle = async (member, newTitle) => {
   } catch (err) {
     console.error('Executive title update error:', err)
     showToast('Failed to assign officer title.')
+    await fetchRoster(true)
+  }
+}
+
+// SUPER ADMIN: CHANGE USER INSTRUMENT
+const changeInstrument = async (member, newInstrument) => {
+  try {
+    const oldInstrument = member.instrument
+    member.instrument = newInstrument
+    members.value = [...members.value]
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ instrument: newInstrument })
+      .eq('id', member.id)
+
+    if (error) {
+      member.instrument = oldInstrument
+      members.value = [...members.value]
+      throw error
+    }
+
+    showToast(`Updated ${member.name}'s instrument to ${newInstrument}.`)
+    await fetchRoster(true)
+  } catch (err) {
+    console.error('Instrument update error:', err)
+    showToast('Failed to update instrument.')
+    await fetchRoster(true)
   }
 }
 
@@ -327,6 +367,9 @@ const assignExecutiveTitle = async (member, newTitle) => {
 const toggleMemberRank = async (member) => {
   const newRank = member.rank === 'Senior' ? 'Junior' : 'Senior'
   try {
+    member.rank = newRank
+    members.value = [...members.value]
+
     const { error } = await supabase
       .from('profiles')
       .update({ rank: newRank })
@@ -334,12 +377,12 @@ const toggleMemberRank = async (member) => {
 
     if (error) throw error
 
-    member.rank = newRank
     showToast(`${member.name} is now a ${newRank} Musician.`)
     await fetchRoster(true)
   } catch (err) {
     console.error('Rank toggle error:', err)
     showToast('Failed to change rank.')
+    await fetchRoster(true)
   }
 }
 
@@ -372,7 +415,7 @@ const executeDeleteMember = async () => {
   }
 }
 
-// VIEW MEMBER AVAILABILITY
+// VIEW MEMBER AVAILABILITY (QUERIES ALL COLUMNS TOLERATING is_free & is_available)
 const openAvailabilityView = async (member) => {
   selectedMember.value = member
   showAvailabilityModal.value = true
@@ -382,14 +425,27 @@ const openAvailabilityView = async (member) => {
   try {
     const { data, error } = await supabase
       .from('member_availability')
-      .select('day_of_week, time_slot, is_available')
+      .select('*')
       .eq('user_id', member.id)
-      .eq('is_available', true)
 
     if (error) throw error
 
     if (data && data.length > 0) {
-      memberAvailabilitySlots.value = data.map(d => `${d.day_of_week.toUpperCase()} • ${d.time_slot}`)
+      // Tolerate both is_free and is_available schema variants
+      const freeSlots = data.filter(d => d.is_free !== false && d.is_available !== false)
+      
+      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      const sortedSlots = [...freeSlots].sort((a, b) => {
+        const idxA = dayOrder.indexOf((a.day_of_week || '').toLowerCase())
+        const idxB = dayOrder.indexOf((b.day_of_week || '').toLowerCase())
+        return idxA - idxB
+      })
+
+      memberAvailabilitySlots.value = sortedSlots.map(d => {
+        const rawDay = d.day_of_week || ''
+        const day = rawDay ? rawDay.charAt(0).toUpperCase() + rawDay.slice(1).toLowerCase() : 'Any Day'
+        return `${day} • ${d.time_slot || 'All Day'}`
+      })
     }
   } catch (err) {
     console.error('Error fetching member availability:', err)
@@ -459,51 +515,40 @@ onUnmounted(() => {
       </div>
     </Transition>
 
-    <!-- 1. PINNED 7 EXECUTIVE OFFICERS CARDS -->
-    <section class="space-y-3" aria-label="Executive Leadership Section">
+    <!-- 1. PINNED ACTIVE EXECUTIVE OFFICERS CARDS (NO BLANK TABS, NO '(7 Posts)') -->
+    <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Executive Leadership Section">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
           <Crown class="w-4 h-4 text-amber-500" />
           <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
-            Band Leadership & Executive Officers (7 Posts)
+            Band Leadership & Executive Officers
           </h2>
         </div>
         <span class="text-[11px] font-bold text-slate-400 dark:text-neutral-500">
-          Single-Officer Hierarchy
+          {{ pinnedLeadership.length }} Active {{ pinnedLeadership.length === 1 ? 'Officer' : 'Officers' }}
         </span>
       </div>
 
-      <!-- Responsive Grid for Officers: 1 col (xs), 2 cols (sm), 3 cols (md), 4 cols (lg/xl) -->
+      <!-- Responsive Grid: Only Active Appointed Officers Rendered -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
         <div 
           v-for="pos in pinnedLeadership" 
           :key="pos.key"
-          class="rounded-3xl p-4 border transition-all duration-200 flex flex-col justify-between"
-          :class="pos.officer 
-            ? 'bg-white dark:bg-[#1c1c1e] border-slate-200/90 dark:border-neutral-800 shadow-sm hover:border-blue-500/50' 
-            : 'bg-slate-50/60 dark:bg-[#1c1c1e]/40 border-dashed border-slate-300 dark:border-neutral-800'"
+          class="rounded-3xl p-4 border transition-all duration-200 flex flex-col justify-between bg-white dark:bg-[#1c1c1e] border-slate-200/90 dark:border-neutral-800 shadow-sm hover:border-blue-500/50"
         >
           <div>
             <!-- Officer Title Badge -->
             <div class="flex items-center justify-between gap-2 mb-3">
-              <span 
-                class="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg tracking-wider"
-                :class="pos.officer 
-                  ? 'bg-blue-600 text-white shadow-xs' 
-                  : 'bg-slate-200 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400'"
-              >
+              <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg tracking-wider bg-blue-600 text-white shadow-xs">
                 {{ pos.title }}
               </span>
-              <span v-if="pos.officer" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
                 Active
-              </span>
-              <span v-else class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
-                Vacant
               </span>
             </div>
 
             <!-- Musician Details -->
-            <div v-if="pos.officer" class="flex items-start space-x-3">
+            <div class="flex items-start space-x-3">
               <div class="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
                 <img v-if="pos.officer.profile_picture" :src="pos.officer.profile_picture" :alt="pos.officer.name" class="w-full h-full object-cover" />
                 <span v-else>{{ pos.officer.avatar }}</span>
@@ -526,21 +571,10 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-
-            <!-- Vacant Placeholder -->
-            <div v-else class="flex items-center space-x-3 py-1">
-              <div class="w-12 h-12 rounded-2xl border border-dashed border-slate-300 dark:border-neutral-700 bg-slate-100/60 dark:bg-[#27272a]/50 text-slate-400 flex items-center justify-center font-black text-xs shrink-0">
-                ?
-              </div>
-              <div class="min-w-0">
-                <p class="font-bold text-xs text-slate-700 dark:text-neutral-300">Position Unassigned</p>
-                <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Appointment pending</p>
-              </div>
-            </div>
           </div>
 
           <!-- Bottom Action for Officer Card -->
-          <div v-if="pos.officer" class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
+          <div class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(pos.officer)"
               type="button"
@@ -727,9 +761,22 @@ onUnmounted(() => {
                 </div>
               </td>
 
-              <!-- Section / Instrument -->
-              <td class="py-3.5 px-4 font-bold text-slate-700 dark:text-neutral-300 capitalize">
-                {{ member.instrument }}
+              <!-- Section / Instrument (Editable by Super Admin) -->
+              <td class="py-3.5 px-4">
+                <select 
+                  v-if="store.isSuperAdmin"
+                  :value="member.instrument"
+                  @change="e => changeInstrument(member, e.target.value)"
+                  class="bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[36px] max-w-[170px] cursor-pointer"
+                  title="Change Musician Instrument Section"
+                >
+                  <option v-for="sec in sections.filter(s => s !== 'All')" :key="sec" :value="sec">
+                    {{ sec }}
+                  </option>
+                </select>
+                <span v-else class="font-bold text-slate-700 dark:text-neutral-300 capitalize">
+                  {{ member.instrument }}
+                </span>
               </td>
 
               <!-- Rank (Toggleable if Super Admin) -->
@@ -785,10 +832,10 @@ onUnmounted(() => {
 
                   <!-- Executive Title Selector -->
                   <select 
-                    :value="member.executive_title || ''"
+                    :value="normalizeTitle(member.executive_title) || ''"
                     @change="e => assignExecutiveTitle(member, e.target.value)"
                     class="bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[36px]"
-                    title="Assign Executive Title"
+                    title="Assign Executive Officer Title"
                   >
                     <option value="">None (Regular Musician)</option>
                     <option value="president">Band President</option>
@@ -902,7 +949,7 @@ onUnmounted(() => {
               <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Officer Title</label>
                 <select 
-                  :value="member.executive_title || ''"
+                  :value="normalizeTitle(member.executive_title) || ''"
                   @change="e => assignExecutiveTitle(member, e.target.value)"
                   class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-[11px] rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
                 >
@@ -914,6 +961,20 @@ onUnmounted(() => {
                   <option value="auditor">Auditor</option>
                   <option value="resident_conductor">Conductor</option>
                   <option value="band_manager">Manager</option>
+                </select>
+              </div>
+
+              <!-- Instrument Select for Super Admin on Mobile -->
+              <div class="col-span-2">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Instrument Section</label>
+                <select 
+                  :value="member.instrument"
+                  @change="e => changeInstrument(member, e.target.value)"
+                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-[11px] rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
+                >
+                  <option v-for="sec in sections.filter(s => s !== 'All')" :key="sec" :value="sec">
+                    {{ sec }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -994,14 +1055,17 @@ onUnmounted(() => {
             <span 
               v-for="slot in memberAvailabilitySlots" 
               :key="slot" 
-              class="text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-xl border border-emerald-300 dark:border-emerald-800/40"
+              class="text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800/40 shadow-xs"
             >
               ✓ {{ slot }}
             </span>
           </div>
 
-          <div v-else class="p-4 bg-slate-50 dark:bg-[#27272a] rounded-2xl text-center text-xs text-slate-400 font-bold">
-            No active availability slots registered for this week yet.
+          <div v-else class="p-4 bg-slate-50 dark:bg-[#27272a] rounded-2xl text-center text-xs text-slate-400 font-bold space-y-1">
+            <p>No active free slots registered for this week yet.</p>
+            <p v-if="selectedMember?.id === store.user?.id" class="text-[11px] text-blue-500">
+              You can set your weekly slots in Profile Settings.
+            </p>
           </div>
         </div>
 

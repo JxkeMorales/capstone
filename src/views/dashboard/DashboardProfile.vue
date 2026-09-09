@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { User, Phone, Music, Activity, Clock, CheckCircle2, Check, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2, Settings, ShieldCheck } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
@@ -280,6 +280,10 @@ const openEditProfile = (initialTab = 'profile') => {
 }
 
 const imgLoadError = ref(false)
+
+watch(() => store.profile?.profile_picture, () => {
+  imgLoadError.value = false
+})
 
 onMounted(async () => {
   fetchAvailability()

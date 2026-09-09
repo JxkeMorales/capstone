@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
@@ -457,13 +457,18 @@ onMounted(() => {
     .subscribe()
 
   // Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
-  if (store.user?.id) {
-    userProfileSub = supabase.channel(`user_profile_${store.user.id}`)
+  const setupUserProfileSub = (userId) => {
+    if (!userId) return
+    if (userProfileSub) {
+      supabase.removeChannel(userProfileSub)
+      userProfileSub = null
+    }
+    userProfileSub = supabase.channel(`user_profile_${userId}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'profiles',
-        filter: `id=eq.${store.user.id}`
+        filter: `id=eq.${userId}`
       }, payload => {
         if (payload.new) {
           store.profile = payload.new
@@ -483,6 +488,16 @@ onMounted(() => {
       })
       .subscribe()
   }
+
+  if (store.user?.id) {
+    setupUserProfileSub(store.user.id)
+  }
+
+  watch(() => store.user?.id, (newId) => {
+    if (newId) {
+      setupUserProfileSub(newId)
+    }
+  })
 
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     syncPushSubscription()

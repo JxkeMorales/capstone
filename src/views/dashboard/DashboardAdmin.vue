@@ -205,14 +205,16 @@ const executeRejectAndDeleteUser = async () => {
 // 7. AVAILABILITY CHECKER
 const runAvailabilityCheck = async () => {
   try {
-    const { data: availData } = await supabase
+    const { data: availData, error } = await supabase
       .from('member_availability')
-      .select('user_id')
+      .select('*')
       .eq('day_of_week', selectedDayNeeded.value.toLowerCase())
       .eq('time_slot', selectedSlotNeeded.value.split(' ')[0])
-      .eq('is_available', true)
 
-    availableUserIds.value = new Set(availData ? availData.map(a => a.user_id) : [])
+    if (error) console.warn('Availability query notice:', error)
+
+    const freeRecords = availData ? availData.filter(a => a.is_free !== false && a.is_available !== false) : []
+    availableUserIds.value = new Set(freeRecords.map(a => a.user_id))
 
     let filtered = memberRoster.value
     if (selectedInstrumentNeeded.value !== 'All') {
