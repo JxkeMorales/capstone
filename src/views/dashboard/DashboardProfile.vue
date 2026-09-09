@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { User, Phone, Music, Activity, Clock, CheckCircle2, Check, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2 } from 'lucide-vue-next'
+import { useRouter, useRoute } from 'vue-router'
+import { User, Phone, Music, Activity, Clock, CheckCircle2, Check, LogOut, Edit3, KeyRound, Eye, EyeOff, X, Calendar, AlertCircle, Camera, Loader2, Settings, ShieldCheck } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 
 const router = useRouter()
+const route = useRoute()
 const store = useMainStore()
 const uiStore = useUIStore()
 
@@ -14,16 +15,20 @@ const isSaving = ref(false)
 const saveSuccess = ref(false)
 const availability = ref({})
 
-// Profile Editing Modal State
+// Settings Pop-up Modal State
 const showEditProfileModal = ref(false)
+const activeSettingsTab = ref('profile') // 'profile' | 'availability' | 'security'
 const editFullName = ref('')
 const editPrimaryInstrument = ref('')
 const editSecondaryInstrument = ref('None / N/A')
 const editContactNumber = ref('')
 const isUpdatingProfile = ref(false)
 
-// Password Change State within Profile
-const showPasswordSection = ref(false)
+// Sign Out Confirmation Warning State
+const showSignOutModal = ref(false)
+
+// Password Change State within Settings
+const showPasswordSection = ref(true)
 const newPassword = ref('')
 const confirmPassword = ref('')
 const showNewPass = ref(false)
@@ -186,35 +191,6 @@ const saveAvailability = async () => {
   }
 }
 
-const openEditProfile = () => {
-  editFullName.value = store.profile?.full_name || ''
-  const currentInst = store.profile?.instrument || ''
-  
-  if (currentInst.includes(' + ')) {
-    const parts = currentInst.split(' + ')
-    editPrimaryInstrument.value = instrumentList.includes(parts[0]) ? parts[0] : 'Trumpet'
-    editSecondaryInstrument.value = instrumentList.includes(parts[1]) ? parts[1] : 'None / N/A'
-  } else {
-    // Legacy slash support or single instrument
-    const possibleMatch = instrumentList.find(inst => currentInst.startsWith(inst + ' / ') && currentInst !== inst)
-    if (possibleMatch) {
-       editPrimaryInstrument.value = possibleMatch
-       const secondary = currentInst.substring(possibleMatch.length + 3)
-       editSecondaryInstrument.value = instrumentList.includes(secondary) ? secondary : 'None / N/A'
-    } else {
-       editPrimaryInstrument.value = instrumentList.includes(currentInst) ? currentInst : 'Trumpet'
-       editSecondaryInstrument.value = 'None / N/A'
-    }
-  }
-  editContactNumber.value = store.profile?.contact_number || ''
-  showPasswordSection.value = false
-  newPassword.value = ''
-  confirmPassword.value = ''
-  passwordChangeSuccess.value = false
-  passwordChangeError.value = ''
-  showEditProfileModal.value = true
-}
-
 const handleUpdateProfile = async () => {
   isUpdatingProfile.value = true
   passwordChangeError.value = ''
@@ -265,9 +241,42 @@ const handleUpdateProfile = async () => {
   }
 }
 
+const triggerSignOut = () => {
+  showSignOutModal.value = true
+}
+
 const handleSignOut = async () => {
+  showSignOutModal.value = false
   await store.signOut()
   router.push('/')
+}
+
+const openEditProfile = (initialTab = 'profile') => {
+  activeSettingsTab.value = initialTab
+  editFullName.value = store.profile?.full_name || ''
+  const currentInst = store.profile?.instrument || ''
+  
+  if (currentInst.includes(' + ')) {
+    const parts = currentInst.split(' + ')
+    editPrimaryInstrument.value = instrumentList.includes(parts[0]) ? parts[0] : 'Trumpet'
+    editSecondaryInstrument.value = instrumentList.includes(parts[1]) ? parts[1] : 'None / N/A'
+  } else {
+    const possibleMatch = instrumentList.find(inst => currentInst.startsWith(inst + ' / ') && currentInst !== inst)
+    if (possibleMatch) {
+       editPrimaryInstrument.value = possibleMatch
+       const secondary = currentInst.substring(possibleMatch.length + 3)
+       editSecondaryInstrument.value = instrumentList.includes(secondary) ? secondary : 'None / N/A'
+    } else {
+       editPrimaryInstrument.value = instrumentList.includes(currentInst) ? currentInst : 'Trumpet'
+       editSecondaryInstrument.value = 'None / N/A'
+    }
+  }
+  editContactNumber.value = store.profile?.contact_number || ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  passwordChangeSuccess.value = false
+  passwordChangeError.value = ''
+  showEditProfileModal.value = true
 }
 
 const imgLoadError = ref(false)
@@ -276,7 +285,11 @@ onMounted(async () => {
   fetchAvailability()
   imgLoadError.value = false
   await store.fetchProfile(true)
+  if (route.query.settings === 'true' || route.query.modal === 'true') {
+    openEditProfile()
+  }
 })
+
 // ==========================================
 // AVATAR UPLOAD LOGIC
 // ==========================================
@@ -349,17 +362,26 @@ const handleFileUpload = async (event) => {
     
     <header class="pt-1 flex items-center justify-between">
       <h1 class="text-2xl font-black text-slate-900 dark:text-white">My Profile</h1>
-      <button 
-        @click="handleSignOut"
-        type="button"
-        class="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 px-3.5 py-2 rounded-xl flex items-center hover:bg-rose-100 transition-colors min-h-[44px] cursor-pointer"
-        aria-label="Sign Out of Account"
-      >
-        <LogOut class="w-3.5 h-3.5 mr-1" /> Sign Out
-      </button>
+      <div class="flex items-center space-x-2">
+        <button 
+          @click="openEditProfile('profile')"
+          type="button"
+          class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/40 px-3.5 py-2 rounded-xl flex items-center hover:bg-blue-100 transition-colors min-h-[44px] cursor-pointer"
+        >
+          <Settings class="w-3.5 h-3.5 mr-1" /> Profile Settings
+        </button>
+        <button 
+          @click="triggerSignOut"
+          type="button"
+          class="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 px-3.5 py-2 rounded-xl flex items-center hover:bg-rose-100 transition-colors min-h-[44px] cursor-pointer"
+          aria-label="Sign Out of Account"
+        >
+          <LogOut class="w-3.5 h-3.5 mr-1" /> Sign Out
+        </button>
+      </div>
     </header>
 
-    <!-- Profile Info Card with Edit Trigger (Lighter Matte Black) -->
+    <!-- Profile Info Card with Edit Trigger -->
     <section class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
@@ -399,10 +421,11 @@ const handleFileUpload = async (event) => {
         </div>
 
         <button 
-          @click="openEditProfile"
+          @click="openEditProfile('profile')"
           type="button"
           class="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
           aria-label="Edit Profile Details"
+          title="Edit Profile Settings"
         >
           <Edit3 class="w-5 h-5" />
         </button>
@@ -430,7 +453,7 @@ const handleFileUpload = async (event) => {
           <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Tap slots when FREE. Saved directly to database.</p>
         </div>
         <button 
-          @click="saveAvailability"
+          @click="saveAvailability" 
           :disabled="isSaving"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-xs active:scale-95 transition-all flex items-center min-h-[44px] cursor-pointer"
         >
@@ -475,128 +498,209 @@ const handleFileUpload = async (event) => {
       </div>
     </section>
 
-    <!-- EDIT PROFILE & SECURE PASSWORD CHANGE MODAL (Lighter Matte Black) -->
+    <!-- COMPLETE POP-UP SETTINGS MODAL (Profile, Phone, Instruments, Password, Availability Grid) -->
     <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[88vh] flex flex-col">
         
+        <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <h3 class="font-black text-base text-slate-900 dark:text-white">Edit Profile & Credentials</h3>
+          <div class="flex items-center space-x-2">
+            <Settings class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h3 class="font-black text-base text-slate-900 dark:text-white">Profile & Account Settings</h3>
+          </div>
           <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
             <X class="w-5 h-5" />
           </button>
         </div>
 
-        <div class="overflow-y-auto flex-1 space-y-4 pr-1">
-          <!-- Full Name -->
-          <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Full Name</label>
-            <input 
-              v-model="editFullName" 
-              type="text" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-            >
-          </div>
-
-          <!-- Primary Instrument -->
-          <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Primary Instrument</label>
-            <select 
-              v-model="editPrimaryInstrument" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-            >
-              <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
-            </select>
-          </div>
-
-          <!-- Secondary Instrument -->
-          <div class="space-y-1 text-left">
-            <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Secondary Instrument (Optional)</label>
-            <select 
-              v-model="editSecondaryInstrument" 
-              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-            >
-              <option value="None / N/A">None / N/A</option>
-              <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
-            </select>
-          </div>
-
-          <!-- Philippine Mobile Number -->
-          <div class="space-y-1 text-left">
-            <div class="flex justify-between items-center">
-              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Contact Number (11 digits)</label>
-              <span class="text-[10px] font-black" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
-                {{ editContactNumber.length }}/11
-              </span>
-            </div>
-            <input 
-              :value="editContactNumber" 
-              @input="handlePhoneEditInput" 
-              type="tel" 
-              maxlength="11"
-              placeholder="09123456789"
-              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-              :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
-            >
-          </div>
-
-          <!-- SECURE PASSWORD CHANGE COLLAPSIBLE SECTION -->
-          <div class="pt-2 border-t border-slate-100 dark:border-neutral-800">
-            <button 
-              type="button" 
-              @click="showPasswordSection = !showPasswordSection"
-              class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-[#27272a] text-xs font-black text-slate-800 dark:text-neutral-200 min-h-[44px] cursor-pointer"
-            >
-              <span class="flex items-center"><KeyRound class="w-4 h-4 mr-2 text-blue-500" /> Change Account Password</span>
-              <span>{{ showPasswordSection ? '▲' : '▼' }}</span>
-            </button>
-
-            <div v-if="showPasswordSection" class="mt-3 space-y-3 p-3 bg-slate-50 dark:bg-[#18181b] rounded-2xl border border-slate-200 dark:border-neutral-800">
-              <div class="space-y-1">
-                <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">New Password</label>
-                <div class="relative">
-                  <input 
-                    v-model="newPassword" 
-                    :type="showNewPass ? 'text' : 'password'" 
-                    placeholder="Min. 8 characters"
-                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
-                  >
-                  <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400">
-                    <Eye v-if="!showNewPass" class="w-3.5 h-3.5" />
-                    <EyeOff v-else class="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <div class="space-y-1">
-                <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">Confirm New Password</label>
-                <div class="relative">
-                  <input 
-                    v-model="confirmPassword" 
-                    :type="showConfirmPass ? 'text' : 'password'" 
-                    placeholder="Re-type new password"
-                    class="w-full p-2.5 pr-9 bg-white dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[40px]"
-                  >
-                  <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400">
-                    <Eye v-if="!showConfirmPass" class="w-3.5 h-3.5" />
-                    <EyeOff v-else class="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <p v-if="newPassword && newPassword === confirmPassword" class="text-[10px] font-bold text-emerald-500">
-                ✓ Passwords match!
-              </p>
-            </div>
-          </div>
+        <!-- Setting Navigation Tabs -->
+        <div class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1 gap-1">
+          <button 
+            type="button" 
+            @click="activeSettingsTab = 'profile'"
+            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+          >
+            Profile & Instruments
+          </button>
+          <button 
+            type="button" 
+            @click="activeSettingsTab = 'availability'"
+            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+          >
+            Availability Grid
+          </button>
+          <button 
+            type="button" 
+            @click="activeSettingsTab = 'security'"
+            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+          >
+            Password
+          </button>
         </div>
 
+        <!-- TAB CONTENT AREA -->
+        <div class="overflow-y-auto flex-1 space-y-4 pr-1">
+
+          <!-- TAB 1: PROFILE, PHONE & INSTRUMENTS -->
+          <div v-if="activeSettingsTab === 'profile'" class="space-y-4">
+            <!-- Full Name -->
+            <div class="space-y-1 text-left">
+              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Full Name</label>
+              <input 
+                v-model="editFullName" 
+                type="text" 
+                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              >
+            </div>
+
+            <!-- Primary Instrument -->
+            <div class="space-y-1 text-left">
+              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Primary Instrument</label>
+              <select 
+                v-model="editPrimaryInstrument" 
+                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              >
+                <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
+              </select>
+            </div>
+
+            <!-- Secondary Instrument -->
+            <div class="space-y-1 text-left">
+              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Secondary Instrument (Optional)</label>
+              <select 
+                v-model="editSecondaryInstrument" 
+                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+              >
+                <option value="None / N/A">None / N/A</option>
+                <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
+              </select>
+            </div>
+
+            <!-- Philippine Mobile Phone Number -->
+            <div class="space-y-1 text-left">
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Phone Number (11 digits)</label>
+                <span class="text-[10px] font-black" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
+                  {{ editContactNumber.length }}/11
+                </span>
+              </div>
+              <input 
+                :value="editContactNumber" 
+                @input="handlePhoneEditInput" 
+                type="tel" 
+                maxlength="11"
+                placeholder="09123456789"
+                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
+              >
+            </div>
+          </div>
+
+          <!-- TAB 2: AVAILABILITY GRID (Settings Pop-up integration) -->
+          <div v-else-if="activeSettingsTab === 'availability'" class="space-y-3">
+            <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300">
+              <p class="font-bold">Weekly Schedule Availability</p>
+              <p class="text-[11px] opacity-90 mt-0.5">Toggle slots between FREE and busy. The Band Secretary uses this grid to schedule gigs and check musician availability.</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-x-auto">
+              <table class="w-full text-center border-collapse text-xs">
+                <thead class="bg-slate-50 dark:bg-[#27272a]">
+                  <tr>
+                    <th class="p-2 text-left text-[10px] font-black text-slate-400 uppercase">Slot</th>
+                    <th v-for="d in weekDays" :key="d.key" class="p-2 text-[10px] font-black text-slate-700 dark:text-neutral-200">
+                      {{ d.name }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
+                  <tr v-for="slot in timeSlots" :key="slot">
+                    <td class="p-2 text-left font-bold text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
+                      {{ slot.split(' ')[0] }}
+                    </td>
+                    <td v-for="d in weekDays" :key="d.key" class="p-1">
+                      <button 
+                        @click="toggleSlot(d.key, slot)"
+                        type="button"
+                        class="w-full py-1.5 rounded-lg font-black text-[10px] transition-all cursor-pointer min-h-[36px] flex items-center justify-center"
+                        :class="isSlotFree(d.key, slot) 
+                          ? 'bg-blue-600 text-white shadow-xs' 
+                          : 'bg-slate-100 dark:bg-[#27272a] text-slate-400 hover:bg-slate-200'"
+                      >
+                        {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button 
+              @click="saveAvailability" 
+              :disabled="isSaving"
+              type="button" 
+              class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center min-h-[44px] cursor-pointer"
+            >
+              <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1 text-white" />
+              {{ isSaving ? 'Saving Grid...' : saveSuccess ? '✓ Availability Grid Saved!' : 'Save Availability Grid' }}
+            </button>
+          </div>
+
+          <!-- TAB 3: PASSWORD CHANGE -->
+          <div v-else-if="activeSettingsTab === 'security'" class="space-y-4">
+            <div class="space-y-1">
+              <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">New Password</label>
+              <div class="relative">
+                <input 
+                  v-model="newPassword" 
+                  :type="showNewPass ? 'text' : 'password'" 
+                  placeholder="Min. 8 characters"
+                  class="w-full p-3 pr-10 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                >
+                <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
+                  <Eye v-if="!showNewPass" class="w-4 h-4" />
+                  <EyeOff v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">Confirm New Password</label>
+              <div class="relative">
+                <input 
+                  v-model="confirmPassword" 
+                  :type="showConfirmPass ? 'text' : 'password'" 
+                  placeholder="Re-type new password"
+                  class="w-full p-3 pr-10 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                >
+                <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
+                  <Eye v-if="!showConfirmPass" class="w-4 h-4" />
+                  <EyeOff v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <p v-if="newPassword && newPassword === confirmPassword" class="text-xs font-bold text-emerald-500">
+              ✓ Passwords match!
+            </p>
+            <p v-if="passwordChangeError" class="text-xs font-bold text-rose-500">
+              {{ passwordChangeError }}
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer Actions -->
         <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button 
             @click="showEditProfileModal = false" 
             type="button" 
             class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
           >
-            Cancel
+            Close
           </button>
           <button 
             @click="handleUpdateProfile" 
@@ -604,10 +708,39 @@ const handleFileUpload = async (event) => {
             type="button" 
             class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
           >
-            {{ isUpdatingProfile ? 'Saving...' : 'Save Changes' }}
+            {{ isUpdatingProfile ? 'Saving...' : 'Save Settings' }}
           </button>
         </div>
 
+      </div>
+    </div>
+
+    <!-- SIGN OUT CONFIRMATION MODAL -->
+    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center mx-auto text-rose-500">
+          <LogOut class="w-6 h-6" />
+        </div>
+        <div class="space-y-1">
+          <h3 class="font-black text-lg text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button 
+            @click="showSignOutModal = false" 
+            type="button" 
+            class="py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-black text-xs rounded-xl min-h-[44px] cursor-pointer transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="handleSignOut" 
+            type="button" 
+            class="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-md min-h-[44px] cursor-pointer transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
 

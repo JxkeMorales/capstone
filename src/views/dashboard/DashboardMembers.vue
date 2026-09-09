@@ -341,9 +341,18 @@ onUnmounted(() => {
 
     
 
-    <!-- Member Directory List (Lighter Matte Black) -->
+    <!-- Member Directory List (Scrollable Roster Container) -->
     <section class="space-y-3">
-      <div v-if="sortedAndFilteredRoster.length > 0" class="grid grid-cols-1 gap-3">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs font-bold text-slate-500 dark:text-neutral-400">
+          Showing {{ sortedAndFilteredRoster.length }} Musicians
+        </span>
+        <span v-if="sortedAndFilteredRoster.length > 6" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
+          Scrollable roster
+        </span>
+      </div>
+
+      <div v-if="sortedAndFilteredRoster.length > 0" class="max-h-[620px] sm:max-h-[680px] overflow-y-auto pr-1 space-y-3">
         <div 
           v-for="member in sortedAndFilteredRoster" 
           :key="member.id"

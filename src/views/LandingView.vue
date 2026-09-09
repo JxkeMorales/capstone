@@ -10,11 +10,124 @@ import {
   Shield, 
   Award, 
   Sparkles, 
-  Activity
+  Activity,
+  CheckCircle2,
+  UserCheck
 } from 'lucide-vue-next'
+import { supabase } from '@/supabase'
 
 const router = useRouter()
 const isDark = ref(true)
+
+const defaultPositions = [
+  {
+    key: 'president',
+    titleCode: 'BAND PRESIDENT',
+    role: 'Band President',
+    responsibility: 'Executive leadership, civic engagements, and official band representation.',
+    defaultInstrument: 'Principal Brass / Winds',
+  },
+  {
+    key: 'vice_president',
+    titleCode: 'BAND VICE PRESIDENT',
+    role: 'Band Vice President',
+    responsibility: 'Assists band governance, coordinates sectional leaders and rehearsals.',
+    defaultInstrument: 'Woodwinds / Ensemble',
+  },
+  {
+    key: 'secretary',
+    titleCode: 'BAND SECRETARY',
+    role: 'Band Secretary',
+    responsibility: 'Roster management, gig call-time schedules, and member availability.',
+    defaultInstrument: 'Percussion / Section Lead',
+  },
+  {
+    key: 'treasurer',
+    titleCode: 'BAND TREASURER',
+    role: 'Band Treasurer',
+    responsibility: 'Band financial accountability, instrument care funds, and member logistics.',
+    defaultInstrument: 'High Winds / Brass',
+  },
+  {
+    key: 'admin',
+    titleCode: 'BAND ADMINISTRATOR',
+    role: 'Band Administrator',
+    responsibility: 'IT system operations, user account verifications, and digital registry.',
+    defaultInstrument: 'Operations & Baton',
+  }
+]
+
+// Officers Data (Initialized with clean placeholders until verified records load)
+const officers = ref(
+  defaultPositions.map(pos => ({
+    id: pos.key,
+    titleCode: pos.titleCode,
+    role: pos.role,
+    name: 'Position To Be Appointed',
+    instrument: pos.defaultInstrument,
+    rank: 'Official Officer',
+    reliability: '100% Verified',
+    responsibility: pos.responsibility,
+    image: null,
+    isAssigned: false
+  }))
+)
+
+const fetchOfficers = async () => {
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, instrument, role, executive_title, rank, reliability_score, profile_picture')
+      .eq('is_verified', true)
+
+    if (data && data.length > 0) {
+      const pres = data.find(p => p.executive_title === 'president')
+      const vp = data.find(p => p.executive_title === 'vice_president')
+      const sec = data.find(p => p.role === 'secretary_admin')
+      const treas = data.find(p => p.executive_title === 'treasurer')
+      const admin = data.find(p => p.role === 'super_admin')
+
+      const mapOfficer = (pos, member) => {
+        if (member) {
+          return {
+            id: member.id,
+            titleCode: pos.titleCode,
+            role: pos.role,
+            name: member.full_name,
+            instrument: member.instrument || pos.defaultInstrument,
+            rank: member.rank ? `${member.rank} Musician` : 'Senior Musician',
+            reliability: member.reliability_score ? `${member.reliability_score}% Verified` : '100% Verified',
+            responsibility: pos.responsibility,
+            image: member.profile_picture || null,
+            isAssigned: true
+          }
+        }
+        return {
+          id: pos.key,
+          titleCode: pos.titleCode,
+          role: pos.role,
+          name: 'Position To Be Appointed',
+          instrument: pos.defaultInstrument,
+          rank: 'Officer Appointment Pending',
+          reliability: 'Pending Assignment',
+          responsibility: pos.responsibility,
+          image: null,
+          isAssigned: false
+        }
+      }
+
+      officers.value = [
+        mapOfficer(defaultPositions[0], pres),
+        mapOfficer(defaultPositions[1], vp),
+        mapOfficer(defaultPositions[2], sec),
+        mapOfficer(defaultPositions[3], treas),
+        mapOfficer(defaultPositions[4], admin)
+      ]
+    }
+  } catch (err) {
+    console.warn('Could not fetch officers for landing page:', err)
+  }
+}
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('smartband_theme')
@@ -26,6 +139,7 @@ onMounted(() => {
     isDark.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   }
   window.addEventListener('keydown', handleKeyDown)
+  fetchOfficers()
 })
 
 onUnmounted(() => {
@@ -46,110 +160,6 @@ const toggleTheme = () => {
 const goToLogin = () => {
   router.push('/login')
 }
-
-// Officers Data
-const officers = ref([
-  {
-    id: 1,
-    titleCode: 'BAND PRES',
-    role: 'Band President',
-    name: 'Capt. Danilo Rivera',
-    instrument: 'Lead Trumpet & Principal Brass',
-    image: '/officers/officer_2.jpg',
-    tenure: '18 Years Active',
-    reliability: '99.4%',
-    specialty: 'Executive Governance & Civic Parades',
-    quote: 'Guiding Band 1870 with discipline, honor, and passion for our municipal musical heritage.',
-    bio: 'Oversees executive operations, public representation, and official engagements of Band 1870. Coordinates with municipal authorities, event sponsors, and festival committees.',
-    stats: [
-      { label: 'Tenure', value: '18 yrs' },
-      { label: 'Section', value: 'Lead Trumpet' },
-      { label: 'Reliability', value: '99.4%' },
-      { label: 'Rank', value: 'Executive 01' }
-    ],
-    tags: ['Executive Board', 'Principal Brass', 'Master Coordinator']
-  },
-  {
-    id: 2,
-    titleCode: 'BAND VP',
-    role: 'Band Vice President',
-    name: 'Maria Elena Ramos',
-    instrument: 'Clarinet & Woodwind Ensemble',
-    image: '/officers/officer_3.jpg',
-    tenure: '14 Years Active',
-    reliability: '98.9%',
-    specialty: 'Sectionals & Repertoire Tuning',
-    quote: 'Harmonizing our youthful talents with timeless classic band literature.',
-    bio: 'Assists the President in daily operational logistics, directs sectional woodwind rehearsals, and serves as primary liaison between section leaders and executive administration.',
-    stats: [
-      { label: 'Tenure', value: '14 yrs' },
-      { label: 'Section', value: 'Woodwinds' },
-      { label: 'Reliability', value: '98.9%' },
-      { label: 'Rank', value: 'Executive 02' }
-    ],
-    tags: ['Executive Board', 'Woodwind Lead', 'Repertoire Committee']
-  },
-  {
-    id: 3,
-    titleCode: 'BAND SEC',
-    role: 'Band Secretary',
-    name: 'Arnel Bautista',
-    instrument: 'Snare & Field Drill Maces',
-    image: '/officers/officer_4.jpg',
-    tenure: '11 Years Active',
-    reliability: '99.6%',
-    specialty: 'Roster Call-Times & Field Marshalling',
-    quote: 'Precise schedules, unified cadence, and transparent communication across all sections.',
-    bio: 'Maintains official member directories, monitors gig call-times and rehearsal logs, handles official correspondence, and oversees marching parade field drills.',
-    stats: [
-      { label: 'Tenure', value: '11 yrs' },
-      { label: 'Section', value: 'Percussion' },
-      { label: 'Reliability', value: '99.6%' },
-      { label: 'Rank', value: 'Operations 01' }
-    ],
-    tags: ['Field Marshall', 'Call-Time Logs', 'Roster Master']
-  },
-  {
-    id: 4,
-    titleCode: 'BAND TREAS',
-    role: 'Band Treasurer',
-    name: 'Carmela De Leon',
-    instrument: 'Flute & High Winds',
-    image: '/officers/officer_5.jpg',
-    tenure: '12 Years Active',
-    reliability: '100%',
-    specialty: 'Financial Auditing & Uniform Logistics',
-    quote: 'Equipping every musician with pride, reliable instruments, and prompt honorariums.',
-    bio: 'Manages band finances, member honorarium disbursements, uniform allocations, and instrument maintenance funds with transparent accountability.',
-    stats: [
-      { label: 'Tenure', value: '12 yrs' },
-      { label: 'Section', value: 'High Winds' },
-      { label: 'Reliability', value: '100%' },
-      { label: 'Rank', value: 'Finance 01' }
-    ],
-    tags: ['Finance Head', 'Quartermaster', 'Audits']
-  },
-  {
-    id: 5,
-    titleCode: 'BAND ADMIN',
-    role: 'Band Administrator',
-    name: 'Maestro Ricardo Santos',
-    instrument: 'French Horn & Conducting Baton',
-    image: '/officers/officer_1.jpg',
-    tenure: '25 Years Active',
-    reliability: '99.8%',
-    specialty: 'System Operations, Logistics & Music Direction',
-    quote: 'Translating tradition into excellence through digital precision and musical rigor.',
-    bio: 'Oversees digital management systems, logistical preparation for municipal tours, equipment inventories, and administrative coordination for Band 1870.',
-    stats: [
-      { label: 'Tenure', value: '25 yrs' },
-      { label: 'Section', value: 'Operations' },
-      { label: 'Reliability', value: '99.8%' },
-      { label: 'Rank', value: 'System Admin' }
-    ],
-    tags: ['System Admin', 'Logistics Lead', 'Artistic Advisor']
-  }
-])
 
 const selectedIndex = ref(0)
 const currentOfficer = computed(() => officers.value[selectedIndex.value])
@@ -286,17 +296,24 @@ const handleKeyDown = (e) => {
               <!-- Carousel Cards Wrapper -->
               <div class="flex items-center justify-center space-x-3 sm:space-x-5 w-full">
                 
-                <!-- PREVIOUS CARD (Zoom in on hover like preparing to switch; switches ONLY on click) -->
+                <!-- PREVIOUS CARD -->
                 <div 
                   @click="prevOfficer"
-                  class="hidden sm:flex flex-col relative w-36 md:w-44 h-[360px] md:h-[390px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-300 dark:border-white/10 shadow-lg group opacity-60 hover:opacity-100 hover:scale-105 hover:blur-none hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/25 filter blur-[1.5px] z-10 hover:z-30"
+                  class="hidden sm:flex flex-col relative w-36 md:w-44 h-[360px] md:h-[390px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-300 dark:border-white/10 shadow-lg group opacity-60 hover:opacity-100 hover:scale-105 hover:blur-none hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/25 filter blur-[1.5px] z-10 hover:z-30 bg-slate-900"
                 >
                   <img 
+                    v-if="officers[prevIndex].image"
                     :src="officers[prevIndex].image" 
                     :alt="officers[prevIndex].name"
                     class="w-full h-full object-cover object-top brightness-90 group-hover:brightness-100 group-hover:scale-110 transition-all duration-500"
                   />
-                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-950 p-3 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-2">
+                      <Music class="w-6 h-6" />
+                    </div>
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-wider">{{ officers[prevIndex].titleCode }}</span>
+                  </div>
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none"></div>
                   
                   <!-- Top Preview Tag -->
                   <div class="absolute top-3 left-3 z-10">
@@ -325,14 +342,22 @@ const handleKeyDown = (e) => {
                   class="relative w-64 sm:w-72 md:w-80 h-[420px] sm:h-[450px] md:h-[470px] rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 transform scale-100 z-20 border-2 border-blue-500 ring-4 ring-blue-500/20 bg-slate-900 group"
                 >
                   <img 
+                    v-if="currentOfficer.image"
                     :src="currentOfficer.image" 
                     :alt="currentOfficer.name"
                     class="w-full h-full object-cover object-top brightness-95 group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 p-6 text-center">
+                    <div class="w-20 h-20 rounded-3xl bg-blue-600/20 border-2 border-blue-500/40 flex items-center justify-center text-blue-400 mb-4 shadow-xl shadow-blue-900/30">
+                      <Music class="w-10 h-10" />
+                    </div>
+                    <span class="text-xs font-black text-blue-400 uppercase tracking-widest mb-1">{{ currentOfficer.titleCode }}</span>
+                    <p class="text-base font-black text-white px-2">{{ currentOfficer.name }}</p>
+                  </div>
                   
                   <!-- Cinematic Vignette & Gradient Overlay -->
-                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                  <div class="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-transparent"></div>
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none"></div>
+                  <div class="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-transparent pointer-events-none"></div>
 
                   <!-- Top Card Badges -->
                   <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
@@ -342,13 +367,6 @@ const handleKeyDown = (e) => {
                     </span>
                     <span class="px-2.5 py-1 text-[11px] font-black font-mono tracking-widest bg-black/70 backdrop-blur-md text-white/90 rounded-lg border border-white/10">
                       0{{ selectedIndex + 1 }}/0{{ officers.length }}
-                    </span>
-                  </div>
-
-                  <!-- Card Center Subtle Accent -->
-                  <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center">
-                    <span class="text-[10px] font-mono tracking-widest text-blue-300 uppercase px-3 py-1 bg-black/60 rounded-full border border-blue-400/30 backdrop-blur-md">
-                      ACTIVE SELECTION
                     </span>
                   </div>
 
@@ -368,17 +386,24 @@ const handleKeyDown = (e) => {
                   </div>
                 </div>
 
-                <!-- NEXT CARD (Zoom in on hover like preparing to switch; switches ONLY on click) -->
+                <!-- NEXT CARD -->
                 <div 
                   @click="nextOfficer"
-                  class="hidden sm:flex flex-col relative w-36 md:w-44 h-[360px] md:h-[390px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-300 dark:border-white/10 shadow-lg group opacity-60 hover:opacity-100 hover:scale-105 hover:blur-none hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/25 filter blur-[1.5px] z-10 hover:z-30"
+                  class="hidden sm:flex flex-col relative w-36 md:w-44 h-[360px] md:h-[390px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-300 dark:border-white/10 shadow-lg group opacity-60 hover:opacity-100 hover:scale-105 hover:blur-none hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/25 filter blur-[1.5px] z-10 hover:z-30 bg-slate-900"
                 >
                   <img 
+                    v-if="officers[nextIndex].image"
                     :src="officers[nextIndex].image" 
                     :alt="officers[nextIndex].name"
                     class="w-full h-full object-cover object-top brightness-90 group-hover:brightness-100 group-hover:scale-110 transition-all duration-500"
                   />
-                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-950 p-3 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-2">
+                      <Music class="w-6 h-6" />
+                    </div>
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-wider">{{ officers[nextIndex].titleCode }}</span>
+                  </div>
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none"></div>
                   
                   <!-- Top Preview Tag -->
                   <div class="absolute top-3 left-3 z-10">
@@ -430,46 +455,48 @@ const handleKeyDown = (e) => {
                     
                     <!-- Flat "C" Bracket SVG hugging the selected circular avatar (NOT a full "O", but an open flat "C" caliper) -->
                     <svg 
-                      v-if="selectedIndex === idx"
+                      v-if="selectedIndex === idx" 
                       viewBox="0 0 68 68" 
                       class="absolute -inset-1.5 w-[76px] h-[76px] pointer-events-none text-blue-600 dark:text-blue-400 drop-shadow-[0_0_8px_rgba(37,99,235,0.6)] animate-pulse"
                     >
-                      <!-- Flat "C" caliper: horizontal top, smooth curve left, horizontal bottom -->
                       <path 
                         d="M 48 8 L 24 8 C 13 8, 7 17, 7 34 C 7 51, 13 60, 24 60 L 48 60" 
                         fill="none" 
                         stroke="currentColor" 
                         stroke-width="3.5" 
-                        stroke-linecap="round"
+                        stroke-linecap="round" 
                         stroke-linejoin="round"
                       />
-                      <!-- Flat accent end nodes -->
                       <circle cx="48" cy="8" r="2.5" fill="currentColor" />
                       <circle cx="48" cy="60" r="2.5" fill="currentColor" />
                     </svg>
 
-                    <!-- Circular Avatar Image -->
+                    <!-- Circular Avatar Image / Monogram -->
                     <div 
-                      class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden transition-all duration-300"
+                      class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center"
                       :class="selectedIndex === idx 
                         ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/30' 
                         : 'border-2 border-slate-300 dark:border-neutral-700/80 group-hover:border-blue-400'"
                     >
                       <img 
+                        v-if="officer.image"
                         :src="officer.image" 
                         :alt="officer.name" 
                         class="w-full h-full object-cover object-top"
                       />
+                      <div v-else class="w-full h-full bg-gradient-to-br from-blue-700 to-indigo-900 text-white flex items-center justify-center font-black text-xs">
+                        {{ officer.name && officer.isAssigned ? officer.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : officer.titleCode.split(' ')[1]?.slice(0,2) || 'MB' }}
+                      </div>
                     </div>
 
-                    <!-- Active Green Ping Dot -->
+                    <!-- Active Ping Dot -->
                     <span 
                       v-if="selectedIndex === idx" 
                       class="absolute -top-0.5 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#18181b]"
                     ></span>
                   </div>
 
-                  <!-- Role Pill Tag Underneath -->
+                  <!-- Complete Rank / Role Underneath -->
                   <div class="mt-1.5 text-center">
                     <span 
                       class="text-[9px] sm:text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full transition-all block truncate max-w-[70px] sm:max-w-[85px]"
@@ -477,7 +504,7 @@ const handleKeyDown = (e) => {
                         ? 'bg-blue-600 text-white shadow-xs' 
                         : 'text-slate-600 dark:text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'"
                     >
-                      {{ officer.titleCode.replace('BAND ', '') }}
+                      {{ officer.role.replace('Band ', '') }}
                     </span>
                   </div>
                 </button>
@@ -492,32 +519,31 @@ const handleKeyDown = (e) => {
 
           </div>
 
-          <!-- RIGHT SIDE: Profile Details Dossier (Dimmed Surfaces in Light Mode) -->
+          <!-- RIGHT SIDE: Concise Officer Details Dossier -->
           <div class="lg:col-span-6 xl:col-span-5">
             <div class="p-8 sm:p-10 rounded-3xl bg-[#f8fafc] dark:bg-[#18181b] border border-slate-300/80 dark:border-neutral-800 shadow-xl relative overflow-hidden transition-all duration-300">
               
-              <!-- Subtle Background Watermark Glow -->
+              <!-- Subtle Background Glow -->
               <div class="absolute -top-20 -right-20 w-56 h-56 bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
               <!-- Top Status HUD -->
               <div class="flex items-center justify-between pb-6 border-b border-slate-200/80 dark:border-neutral-800/80 mb-6">
                 <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="w-2.5 h-2.5 rounded-full" :class="currentOfficer.isAssigned ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
                   <span class="text-xs font-black font-mono uppercase tracking-widest text-slate-500 dark:text-neutral-400">
-                    STATUS: ACTIVE ROSTER
+                    {{ currentOfficer.isAssigned ? 'STATUS: VERIFIED ROSTER' : 'STATUS: APPOINTMENT PENDING' }}
                   </span>
                 </div>
                 <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-300/60 dark:border-blue-500/20">
-                  DOSSIER #0{{ selectedIndex + 1 }}
+                  OFFICER 0{{ selectedIndex + 1 }}
                 </span>
               </div>
 
-              <!-- Role & Title Display -->
-              <div class="mb-4">
-                <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs px-3 py-1.5 rounded-lg uppercase tracking-wider mb-3 shadow-md shadow-blue-500/20">
-                  <Award class="w-3.5 h-3.5" />
+              <!-- Complete Rank Name & Title Display -->
+              <div class="mb-5">
+                <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs px-3.5 py-1.5 rounded-xl uppercase tracking-wider mb-3 shadow-md shadow-blue-500/20">
+                  <Award class="w-4 h-4" />
                   <span>{{ currentOfficer.role }}</span>
-                  <span class="opacity-75 font-normal">({{ currentOfficer.titleCode }})</span>
                 </div>
                 
                 <h3 class="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight mb-2">
@@ -525,49 +551,36 @@ const handleKeyDown = (e) => {
                 </h3>
 
                 <p class="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center">
-                  <Music class="w-4 h-4 mr-2" />
-                  {{ currentOfficer.instrument }}
+                  <Music class="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span>{{ currentOfficer.instrument }}</span>
                 </p>
               </div>
 
-              <!-- Quote Card (Dimmed in light mode) -->
-              <div class="p-4 rounded-2xl bg-[#edf1f5] dark:bg-neutral-900/70 border border-slate-300/70 dark:border-neutral-800 mb-6 italic text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
-                “{{ currentOfficer.quote }}”
+              <!-- Operational Responsibility -->
+              <div class="p-4 rounded-2xl bg-[#edf1f5] dark:bg-neutral-900/70 border border-slate-300/70 dark:border-neutral-800 mb-6 text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
+                <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1 font-mono">Official Duty</p>
+                <p>{{ currentOfficer.responsibility }}</p>
               </div>
 
-              <!-- Bio Description -->
-              <p class="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-6 font-medium">
-                {{ currentOfficer.bio }}
-              </p>
-
-              <!-- Game Character Stat HUD (2x2 Grid with Dimmed Surfaces) -->
-              <div class="grid grid-cols-2 gap-3 mb-6">
-                <div 
-                  v-for="(stat, sIdx) in currentOfficer.stats" 
-                  :key="sIdx"
-                  class="p-3.5 rounded-xl bg-[#edf1f5] dark:bg-neutral-900/60 border border-slate-300/70 dark:border-neutral-800/80 flex flex-col"
-                >
+              <!-- Concise Attributes (Rank & Verification) -->
+              <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="p-3.5 rounded-xl bg-[#edf1f5] dark:bg-neutral-900/60 border border-slate-300/70 dark:border-neutral-800/80 flex flex-col">
                   <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1">
-                    {{ stat.label }}
+                    Musician Rank
                   </span>
-                  <span class="text-sm font-black text-slate-800 dark:text-white">
-                    {{ stat.value }}
+                  <span class="text-sm font-black text-slate-800 dark:text-white flex items-center">
+                    <UserCheck class="w-4 h-4 mr-1 text-blue-500 inline" />
+                    {{ currentOfficer.rank }}
                   </span>
                 </div>
-              </div>
 
-              <!-- Specialization Tags -->
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 block mb-2 font-mono">
-                  KEY RESPONSIBILITIES //
-                </span>
-                <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="(tag, tIdx) in currentOfficer.tags" 
-                    :key="tIdx"
-                    class="text-xs font-semibold px-3 py-1 rounded-lg bg-blue-600/10 text-blue-800 dark:text-blue-300 border border-blue-300/60 dark:border-blue-500/20"
-                  >
-                    {{ tag }}
+                <div class="p-3.5 rounded-xl bg-[#edf1f5] dark:bg-neutral-900/60 border border-slate-300/70 dark:border-neutral-800/80 flex flex-col">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1">
+                    Reliability Record
+                  </span>
+                  <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 flex items-center">
+                    <CheckCircle2 class="w-4 h-4 mr-1 text-emerald-500 inline" />
+                    {{ currentOfficer.reliability }}
                   </span>
                 </div>
               </div>

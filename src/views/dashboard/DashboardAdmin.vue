@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Shield, ShieldCheck, ShieldAlert, UserCheck, UserX, Award, Send, Users, Cpu, Calendar, Trash2, CheckCircle2, AlertCircle, X } from 'lucide-vue-next'
+import { Shield, ShieldCheck, ShieldAlert, UserCheck, UserX, Award, Send, Users, Cpu, Calendar, Trash2, CheckCircle2, AlertCircle, X, Search, Filter } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 
@@ -11,6 +11,10 @@ const pendingAvatars = ref([])
 const memberRoster = ref([])
 const notification = ref('')
 const isDispatchGenerated = ref(false)
+
+// Roster Search & Role Filter State
+const rosterSearch = ref('')
+const rosterFilter = ref('all') // 'all' | 'officers' | 'members'
 
 // Day and Week Accurate Availability State
 const selectedDayNeeded = ref('Monday')
@@ -173,7 +177,7 @@ const executeRejectAndDeleteUser = async () => {
 
     pendingAccounts.value = pendingAccounts.value.filter(u => u.id !== target.id)
     memberRoster.value = memberRoster.value.filter(u => u.id !== target.id)
-    showToast(`Removed ${target.full_name}. ID freed.`)
+    showToast(`Removed ${target.full_name}.`)
   } catch (err) {
     console.error('Delete Error:', err)
     showToast('Failed to delete user profile.')
@@ -183,9 +187,20 @@ const executeRejectAndDeleteUser = async () => {
   }
 }
 
-// 3. ROLE MANAGEMENT
+// 3. ROLE MANAGEMENT (Single Secretary Admin Enforcement)
 const changeRole = async (member, newRole) => {
   try {
+    if (newRole === 'secretary_admin') {
+      const prevSec = memberRoster.value.find(m => m.id !== member.id && m.role === 'secretary_admin')
+      if (prevSec) {
+        await supabase
+          .from('profiles')
+          .update({ role: 'member' })
+          .eq('id', prevSec.id)
+        prevSec.role = 'member'
+      }
+    }
+
     const { error } = await supabase
       .from('profiles')
       .update({ role: newRole })
@@ -201,18 +216,31 @@ const changeRole = async (member, newRole) => {
   }
 }
 
-// 4. EXECUTIVE TITLE ASSIGNMENT
+// 4. EXECUTIVE TITLE ASSIGNMENT (Single Officer Assignment Enforcement)
 const assignExecutiveTitle = async (member, newTitle) => {
   try {
+    const formattedTitle = newTitle || null
+    if (formattedTitle) {
+      // Find previous holder of this title if any and clear them
+      const prevHolder = memberRoster.value.find(m => m.id !== member.id && m.executive_title === formattedTitle)
+      if (prevHolder) {
+        await supabase
+          .from('profiles')
+          .update({ executive_title: null })
+          .eq('id', prevHolder.id)
+        prevHolder.executive_title = null
+      }
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({ executive_title: newTitle || null })
+      .update({ executive_title: formattedTitle })
       .eq('id', member.id)
 
     if (error) throw error
 
-    member.executive_title = newTitle || null
-    showToast(`Updated ${member.full_name}'s executive title.`)
+    member.executive_title = formattedTitle
+    showToast(`Assigned ${member.full_name} as ${formattedTitle ? formattedTitle.replace('_', ' ').toUpperCase() : 'None'}.`)
   } catch (err) {
     console.error('Executive title update error:', err)
     showToast('Failed to assign title.')
@@ -237,6 +265,51 @@ const toggleRank = async (member) => {
     showToast('Failed to change rank.')
   }
 }
+
+// COMPUTED: PINNED LEADERSHIP ROSTER WITH SEARCH & FILTER
+const displayedRoster = computed(() => {
+  let list = [...memberRoster.value]
+
+  if (rosterSearch.value.trim()) {
+    const q = rosterSearch.value.toLowerCase()
+    list = list.filter(m => 
+      (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+      (m.instrument && m.instrument.toLowerCase().includes(q)) ||
+      (m.role && m.role.toLowerCase().includes(q)) ||
+      (m.executive_title && m.executive_title.toLowerCase().includes(q))
+    )
+  }
+
+  if (rosterFilter.value === 'officers') {
+    list = list.filter(m => m.role === 'super_admin' || m.role === 'secretary_admin' || !!m.executive_title)
+  } else if (rosterFilter.value === 'members') {
+    list = list.filter(m => m.role === 'member' && !m.executive_title)
+  }
+
+  // Pin Leadership at the top:
+  // 1. super_admin (IT Admin)
+  // 2. president
+  // 3. vice_president
+  // 4. secretary_admin
+  // 5. treasurer
+  // 6. other executive titles
+  // 7. regular members alphabetically
+  return list.sort((a, b) => {
+    const getPriority = (m) => {
+      if (m.role === 'super_admin') return 1
+      if (m.executive_title === 'president') return 2
+      if (m.executive_title === 'vice_president') return 3
+      if (m.role === 'secretary_admin') return 4
+      if (m.executive_title === 'treasurer') return 5
+      if (m.executive_title) return 6
+      return 10
+    }
+    const pA = getPriority(a)
+    const pB = getPriority(b)
+    if (pA !== pB) return pA - pB
+    return (a.full_name || '').localeCompare(b.full_name || '')
+  })
+})
 
 // 6. AVAILABILITY CHECKER
 const runAvailabilityCheck = async () => {
@@ -307,10 +380,10 @@ onUnmounted(() => {
       </div>
       <div class="min-w-0">
         <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider leading-tight mb-0.5">
-          {{ store.isSuperAdmin ? 'IT Super Admin Caretaker' : 'Band Secretary Operations Hub' }}
+          {{ store.isSuperAdmin ? 'IT Super Admin Caretaker' : 'Band Operations Hub' }}
         </p>
         <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight truncate">
-          {{ store.isSuperAdmin ? 'System & Accounts Admin' : 'Secretary Management Hub' }}
+          {{ store.isSuperAdmin ? 'System & Accounts Admin' : 'Band Operations' }}
         </h1>
       </div>
     </header>
@@ -331,100 +404,18 @@ onUnmounted(() => {
       </div>
     </Transition>
 
-    <!-- PENDING APPROVALS QUEUE (IT Super Admin) -->
-    <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Pending Approvals Section">
-      <div class="flex items-center justify-between px-1">
-        <div class="flex items-center space-x-1">
-          <ShieldAlert class="w-4 h-4 text-amber-500" />
-          <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-            Pending Master List Approvals ({{ pendingAccounts.length }})
-          </h2>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <div 
-          v-for="user in pendingAccounts" 
-          :key="user.id"
-          class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">{{ user.full_name }}</h3>
-              <p class="text-xs text-slate-500 dark:text-neutral-400">{{ user.email }} • {{ user.contact_number }}</p>
-            </div>
-            <span class="text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md">
-              UNVERIFIED
-            </span>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#27272a] p-2.5 rounded-xl text-slate-600 dark:text-neutral-300">
-            <div><span class="text-slate-400">Inst:</span> {{ user.instrument || 'None' }}</div>
-            <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
-          </div>
-
-          <div class="flex space-x-2 pt-1">
-            <button 
-              @click="approveUser(user)"
-              type="button"
-              class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer min-h-[44px]"
-            >
-              <UserCheck class="w-4 h-4 mr-1.5" /> Approve & Verify
-            </button>
-            <button 
-              @click="promptDeleteUser(user)"
-              type="button"
-              class="py-3 px-3 bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl flex items-center justify-center transition-all active:scale-95 border border-rose-200 dark:border-rose-900/40 cursor-pointer min-h-[44px]"
-            >
-              <Trash2 class="w-4 h-4 mr-1" /> Decline & Delete
-            </button>
-          </div>
-        </div>
-
-        <div v-if="pendingAccounts.length === 0" class="text-center p-6 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-neutral-800">
-          <CheckCircle2 class="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-50" />
-          <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- AVATAR MODERATION QUEUE -->
-    <section v-if="pendingAvatars.length > 0" class="space-y-3" aria-label="Avatar Moderation Queue">
-      <div class="flex items-center space-x-2 px-1">
-        <AlertCircle class="w-4 h-4 text-amber-500" />
-        <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-          Pending Avatar Approvals ({{ pendingAvatars.length }})
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-        <div 
-          v-for="user in pendingAvatars" 
-          :key="user.id"
-          class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-3 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-3"
-        >
-          <img :src="user.profile_picture" alt="Avatar Review" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-200 dark:border-neutral-700" />
-          <p class="text-xs font-black text-slate-900 dark:text-white line-clamp-1 w-full">{{ user.full_name }}</p>
-          <div class="flex space-x-1 w-full">
-            <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 rounded-xl cursor-pointer text-[10px] uppercase">Approve</button>
-            <button @click="declineAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl cursor-pointer text-[10px] uppercase">Decline</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER -->
+    <!-- 1. ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER (TOP POSITION) -->
     <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
       <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-1">
+          <div class="flex items-center space-x-2">
             <Calendar class="w-5 h-5 text-blue-500" />
             <h2 class="font-black text-base text-slate-900 dark:text-white">Check Member Availability</h2>
           </div>
-          <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full uppercase">Secretary Tool</span>
+          <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full uppercase">Operations Tool</span>
         </div>
 
-        <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Select target week day & date to check available musicians.</p>
+        <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Select target week day & date to check available musicians for upcoming gigs.</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
           <div>
@@ -473,7 +464,7 @@ onUnmounted(() => {
           </span>
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
           <div v-for="m in matchedDispatchRoster" :key="m.id" class="p-2.5 bg-slate-50 dark:bg-[#27272a] rounded-xl flex items-center justify-between text-xs">
             <div class="flex items-center space-x-1">
               <span class="font-bold text-slate-900 dark:text-white">{{ m.full_name }} ({{ m.instrument }})</span>
@@ -487,11 +478,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Re-notifications Trigger -->
+      <!-- 2. RSVP RE-NOTIFICATIONS (DIRECTLY BELOW AVAILABILITY CHECKER) -->
       <div class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200 dark:border-neutral-800 flex items-center justify-between">
         <div>
           <h3 class="font-bold text-sm text-slate-900 dark:text-white">RSVP Re-notifications</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400">Send follow-up reminders to unconfirmed members</p>
+          <p class="text-xs text-slate-500 dark:text-neutral-400">Send follow-up reminder alerts to unconfirmed musicians</p>
         </div>
         <button 
           @click="triggerReNotifications"
@@ -503,93 +494,253 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- ROSTER MANAGEMENT FOR IT ADMIN -->
-    <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Member Roster & Roles Section">
+    <!-- 3. PENDING MASTER LIST APPROVALS QUEUE (IT Super Admin) -->
+    <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Pending Approvals Section">
       <div class="flex items-center justify-between px-1">
-        <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
-          System Roles & Officer Assignments
-        </h2>
+        <div class="flex items-center space-x-1.5">
+          <ShieldAlert class="w-4 h-4 text-amber-500" />
+          <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+            Pending Master List Approvals ({{ pendingAccounts.length }})
+          </h2>
+        </div>
+        <span v-if="pendingAccounts.length > 3" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
+          Scroll for more
+        </span>
       </div>
 
-      <div class="bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden">
-        <div v-if="memberRoster.length > 0">
+      <!-- Dynamic Scrollable Queue Container for Mobile, Tablet & Desktop -->
+      <div :class="pendingAccounts.length > 3 ? 'max-h-[380px] sm:max-h-[440px] overflow-y-auto pr-1 space-y-3' : 'space-y-3'">
+        <div 
+          v-for="user in pendingAccounts" 
+          :key="user.id"
+          class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">{{ user.full_name }}</h3>
+              <p class="text-xs text-slate-500 dark:text-neutral-400">{{ user.email }} • {{ user.contact_number }}</p>
+            </div>
+            <span class="text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md">
+              UNVERIFIED
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#27272a] p-2.5 rounded-xl text-slate-600 dark:text-neutral-300">
+            <div><span class="text-slate-400">Inst:</span> {{ user.instrument || 'None' }}</div>
+            <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
+          </div>
+
+          <div class="flex space-x-2 pt-1">
+            <button 
+              @click="approveUser(user)"
+              type="button"
+              class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer min-h-[44px]"
+            >
+              <UserCheck class="w-4 h-4 mr-1.5" /> Approve & Verify
+            </button>
+            <button 
+              @click="promptDeleteUser(user)"
+              type="button"
+              class="py-3 px-3 bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl flex items-center justify-center transition-all active:scale-95 border border-rose-200 dark:border-rose-900/40 cursor-pointer min-h-[44px]"
+            >
+              <Trash2 class="w-4 h-4 mr-1" /> Decline & Delete
+            </button>
+          </div>
+        </div>
+
+        <div v-if="pendingAccounts.length === 0" class="text-center p-6 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+          <CheckCircle2 class="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-50" />
+          <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PENDING AVATARS APPROVAL QUEUE -->
+    <section v-if="pendingAvatars.length > 0" class="space-y-3" aria-label="Avatar Moderation Queue">
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center space-x-1.5">
+          <AlertCircle class="w-4 h-4 text-amber-500" />
+          <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+            Pending Avatar Approvals ({{ pendingAvatars.length }})
+          </h2>
+        </div>
+        <span v-if="pendingAvatars.length > 3" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
+          Scroll for more
+        </span>
+      </div>
+
+      <!-- Dynamic Scrollable Avatar Grid for Mobile, Tablet & Desktop -->
+      <div :class="pendingAvatars.length > 3 ? 'max-h-[360px] sm:max-h-[400px] overflow-y-auto pr-1' : ''">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           <div 
-            v-for="member in memberRoster" 
-            :key="member.id"
-            class="p-4 border-b border-slate-100 dark:border-neutral-800 last:border-0 space-y-3"
+            v-for="user in pendingAvatars" 
+            :key="user.id"
+            class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-3 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-2.5"
           >
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-black text-sm text-slate-900 dark:text-white flex items-center">
-                  {{ member.full_name }}
-                  <span v-if="member.role === 'super_admin'" class="ml-2 text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded-md">
-                    IT Super Admin
-                  </span>
-                  <span v-else-if="member.executive_title" class="ml-2 text-[10px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-md">
-                    {{ member.executive_title }}
-                  </span>
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-neutral-400">{{ member.email }} • {{ member.instrument }}</p>
-              </div>
+            <img :src="user.profile_picture" alt="Avatar Review" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-200 dark:border-neutral-700" />
+            <p class="text-xs font-black text-slate-900 dark:text-white line-clamp-1 w-full">{{ user.full_name }}</p>
+            <div class="flex space-x-1 w-full">
+              <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 rounded-xl cursor-pointer text-[10px] uppercase">Approve</button>
+              <button @click="declineAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl cursor-pointer text-[10px] uppercase">Decline</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-              <button 
-                @click="toggleRank(member)"
-                type="button"
+    <!-- 5. SYSTEM ROLES & OFFICER ASSIGNMENTS (COMPACT, PINNED LEADERSHIP, SEARCH & DELETE) -->
+    <section v-if="store.isSuperAdmin" class="space-y-3" aria-label="Member Roster & Roles Section">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+        <div>
+          <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider flex items-center">
+            <ShieldCheck class="w-4 h-4 mr-1 text-blue-500" />
+            System Roles & Officer Assignments ({{ memberRoster.length }})
+          </h2>
+          <p class="text-[11px] text-slate-400 dark:text-neutral-500">Executive titles are strictly single-officer appointments.</p>
+        </div>
+
+        <!-- Role Filter Tabs -->
+        <div class="flex rounded-xl bg-slate-100 dark:bg-[#27272a] p-1 text-[11px] font-bold">
+          <button 
+            type="button" 
+            @click="rosterFilter = 'all'"
+            class="px-3 py-1 rounded-lg transition-colors cursor-pointer"
+            :class="rosterFilter === 'all' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500'"
+          >
+            All
+          </button>
+          <button 
+            type="button" 
+            @click="rosterFilter = 'officers'"
+            class="px-3 py-1 rounded-lg transition-colors cursor-pointer"
+            :class="rosterFilter === 'officers' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500'"
+          >
+            Officers
+          </button>
+          <button 
+            type="button" 
+            @click="rosterFilter = 'members'"
+            class="px-3 py-1 rounded-lg transition-colors cursor-pointer"
+            :class="rosterFilter === 'members' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500'"
+          >
+            Musicians
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Search Bar -->
+      <div class="relative">
+        <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input 
+          v-model="rosterSearch" 
+          type="text" 
+          placeholder="Search musician by name or instrument..."
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[42px]"
+        />
+      </div>
+
+      <!-- Compact Roster Card List with Leadership Pinned at Top -->
+      <div class="bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden divide-y divide-slate-100 dark:divide-neutral-800/80">
+        <div 
+          v-for="member in displayedRoster" 
+          :key="member.id"
+          class="p-3.5 sm:p-4 space-y-2.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-neutral-800/30"
+          :class="member.role === 'super_admin' ? 'bg-rose-50/20 dark:bg-rose-950/10' : member.executive_title ? 'bg-blue-50/20 dark:bg-blue-950/10' : ''"
+        >
+          <!-- Top Row: Musician Identity & Badges -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+                <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.full_name" class="w-full h-full object-cover" />
+                <span v-else>{{ member.full_name ? member.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center space-x-1.5 flex-wrap">
+                  <h3 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                    {{ member.full_name }}
+                  </h3>
+                  <!-- Badges -->
+                  <span v-if="member.role === 'super_admin'" class="text-[9px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded-md">
+                    IT Admin
+                  </span>
+                  <span v-else-if="member.executive_title" class="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-md">
+                    {{ member.executive_title.replace('_', ' ') }}
+                  </span>
+                  <span v-else-if="member.role === 'secretary_admin'" class="text-[9px] font-black uppercase bg-indigo-600 text-white px-2 py-0.5 rounded-md">
+                    Secretary
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400 dark:text-neutral-500 truncate">
+                  {{ member.instrument || 'Musician' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Rank Badge Button -->
+            <button 
+              @click="toggleRank(member)"
+              type="button"
+              :disabled="member.role === 'super_admin'"
+              class="text-[10px] font-black px-2.5 py-1 rounded-lg border transition-all flex items-center active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+              :class="member.rank === 'Senior' 
+                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/40' 
+                : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700/80'"
+              title="Click to toggle Junior / Senior rank"
+            >
+              <Award class="w-3 h-3 mr-1" /> {{ member.rank || 'Junior' }}
+            </button>
+          </div>
+
+          <!-- Bottom Row: Compact System Role & Executive Title Selectors + Delete Button -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center pt-1">
+            <div class="sm:col-span-5">
+              <label :for="'role-select-' + member.id" class="block text-[9px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-0.5">Role</label>
+              <select 
+                :id="'role-select-' + member.id"
+                :value="member.role"
+                @change="e => changeRole(member, e.target.value)"
                 :disabled="member.role === 'super_admin'"
-                class="text-[10px] font-black px-3 py-1.5 rounded-lg border transition-all flex items-center active:scale-95 disabled:opacity-50 cursor-pointer min-h-[44px]"
-                :class="member.rank === 'Senior' 
-                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/40' 
-                  : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700/80'"
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 disabled:opacity-50 min-h-[38px]"
               >
-                <Award class="w-3.5 h-3.5 mr-1" /> {{ member.rank }} Rank
-              </button>
+                <option value="member">Musician (Member)</option>
+                <option value="secretary_admin">Band Secretary (Admin)</option>
+                <option value="executive">Executive (Officer)</option>
+                <option value="super_admin">IT Admin (Developer)</option>
+              </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <div>
-                <label :for="'role-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">System Role</label>
-                <select 
-                  :id="'role-select-' + member.id"
-                  :value="member.role"
-                  @change="e => changeRole(member, e.target.value)"
-                  :disabled="member.role === 'super_admin'"
-                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-neutral-700/80 focus:ring-0 disabled:opacity-50 min-h-[44px]"
-                >
-                  <option value="member">Musician (Member)</option>
-                  <option value="secretary_admin">Band Secretary (Admin)</option>
-                  <option value="executive">Executive (Officer)</option>
-                  <option value="super_admin">IT Admin (Developer)</option>
-                </select>
-              </div>
-
-              <div>
-                <label :for="'exec-select-' + member.id" class="block text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-1">Executive Title</label>
-                <select 
-                  :id="'exec-select-' + member.id"
-                  :value="member.executive_title || ''"
-                  @change="e => assignExecutiveTitle(member, e.target.value)"
-                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2.5 border border-slate-200 dark:border-neutral-700/80 focus:ring-0 min-h-[44px]"
-                >
-                  <option value="">None</option>
-                  <option value="president">President</option>
-                  <option value="vice_president">Vice President</option>
-                  <option value="treasurer">Treasurer</option>
-                </select>
-              </div>
+            <div class="sm:col-span-5">
+              <label :for="'exec-select-' + member.id" class="block text-[9px] font-bold text-slate-400 dark:text-neutral-500 uppercase mb-0.5">Officer Title</label>
+              <select 
+                :id="'exec-select-' + member.id"
+                :value="member.executive_title || ''"
+                @change="e => assignExecutiveTitle(member, e.target.value)"
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
+              >
+                <option value="">None (Regular Musician)</option>
+                <option value="president">President</option>
+                <option value="vice_president">Vice President</option>
+                <option value="treasurer">Treasurer</option>
+              </select>
             </div>
 
-            <!-- Hide Delete & Free ID button for IT Super Admin / own account -->
-            <div v-if="member.role !== 'super_admin' && member.id !== store.user?.id" class="flex justify-end pt-1">
+            <div class="sm:col-span-2 flex sm:justify-end pt-1 sm:pt-4">
+              <!-- Changed to Delete button only -->
               <button 
+                v-if="member.role !== 'super_admin' && member.id !== store.user?.id"
                 @click="promptDeleteUser(member)"
                 type="button"
-                class="text-[11px] font-bold text-rose-500 hover:text-rose-700 flex items-center hover:underline cursor-pointer min-h-[44px] px-2"
+                class="text-xs font-bold text-rose-500 hover:text-rose-700 flex items-center hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer min-h-[36px]"
               >
-                <Trash2 class="w-3.5 h-3.5 mr-1" /> Delete & Free ID
+                <Trash2 class="w-3.5 h-3.5 mr-1" /> Delete
               </button>
             </div>
-
           </div>
+
+        </div>
+
+        <div v-if="displayedRoster.length === 0" class="text-center p-6">
+          <p class="text-xs font-bold text-slate-400">No members match your search or filter.</p>
         </div>
       </div>
     </section>

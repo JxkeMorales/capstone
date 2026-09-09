@@ -88,17 +88,19 @@ const handleInstallPWA = async () => {
     uiStore.addToast({ title: 'Already Installed', message: 'SmartBand is already installed on your device!', type: 'info' })
     return
   }
-  if (!deferredPrompt.value) {
+  const prompt = deferredPrompt.value || window.deferredPrompt
+  if (!prompt) {
     uiStore.addToast({ title: 'Manual Install Required', message: 'To install: Tap Share (iOS) / Menu (Android) → Add to Home Screen. On Desktop: Click the Install icon in the address bar.', type: 'warning', duration: 8000 })
     return
   }
-  deferredPrompt.value.prompt()
-  const { outcome } = await deferredPrompt.value.userChoice
+  prompt.prompt()
+  const { outcome } = await prompt.userChoice
   if (outcome === 'accepted') {
     showInstallBanner.value = false
     isAppInstalled.value = true
   }
   deferredPrompt.value = null
+  window.deferredPrompt = null
 }
 
 // 5-SECOND AUDIBLE MARCHING BRASS ALARM SYNTHESIZER
@@ -374,7 +376,14 @@ const fetchPendingCount = async () => {
   }
 }
 
+const showSignOutModal = ref(false)
+
+const triggerSignOut = () => {
+  showSignOutModal.value = true
+}
+
 const handleSignOut = async () => {
+  showSignOutModal.value = false
   await store.signOut()
   router.push('/')
 }
@@ -402,7 +411,20 @@ onMounted(() => {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt.value = e
+    window.deferredPrompt = e
     if (!isAppInstalled.value) {
+      showInstallBanner.value = true
+    }
+  })
+
+  // Sync with globally captured prompt
+  if (window.deferredPrompt && !isAppInstalled.value) {
+    deferredPrompt.value = window.deferredPrompt
+    showInstallBanner.value = true
+  }
+  window.addEventListener('pwa-prompt-ready', () => {
+    if (window.deferredPrompt && !isAppInstalled.value) {
+      deferredPrompt.value = window.deferredPrompt
       showInstallBanner.value = true
     }
   })
@@ -554,7 +576,7 @@ onUnmounted(() => {
         >
           <div class="flex items-center space-x-3">
             <ShieldCheck class="w-5 h-5 flex-shrink-0 text-blue-400" />
-            <span>{{ store.isSuperAdmin ? 'Admin Operations' : 'Secretary Hub' }}</span>
+            <span>{{ store.isSuperAdmin ? 'Admin Operations' : 'Band Operations' }}</span>
           </div>
           <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px]">
             {{ pendingCount }}
@@ -606,10 +628,9 @@ onUnmounted(() => {
           </div>
           <div class="min-w-0">
             <p class="font-black text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
-            <p class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider font-extrabold">{{ store.profile?.role || 'Member' }}</p>
           </div>
         </div>
-        <button @click="handleSignOut" type="button" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" title="Sign Out">
+        <button @click="triggerSignOut" type="button" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" title="Sign Out">
           <LogOut class="w-4 h-4" />
         </button>
       </div>
@@ -766,7 +787,7 @@ onUnmounted(() => {
             :class="route.name === 'dashboard-admin' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
           >
             <ShieldCheck class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform text-blue-500" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : 'Secretary' }}</span>
+            <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : 'Operations' }}</span>
             <span v-if="pendingCount > 0" class="absolute top-2 right-3 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
           </RouterLink>
 
@@ -990,6 +1011,35 @@ onUnmounted(() => {
         <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button @click="showTermsModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
             Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGN OUT CONFIRMATION MODAL -->
+    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center mx-auto text-rose-500">
+          <LogOut class="w-6 h-6" />
+        </div>
+        <div class="space-y-1">
+          <h3 class="font-black text-lg text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button 
+            @click="showSignOutModal = false" 
+            type="button" 
+            class="py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-black text-xs rounded-xl min-h-[44px] cursor-pointer transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="handleSignOut" 
+            type="button" 
+            class="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-md min-h-[44px] cursor-pointer transition-colors"
+          >
+            Sign Out
           </button>
         </div>
       </div>

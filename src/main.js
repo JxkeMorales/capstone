@@ -14,6 +14,14 @@ app.use(router)
 
 const store = useMainStore()
 
+// GLOBAL PWA INSTALL PROMPT CAPTURE
+window.deferredPrompt = null
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  window.deferredPrompt = e
+  window.dispatchEvent(new CustomEvent('pwa-prompt-ready'))
+})
+
 // PERSISTENT AUTH LISTENER: Automatically restores session & handles sign out
 supabase.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
