@@ -15,8 +15,11 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Crown,
-  Eye,
-  Edit2
+  Settings,
+  SlidersHorizontal,
+  ChevronRight,
+  UserCheck,
+  Star
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
@@ -24,18 +27,25 @@ import { supabase } from '@/supabase'
 const store = useMainStore()
 
 const searchQuery = ref('')
-const activeFilters = ref(['All'])
-const tempFilters = ref(['All'])
-const showFilterMenu = ref(false)
+const activeSectionFilter = ref('All')
+const activeTierFilter = ref('all') // 'all' | 'officers' | 'senior' | 'junior'
 const members = ref([])
 const isLoading = ref(true)
 const toastMessage = ref('')
 
 // Availability Modal Sheet State
 const showAvailabilityModal = ref(false)
-const selectedMember = ref(null)
+const selectedMemberForAvailability = ref(null)
 const memberAvailabilitySlots = ref([])
 const isLoadingAvailability = ref(false)
+
+// Super Admin Musician Management Modal State
+const showManageModal = ref(false)
+const editingMember = ref(null)
+const managePositionId = ref('member')
+const manageInstrument = ref('Clarinet')
+const manageRank = ref('Junior')
+const isSavingManage = ref(false)
 
 // Delete Confirmation Modal State
 const showDeleteModal = ref(false)
@@ -44,20 +54,32 @@ const confirmDeleteTarget = ref(null)
 // Realtime Channel Reference
 let membersChannel = null
 
-// 7 HIERARCHICAL EXECUTIVE OFFICER POSITIONS
-const executivePositions = [
-  { key: 'president', title: 'Band President', shortTitle: 'President' },
-  { key: 'vice_president', title: 'Band Vice President', shortTitle: 'Vice President' },
-  { key: 'secretary', title: 'Band Secretary', shortTitle: 'Secretary' },
-  { key: 'treasurer', title: 'Band Treasurer', shortTitle: 'Treasurer' },
-  { key: 'auditor', title: 'Band Auditor', shortTitle: 'Auditor' },
-  { key: 'resident_conductor', title: 'Resident Conductor', shortTitle: 'Conductor' },
-  { key: 'band_manager', title: 'Band Manager', shortTitle: 'Manager' },
+// UNIFIED SYSTEM POSITIONS (ONE SINGLE APPOINTMENT SYSTEM - NO SEPARATE DROPDOWNS!)
+const POSITIONS = [
+  { id: 'member', label: 'Regular Musician', role: 'member', title: null, color: 'slate', badge: 'Musician' },
+  { id: 'president', label: 'Band President', role: 'executive', title: 'president', color: 'amber', badge: 'Band President' },
+  { id: 'vice_president', label: 'Band Vice President', role: 'executive', title: 'vice_president', color: 'amber', badge: 'Band Vice President' },
+  { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: 'secretary', color: 'indigo', badge: 'Band Secretary' },
+  { id: 'treasurer', label: 'Band Treasurer', role: 'executive', title: 'treasurer', color: 'emerald', badge: 'Band Treasurer' },
+  { id: 'auditor', label: 'Band Auditor', role: 'executive', title: 'auditor', color: 'teal', badge: 'Band Auditor' },
+  { id: 'resident_conductor', label: 'Resident Conductor', role: 'executive', title: 'resident_conductor', color: 'purple', badge: 'Resident Conductor' },
+  { id: 'band_manager', label: 'Band Manager', role: 'executive', title: 'band_manager', color: 'blue', badge: 'Band Manager' },
+  { id: 'super_admin', label: 'IT Super Admin', role: 'super_admin', title: null, color: 'rose', badge: 'IT Super Admin' }
 ]
 
-// FULL MUNICIPAL BAND SECTION LIST FOR DIRECTORY FILTERING & ADMIN INSTRUMENT SELECTION
-const sections = [
-  'All', 
+// 7 HIERARCHICAL EXECUTIVE OFFICER POSTS (For Pinned Leadership at top)
+const leadershipPosts = [
+  { key: 'president', title: 'Band President' },
+  { key: 'vice_president', title: 'Band Vice President' },
+  { key: 'secretary', title: 'Band Secretary' },
+  { key: 'treasurer', title: 'Band Treasurer' },
+  { key: 'auditor', title: 'Band Auditor' },
+  { key: 'resident_conductor', title: 'Resident Conductor' },
+  { key: 'band_manager', title: 'Band Manager' },
+]
+
+// FULL INSTRUMENT LIST
+const instrumentList = [
   'Clarinet', 
   'Bass Clarinet',
   'Flute', 
@@ -81,7 +103,7 @@ const showToast = (msg) => {
   setTimeout(() => { toastMessage.value = '' }, 3500)
 }
 
-// TITLE NORMALIZER (Tolerates uppercase, spaces, or prefixed titles in DB)
+// TITLE NORMALIZER
 const normalizeTitle = (str) => {
   if (!str) return ''
   const s = str.toLowerCase().trim()
@@ -95,96 +117,101 @@ const normalizeTitle = (str) => {
   return s.replace(/\s+/g, '_')
 }
 
-// FILTER HANDLERS
-const openFilter = () => {
-  tempFilters.value = [...activeFilters.value]
-  showFilterMenu.value = true
+// GET THE UNIFIED POSITION ID FOR ANY MEMBER
+const getMemberPositionId = (member) => {
+  if (member.role === 'super_admin') return 'super_admin'
+  const t = normalizeTitle(member.executive_title)
+  if (t === 'president') return 'president'
+  if (t === 'vice_president') return 'vice_president'
+  if (t === 'secretary' || member.role === 'secretary_admin') return 'secretary'
+  if (t === 'treasurer') return 'treasurer'
+  if (t === 'auditor') return 'auditor'
+  if (t === 'resident_conductor') return 'resident_conductor'
+  if (t === 'band_manager') return 'band_manager'
+  return 'member'
 }
 
-const toggleTempFilter = (sec) => {
-  if (sec === 'All') {
-    tempFilters.value = ['All']
-    return
-  }
-  if (tempFilters.value.includes('All')) {
-    tempFilters.value = tempFilters.value.filter(f => f !== 'All')
-  }
-  if (tempFilters.value.includes(sec)) {
-    tempFilters.value = tempFilters.value.filter(f => f !== sec)
-    if (tempFilters.value.length === 0) tempFilters.value = ['All']
-  } else {
-    tempFilters.value.push(sec)
-  }
+const getMemberPosition = (member) => {
+  const posId = getMemberPositionId(member)
+  return POSITIONS.find(p => p.id === posId) || POSITIONS[0]
 }
 
-const applyFilters = () => {
-  activeFilters.value = [...tempFilters.value]
-  showFilterMenu.value = false
-}
-
-// "PA-IMPORTANTE" ATTENDANCE LIST (Reliability < 85%)
+// "PA-IMPORTANTE" LOW RELIABILITY LIST (< 85%)
 const paImportanteList = computed(() => {
   return members.value.filter(m => (m.reliability || 100) < 85)
 })
 
-// PINNED EXECUTIVE OFFICERS COMPUTED (STRICTLY ACTIVE ONLY - NO BLANK TABS)
+// PINNED ACTIVE EXECUTIVE OFFICERS (ONLY APPOINTED OFFICERS - NO BLANK TABS)
 const pinnedLeadership = computed(() => {
-  return executivePositions
-    .map(pos => {
+  return leadershipPosts
+    .map(post => {
       const officer = members.value.find(m => {
-        if (pos.key === 'secretary') {
-          return normalizeTitle(m.executive_title) === 'secretary' || m.role === 'secretary_admin'
-        }
-        return normalizeTitle(m.executive_title) === pos.key
+        const pId = getMemberPositionId(m)
+        return pId === post.key
       })
       return {
-        ...pos,
+        ...post,
         officer: officer || null
       }
     })
-    .filter(pos => pos.officer !== null) // Strictly filters out vacant positions so no blank cards appear
+    .filter(p => p.officer !== null)
 })
 
-// FILTERED MEMBERS ROSTER
+// FILTERED MEMBERS
 const filteredMembers = computed(() => {
   return members.value.filter(member => {
+    // Search query match
     const q = searchQuery.value.toLowerCase().trim()
-    const matchesSearch = !q || 
-      (member.name && member.name.toLowerCase().includes(q)) ||
-      (member.instrument && member.instrument.toLowerCase().includes(q)) ||
-      (member.role && member.role.toLowerCase().includes(q)) ||
-      (member.executive_title && member.executive_title.toLowerCase().includes(q))
-    
-    if (!matchesSearch) return false
-    if (activeFilters.value.includes('All')) return true
-    
-    return activeFilters.value.some(filterItem => {
-      const filterKey = filterItem.toLowerCase().split('(')[0].trim()
-      return member.instrument && member.instrument.toLowerCase().includes(filterKey)
-    })
+    if (q) {
+      const pos = getMemberPosition(member)
+      const matches = 
+        (member.name && member.name.toLowerCase().includes(q)) ||
+        (member.instrument && member.instrument.toLowerCase().includes(q)) ||
+        pos.label.toLowerCase().includes(q)
+      if (!matches) return false
+    }
+
+    // Section filter
+    if (activeSectionFilter.value !== 'All') {
+      const filterKey = activeSectionFilter.value.toLowerCase()
+      if (!member.instrument || !member.instrument.toLowerCase().includes(filterKey)) {
+        return false
+      }
+    }
+
+    // Tier filter
+    if (activeTierFilter.value === 'officers') {
+      const pId = getMemberPositionId(member)
+      if (pId === 'member') return false
+    } else if (activeTierFilter.value === 'senior') {
+      if (member.rank !== 'Senior') return false
+    } else if (activeTierFilter.value === 'junior') {
+      if (member.rank !== 'Junior') return false
+    }
+
+    return true
   })
 })
 
-// SORTED ROSTER (Hierarchy: Super Admin -> Pinned Officers -> Senior -> Junior -> Alphabetical)
+// SORTED ROSTER (IT Admin -> Officers -> Senior -> Junior -> Alphabetical)
 const sortedRoster = computed(() => {
-  const getRankPriority = (m) => {
-    if (m.role === 'super_admin') return 1
-    const t = normalizeTitle(m.executive_title)
-    if (t === 'president') return 2
-    if (t === 'vice_president') return 3
-    if (m.role === 'secretary_admin' || t === 'secretary') return 4
-    if (t === 'treasurer') return 5
-    if (t === 'auditor') return 6
-    if (t === 'resident_conductor') return 7
-    if (t === 'band_manager') return 8
-    if (m.executive_title) return 9
-    if (m.rank === 'Senior') return 10
-    return 11
+  const getPriority = (m) => {
+    const pId = getMemberPositionId(m)
+    if (pId === 'super_admin') return 1
+    if (pId === 'president') return 2
+    if (pId === 'vice_president') return 3
+    if (pId === 'secretary') return 4
+    if (pId === 'treasurer') return 5
+    if (pId === 'auditor') return 6
+    if (pId === 'resident_conductor') return 7
+    if (pId === 'band_manager') return 8
+    if (m.rank === 'Senior') return 9
+    return 10
   }
 
   return [...filteredMembers.value].sort((a, b) => {
-    const pA = getRankPriority(a)
-    const pB = getRankPriority(b)
+    const pA = getPriority(a)
+    const pB = getPriority(b)
     if (pA !== pB) return pA - pB
     return (a.name || '').localeCompare(b.name || '')
   })
@@ -194,11 +221,9 @@ const sortedRoster = computed(() => {
 const fetchRoster = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
-    const cachedRoster = localStorage.getItem('smartband_members_roster_cache')
-    if (cachedRoster) {
-      try {
-        members.value = JSON.parse(cachedRoster)
-      } catch (e) {}
+    const cached = localStorage.getItem('smartband_members_roster_cache')
+    if (cached) {
+      try { members.value = JSON.parse(cached) } catch (e) {}
     }
   }
 
@@ -220,6 +245,7 @@ const fetchRoster = async (skipCache = false) => {
         role: m.role || 'member',
         executive_title: m.executive_title || null,
         reliability: m.reliability_score ?? 100,
+        contact: m.contact_number || m.email || '',
         avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'MB',
         profile_picture: m.profile_picture || null
       }))
@@ -233,160 +259,69 @@ const fetchRoster = async (skipCache = false) => {
   }
 }
 
-// SUPER ADMIN: CHANGE SYSTEM ROLE
-const changeRole = async (member, newRole) => {
-  try {
-    const prevRole = member.role
-    const prevTitle = member.executive_title
-
-    if (newRole === 'secretary_admin') {
-      // Demote previous secretary if any in local state
-      members.value.forEach(m => {
-        if (m.id !== member.id && (m.role === 'secretary_admin' || normalizeTitle(m.executive_title) === 'secretary')) {
-          m.role = 'member'
-          m.executive_title = null
-        }
-      })
-      member.role = 'secretary_admin'
-      member.executive_title = 'secretary'
-    } else if (newRole === 'member') {
-      member.role = 'member'
-      member.executive_title = null
-    } else {
-      member.role = newRole
-    }
-
-    // Force reactive re-render immediately
-    members.value = [...members.value]
-
-    // Sync to Supabase in background
-    if (newRole === 'secretary_admin') {
-      const prevSec = members.value.find(m => m.id !== member.id && (m.role === 'secretary_admin' || normalizeTitle(m.executive_title) === 'secretary'))
-      if (prevSec) {
-        await supabase.from('profiles').update({ role: 'member', executive_title: null }).eq('id', prevSec.id)
-      }
-      await supabase.from('profiles').update({ role: 'secretary_admin', executive_title: 'secretary' }).eq('id', member.id)
-    } else if (newRole === 'member') {
-      await supabase.from('profiles').update({ role: 'member', executive_title: null }).eq('id', member.id)
-    } else {
-      await supabase.from('profiles').update({ role: newRole }).eq('id', member.id)
-    }
-
-    showToast(`Updated ${member.name}'s role to ${newRole.replace('_', ' ')}.`)
-    await fetchRoster(true)
-  } catch (err) {
-    console.error('Role update error:', err)
-    showToast('Failed to change role.')
-    await fetchRoster(true)
-  }
+// OPEN MANAGE MUSICIAN MODAL (SUPER ADMIN)
+const openManageModal = (member) => {
+  editingMember.value = member
+  managePositionId.value = getMemberPositionId(member)
+  manageInstrument.value = member.instrument || 'Clarinet'
+  manageRank.value = member.rank || 'Junior'
+  showManageModal.value = true
 }
 
-// SUPER ADMIN: ASSIGN EXECUTIVE TITLE (Single Officer Appointment + Instant Reactive Sync)
-const assignExecutiveTitle = async (member, newTitle) => {
+// SAVE MUSICIAN MANAGEMENT CHANGES (ALL-IN-ONE CLEAN HANDLER)
+const saveMemberManagement = async () => {
+  if (!editingMember.value) return
+  isSavingManage.value = true
+
+  const member = editingMember.value
+  const newPos = POSITIONS.find(p => p.id === managePositionId.value) || POSITIONS[0]
+  const newInst = manageInstrument.value
+  const newRk = manageRank.value
+
   try {
-    const formattedTitle = newTitle ? normalizeTitle(newTitle) : null
-
-    // 1. Optimistically update local state immediately so pinnedLeadership updates in 0ms!
-    if (formattedTitle) {
-      members.value.forEach(m => {
-        if (m.id !== member.id && normalizeTitle(m.executive_title) === formattedTitle) {
-          m.executive_title = null
-          if (m.role === 'secretary_admin' || m.role === 'executive') m.role = 'member'
-        }
-      })
-    }
-
-    let targetRole = member.role
-    if (formattedTitle === 'secretary') {
-      targetRole = 'secretary_admin'
-    } else if (['president', 'vice_president', 'treasurer', 'auditor', 'resident_conductor', 'band_manager'].includes(formattedTitle)) {
-      if (member.role !== 'super_admin') {
-        targetRole = 'executive'
-      }
-    } else if (!formattedTitle && (member.role === 'secretary_admin' || member.role === 'executive')) {
-      targetRole = 'member'
-    }
-
-    member.executive_title = formattedTitle
-    member.role = targetRole
-    members.value = [...members.value] // Force Vue reactivity trigger
-
-    // 2. Persist to Supabase
-    if (formattedTitle) {
-      const prevHolder = members.value.find(m => m.id !== member.id && normalizeTitle(m.executive_title) === formattedTitle)
+    // 1. Single Officer Enforcement: Clear previous holder in local memory & DB if leadership post
+    if (newPos.title) {
+      const prevHolder = members.value.find(m => m.id !== member.id && getMemberPositionId(m) === newPos.id)
       if (prevHolder) {
-        await supabase.from('profiles').update({ executive_title: null, role: prevHolder.role }).eq('id', prevHolder.id)
+        prevHolder.executive_title = null
+        prevHolder.role = 'member'
+        await supabase.from('profiles').update({ executive_title: null, role: 'member' }).eq('id', prevHolder.id)
       }
     }
 
+    // 2. Immediate reactive update in memory for 0ms UI feedback
+    member.role = newPos.role
+    member.executive_title = newPos.title
+    member.instrument = newInst
+    member.rank = newRk
+    members.value = [...members.value]
+
+    // 3. Persist to Supabase
     const { error } = await supabase
       .from('profiles')
-      .update({ executive_title: formattedTitle, role: targetRole })
+      .update({
+        role: newPos.role,
+        executive_title: newPos.title,
+        instrument: newInst,
+        rank: newRk
+      })
       .eq('id', member.id)
 
     if (error) throw error
 
-    const titleLabel = formattedTitle ? formattedTitle.replace('_', ' ').toUpperCase() : 'Regular Musician'
-    showToast(`Assigned ${member.name} as ${titleLabel}.`)
+    showToast(`Updated ${member.name} (${newPos.label} • ${newInst}).`)
+    showManageModal.value = false
     await fetchRoster(true)
   } catch (err) {
-    console.error('Executive title update error:', err)
-    showToast('Failed to assign officer title.')
+    console.error('Error saving member changes:', err)
+    showToast('Failed to save changes to database.')
     await fetchRoster(true)
+  } finally {
+    isSavingManage.value = false
   }
 }
 
-// SUPER ADMIN: CHANGE USER INSTRUMENT
-const changeInstrument = async (member, newInstrument) => {
-  try {
-    const oldInstrument = member.instrument
-    member.instrument = newInstrument
-    members.value = [...members.value]
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ instrument: newInstrument })
-      .eq('id', member.id)
-
-    if (error) {
-      member.instrument = oldInstrument
-      members.value = [...members.value]
-      throw error
-    }
-
-    showToast(`Updated ${member.name}'s instrument to ${newInstrument}.`)
-    await fetchRoster(true)
-  } catch (err) {
-    console.error('Instrument update error:', err)
-    showToast('Failed to update instrument.')
-    await fetchRoster(true)
-  }
-}
-
-// TOGGLE RANK (JUNIOR / SENIOR)
-const toggleMemberRank = async (member) => {
-  const newRank = member.rank === 'Senior' ? 'Junior' : 'Senior'
-  try {
-    member.rank = newRank
-    members.value = [...members.value]
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ rank: newRank })
-      .eq('id', member.id)
-
-    if (error) throw error
-
-    showToast(`${member.name} is now a ${newRank} Musician.`)
-    await fetchRoster(true)
-  } catch (err) {
-    console.error('Rank toggle error:', err)
-    showToast('Failed to change rank.')
-    await fetchRoster(true)
-  }
-}
-
-// DELETE MEMBER ACCOUNT (SUPER ADMIN ONLY)
+// DELETE MEMBER ACCOUNT (SUPER ADMIN)
 const promptDeleteMember = (member) => {
   confirmDeleteTarget.value = member
   showDeleteModal.value = true
@@ -406,6 +341,9 @@ const executeDeleteMember = async () => {
 
     members.value = members.value.filter(m => m.id !== target.id)
     showToast(`Permanently deleted ${target.name}.`)
+    if (showManageModal.value && editingMember.value?.id === target.id) {
+      showManageModal.value = false
+    }
   } catch (err) {
     console.error('Delete member error:', err)
     showToast('Failed to delete member account.')
@@ -415,9 +353,9 @@ const executeDeleteMember = async () => {
   }
 }
 
-// VIEW MEMBER AVAILABILITY (QUERIES ALL COLUMNS TOLERATING is_free & is_available)
+// VIEW MEMBER AVAILABILITY
 const openAvailabilityView = async (member) => {
-  selectedMember.value = member
+  selectedMemberForAvailability.value = member
   showAvailabilityModal.value = true
   memberAvailabilitySlots.value = []
   isLoadingAvailability.value = true
@@ -431,24 +369,22 @@ const openAvailabilityView = async (member) => {
     if (error) throw error
 
     if (data && data.length > 0) {
-      // Tolerate both is_free and is_available schema variants
       const freeSlots = data.filter(d => d.is_free !== false && d.is_available !== false)
-      
       const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-      const sortedSlots = [...freeSlots].sort((a, b) => {
+      const sorted = [...freeSlots].sort((a, b) => {
         const idxA = dayOrder.indexOf((a.day_of_week || '').toLowerCase())
         const idxB = dayOrder.indexOf((b.day_of_week || '').toLowerCase())
         return idxA - idxB
       })
 
-      memberAvailabilitySlots.value = sortedSlots.map(d => {
+      memberAvailabilitySlots.value = sorted.map(d => {
         const rawDay = d.day_of_week || ''
         const day = rawDay ? rawDay.charAt(0).toUpperCase() + rawDay.slice(1).toLowerCase() : 'Any Day'
         return `${day} • ${d.time_slot || 'All Day'}`
       })
     }
   } catch (err) {
-    console.error('Error fetching member availability:', err)
+    console.error('Availability fetch error:', err)
   } finally {
     isLoadingAvailability.value = false
   }
@@ -458,7 +394,7 @@ onMounted(() => {
   fetchRoster()
 
   membersChannel = supabase
-    .channel('members-realtime')
+    .channel('members-realtime-directory')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
       fetchRoster(true)
     })
@@ -473,27 +409,29 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+  <div class="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
     
     <!-- Top Header -->
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-neutral-800/80">
       <div class="flex items-center space-x-3.5">
-        <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-xs flex-shrink-0">
+        <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex-shrink-0 shadow-xs">
           <Users class="w-6 h-6" />
         </div>
         <div class="min-w-0">
           <div class="flex items-center space-x-2">
-            <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider leading-tight">Band Directory & Registry</p>
-            <span v-if="store.isSuperAdmin" class="text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded-full">
-              Super Admin Control
+            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Band Directory</span>
+            <span v-if="store.isSuperAdmin" class="text-[10px] font-black uppercase bg-rose-500 text-white px-2.5 py-0.5 rounded-full">
+              Super Admin Mode
             </span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">Band Roster</h1>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">
+            Musician Registry
+          </h1>
         </div>
       </div>
 
       <div class="flex items-center space-x-2">
-        <span class="text-xs font-bold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#27272a] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-800">
+        <span class="text-xs font-bold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#27272a] px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-800">
           {{ members.length }} Verified Musicians
         </span>
       </div>
@@ -503,7 +441,7 @@ onUnmounted(() => {
     <Transition name="toast">
       <div 
         v-if="toastMessage" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs sm:max-w-md w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-bold text-xs"
+        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-md w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-bold text-xs"
       >
         <div class="flex items-center space-x-2 min-w-0 pr-2">
           <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -515,12 +453,12 @@ onUnmounted(() => {
       </div>
     </Transition>
 
-    <!-- 1. PINNED ACTIVE EXECUTIVE OFFICERS CARDS (NO BLANK TABS, NO '(7 Posts)') -->
-    <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Executive Leadership Section">
+    <!-- 1. PINNED ACTIVE EXECUTIVE OFFICERS (ONLY CURRENTLY APPOINTED OFFICERS) -->
+    <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Band Leadership">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
           <Crown class="w-4 h-4 text-amber-500" />
-          <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
+          <h2 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-neutral-300">
             Band Leadership & Executive Officers
           </h2>
         </div>
@@ -529,12 +467,12 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <!-- Responsive Grid: Only Active Appointed Officers Rendered -->
+      <!-- Responsive Grid for Active Officers -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
         <div 
           v-for="pos in pinnedLeadership" 
           :key="pos.key"
-          class="rounded-3xl p-4 border transition-all duration-200 flex flex-col justify-between bg-white dark:bg-[#1c1c1e] border-slate-200/90 dark:border-neutral-800 shadow-sm hover:border-blue-500/50"
+          class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/90 dark:border-neutral-800 shadow-xs hover:border-blue-500/40 transition-all flex flex-col justify-between"
         >
           <div>
             <!-- Officer Title Badge -->
@@ -547,7 +485,7 @@ onUnmounted(() => {
               </span>
             </div>
 
-            <!-- Musician Details -->
+            <!-- Officer Profile Details -->
             <div class="flex items-start space-x-3">
               <div class="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
                 <img v-if="pos.officer.profile_picture" :src="pos.officer.profile_picture" :alt="pos.officer.name" class="w-full h-full object-cover" />
@@ -573,24 +511,30 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom Action for Officer Card -->
+          <!-- Bottom Actions -->
           <div class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(pos.officer)"
               type="button"
               class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center cursor-pointer min-h-[32px]"
             >
-              <Calendar class="w-3 h-3 mr-1" /> View Availability
+              <Calendar class="w-3 h-3 mr-1" /> Availability
             </button>
-            <span v-if="pos.officer.role === 'secretary_admin'" class="text-[9px] font-black uppercase text-indigo-500">
-              Operations Lead
-            </span>
+
+            <button 
+              v-if="store.isSuperAdmin"
+              @click="openManageModal(pos.officer)"
+              type="button"
+              class="text-[11px] font-bold text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[32px]"
+            >
+              <Settings class="w-3 h-3 mr-1" /> Manage
+            </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 2. "PA-IMPORTANTE" ATTENDANCE BEHAVIOR MONITOR (Reliability < 85%) -->
+    <!-- 2. "PA-IMPORTANTE" ATTENDANCE BEHAVIOR MONITOR (< 85%) -->
     <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-rose-50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 rounded-3xl p-4 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2 text-rose-700 dark:text-rose-400">
@@ -602,11 +546,7 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <p class="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed font-medium">
-        Musicians with low attendance reliability. Secretary and Super Admin can demote rank or coordinate call-time follow-ups.
-      </p>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
         <div 
           v-for="item in paImportanteList" 
           :key="item.id" 
@@ -622,108 +562,106 @@ onUnmounted(() => {
             </div>
           </div>
           <button 
-            @click="toggleMemberRank(item)" 
+            v-if="store.isSuperAdmin"
+            @click="openManageModal(item)"
             type="button"
-            class="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-black text-[10px] rounded-xl border border-amber-300 dark:border-amber-800/40 shrink-0 cursor-pointer min-h-[36px]"
-            title="Click to toggle Rank"
+            class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-black text-[10px] rounded-xl border border-amber-300 dark:border-amber-800/40 shrink-0 cursor-pointer min-h-[34px]"
           >
-            Demote
+            Manage
           </button>
         </div>
       </div>
     </section>
 
-    <!-- 3. SEARCH & SECTION FILTER BAR -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+    <!-- 3. SEARCH & DYNAMIC FILTER BAR -->
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
       <!-- Search Input -->
-      <div class="relative flex-1 max-w-lg">
+      <div class="relative flex-1 max-w-md">
         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
           <Search class="w-4 h-4" />
         </div>
         <input 
           v-model="searchQuery"
           type="text" 
-          placeholder="Search by musician name, instrument, role, or title..."
-          class="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-bold shadow-xs min-h-[44px]"
+          placeholder="Search by name, instrument, or title..."
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-bold shadow-xs min-h-[42px]"
         />
       </div>
 
-      <!-- Filter Button & Active Filter Badges -->
-      <div class="flex items-center space-x-2">
-        <div class="relative">
-          <button 
-            @click="openFilter"
-            type="button"
-            class="flex items-center space-x-2 px-4 py-3 bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-[#27272a] text-xs font-bold shadow-xs cursor-pointer min-h-[44px]"
-          >
-            <Filter class="w-4 h-4" :class="{ 'text-blue-600 dark:text-blue-400': !activeFilters.includes('All') }" />
-            <span>Section Filter</span>
-            <span v-if="!activeFilters.includes('All')" class="w-2 h-2 bg-blue-600 rounded-full"></span>
-          </button>
-
-          <!-- Filter Dropdown Menu -->
-          <div v-if="showFilterMenu" class="absolute right-0 mt-2 w-64 bg-white dark:bg-[#27272a] rounded-3xl shadow-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden z-30">
-            <div class="p-3.5 bg-slate-50 dark:bg-[#1c1c1e] border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between">
-              <h3 class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">Filter by Instrument</h3>
-              <button @click="showFilterMenu = false" class="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X class="w-4 h-4" /></button>
-            </div>
-            <div class="max-h-64 overflow-y-auto p-2 space-y-1">
-              <label 
-                v-for="sec in sections" 
-                :key="sec"
-                class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100/70 dark:hover:bg-[#1c1c1e] cursor-pointer transition-colors"
-              >
-                <input 
-                  type="checkbox" 
-                  :checked="tempFilters.includes(sec)"
-                  @change="toggleTempFilter(sec)"
-                  class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 cursor-pointer"
-                >
-                <span class="text-xs font-bold text-slate-700 dark:text-neutral-200">{{ sec === 'All' ? 'All Sections' : sec }}</span>
-              </label>
-            </div>
-            <div class="p-3 bg-slate-50 dark:bg-[#1c1c1e] border-t border-slate-200 dark:border-neutral-800 flex items-center justify-end space-x-2">
-              <button @click="showFilterMenu = false" class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-neutral-200 cursor-pointer">Cancel</button>
-              <button @click="applyFilters" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black transition-colors shadow-xs cursor-pointer">Apply Filter</button>
-            </div>
-          </div>
-        </div>
-
-        <button 
-          v-if="!activeFilters.includes('All')"
-          @click="activeFilters = ['All']"
-          class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline px-2 cursor-pointer"
+      <!-- Quick Category Pills -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0">
+        <!-- Instrument Section Dropdown -->
+        <select 
+          v-model="activeSectionFilter"
+          class="bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-white font-bold text-xs rounded-2xl px-3 py-2 border border-slate-200 dark:border-neutral-800 shadow-xs min-h-[42px] cursor-pointer"
         >
-          Reset Filter
-        </button>
+          <option value="All">All Sections</option>
+          <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
+        </select>
+
+        <!-- Tier Filter Buttons -->
+        <div class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1 text-xs font-bold border border-slate-200/80 dark:border-neutral-800 shrink-0">
+          <button 
+            type="button" 
+            @click="activeTierFilter = 'all'"
+            class="px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+            :class="activeTierFilter === 'all' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+          >
+            All
+          </button>
+          <button 
+            type="button" 
+            @click="activeTierFilter = 'officers'"
+            class="px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+            :class="activeTierFilter === 'officers' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Officers
+          </button>
+          <button 
+            type="button" 
+            @click="activeTierFilter = 'senior'"
+            class="px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+            :class="activeTierFilter === 'senior' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Senior
+          </button>
+          <button 
+            type="button" 
+            @click="activeTierFilter = 'junior'"
+            class="px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+            :class="activeTierFilter === 'junior' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Junior
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- 4. DYNAMIC MEMBER ROSTER (TABLE ON DESKTOP & TABLET, CARDS ON MOBILE) -->
-    <section class="space-y-3" aria-label="Member Directory List">
+    <!-- 4. CLEAN, HIGH-CONTRAST MUSICIAN DIRECTORY (DESKTOP / TABLET TABLE) -->
+    <section class="space-y-3" aria-label="Musician Directory Roster">
       <div class="flex items-center justify-between px-1">
-        <span class="text-xs font-extrabold text-slate-600 dark:text-neutral-400 uppercase tracking-wider">
+        <span class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
           Musician Master Directory ({{ sortedRoster.length }})
         </span>
         <span v-if="sortedRoster.length > 10" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
-          Scroll container enabled ({{ sortedRoster.length }} total)
+          Scrollable table enabled
         </span>
       </div>
 
-      <!-- DESKTOP & TABLET VIEW: SLEEK HIGH-CONTRAST DATA TABLE (Hidden on Mobile) -->
+      <!-- DESKTOP / TABLET VIEW (TABLE) -->
       <div 
         class="hidden md:block bg-white dark:bg-[#1c1c1e] rounded-3xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
-        :class="sortedRoster.length > 10 ? 'max-h-[540px] overflow-y-auto' : ''"
+        :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
       >
         <table class="w-full text-left border-collapse text-xs">
           <!-- Sticky Header -->
-          <thead class="sticky top-0 bg-slate-50 dark:bg-[#27272a] border-b border-slate-200 dark:border-neutral-800 z-10 font-black text-slate-500 dark:text-neutral-400 uppercase tracking-wider text-[10px]">
+          <thead class="sticky top-0 bg-slate-50/95 dark:bg-[#27272a]/95 backdrop-blur-xs border-b border-slate-200 dark:border-neutral-800 z-10 font-black text-slate-500 dark:text-neutral-400 uppercase tracking-wider text-[10px]">
             <tr>
               <th scope="col" class="py-3.5 px-4">Musician</th>
               <th scope="col" class="py-3.5 px-4">Section / Instrument</th>
+              <th scope="col" class="py-3.5 px-4">Role & Leadership</th>
               <th scope="col" class="py-3.5 px-4">Rank</th>
               <th scope="col" class="py-3.5 px-4">Reliability</th>
-              <th v-if="store.isSuperAdmin" scope="col" class="py-3.5 px-4">Role & Officer Title (Super Admin)</th>
               <th scope="col" class="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -735,155 +673,114 @@ onUnmounted(() => {
               :class="member.role === 'super_admin' ? 'bg-rose-50/20 dark:bg-rose-950/10' : member.executive_title ? 'bg-blue-50/20 dark:bg-blue-950/10' : ''"
             >
               <!-- Musician Name & Avatar -->
-              <td class="py-3.5 px-4">
+              <td class="py-3 px-4">
                 <div class="flex items-center space-x-3">
-                  <div class="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                  <div class="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
                     <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                     <span v-else>{{ member.avatar }}</span>
                   </div>
                   <div class="min-w-0">
-                    <div class="flex items-center space-x-1.5 flex-wrap">
-                      <span class="font-black text-slate-900 dark:text-white text-xs truncate max-w-[160px] lg:max-w-none">
-                        {{ member.name }}
-                      </span>
-                      <!-- Role Badges -->
-                      <span v-if="member.role === 'super_admin'" class="text-[9px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded-md">
-                        IT Admin
-                      </span>
-                      <span v-else-if="member.executive_title" class="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-md">
-                        {{ member.executive_title.replace('_', ' ') }}
-                      </span>
-                      <span v-else-if="member.role === 'secretary_admin'" class="text-[9px] font-black uppercase bg-indigo-600 text-white px-2 py-0.5 rounded-md">
-                        Secretary
-                      </span>
-                    </div>
+                    <span class="font-black text-slate-900 dark:text-white text-xs truncate block">
+                      {{ member.name }}
+                    </span>
+                    <span class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
+                      {{ member.contact || 'Registered Member' }}
+                    </span>
                   </div>
                 </div>
               </td>
 
-              <!-- Section / Instrument (Editable by Super Admin) -->
-              <td class="py-3.5 px-4">
-                <select 
-                  v-if="store.isSuperAdmin"
-                  :value="member.instrument"
-                  @change="e => changeInstrument(member, e.target.value)"
-                  class="bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[36px] max-w-[170px] cursor-pointer"
-                  title="Change Musician Instrument Section"
-                >
-                  <option v-for="sec in sections.filter(s => s !== 'All')" :key="sec" :value="sec">
-                    {{ sec }}
-                  </option>
-                </select>
-                <span v-else class="font-bold text-slate-700 dark:text-neutral-300 capitalize">
+              <!-- Section / Instrument -->
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-[#27272a] text-slate-800 dark:text-neutral-200 font-bold text-xs capitalize">
+                  <Music class="w-3 h-3 mr-1 text-slate-400" />
                   {{ member.instrument }}
                 </span>
               </td>
 
-              <!-- Rank (Toggleable if Super Admin) -->
-              <td class="py-3.5 px-4">
-                <button 
-                  v-if="store.isSuperAdmin"
-                  @click="toggleMemberRank(member)"
-                  type="button"
-                  :disabled="member.role === 'super_admin'"
-                  class="text-[10px] font-black px-2.5 py-1 rounded-lg border transition-all flex items-center active:scale-95 disabled:opacity-50 cursor-pointer"
-                  :class="member.rank === 'Senior' 
-                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/40' 
-                    : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700/80'"
-                  title="Click to toggle Junior / Senior rank"
+              <!-- Unified Position / Leadership Role Badge -->
+              <td class="py-3 px-4">
+                <span 
+                  v-if="getMemberPositionId(member) === 'super_admin'" 
+                  class="inline-flex items-center text-[10px] font-black uppercase bg-rose-500 text-white px-2.5 py-1 rounded-lg tracking-wider"
                 >
-                  <Award class="w-3 h-3 mr-1" /> {{ member.rank }}
-                </button>
+                  <ShieldCheck class="w-3 h-3 mr-1" /> IT Super Admin
+                </span>
+                <span 
+                  v-else-if="getMemberPositionId(member) !== 'member'" 
+                  class="inline-flex items-center text-[10px] font-black uppercase bg-blue-600 text-white px-2.5 py-1 rounded-lg tracking-wider shadow-xs"
+                >
+                  <Crown class="w-3 h-3 mr-1 text-amber-300" /> {{ getMemberPosition(member).badge }}
+                </span>
                 <span 
                   v-else 
-                  class="text-[10px] font-black px-2.5 py-1 rounded-lg"
-                  :class="member.rank === 'Senior' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400'"
+                  class="inline-flex items-center text-[10px] font-bold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#27272a] px-2.5 py-1 rounded-lg"
                 >
-                  {{ member.rank }}
+                  Musician
+                </span>
+              </td>
+
+              <!-- Rank -->
+              <td class="py-3 px-4">
+                <span 
+                  class="text-[10px] font-black px-2.5 py-1 rounded-lg border inline-flex items-center"
+                  :class="member.rank === 'Senior' 
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
+                    : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700/80'"
+                >
+                  <Award class="w-3 h-3 mr-1" /> {{ member.rank }}
                 </span>
               </td>
 
               <!-- Reliability -->
-              <td class="py-3.5 px-4">
-                <span 
-                  class="font-extrabold text-[11px] px-2 py-0.5 rounded-md"
-                  :class="member.reliability >= 90 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : member.reliability >= 80 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40' : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40'"
-                >
-                  {{ member.reliability }}%
-                </span>
-              </td>
-
-              <!-- Super Admin Controls (Role & Title Selectors) -->
-              <td v-if="store.isSuperAdmin" class="py-3.5 px-4">
-                <div class="flex items-center space-x-2">
-                  <!-- Role Selector -->
-                  <select 
-                    :value="member.role"
-                    @change="e => changeRole(member, e.target.value)"
-                    :disabled="member.role === 'super_admin' && member.id !== store.user?.id"
-                    class="bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[36px]"
-                    title="Change System Role"
-                  >
-                    <option value="member">Musician (Member)</option>
-                    <option value="secretary_admin">Band Secretary (Admin)</option>
-                    <option value="executive">Executive Officer</option>
-                    <option value="super_admin">IT Super Admin</option>
-                  </select>
-
-                  <!-- Executive Title Selector -->
-                  <select 
-                    :value="normalizeTitle(member.executive_title) || ''"
-                    @change="e => assignExecutiveTitle(member, e.target.value)"
-                    class="bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-xs rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[36px]"
-                    title="Assign Executive Officer Title"
-                  >
-                    <option value="">None (Regular Musician)</option>
-                    <option value="president">Band President</option>
-                    <option value="vice_president">Band Vice President</option>
-                    <option value="secretary">Band Secretary</option>
-                    <option value="treasurer">Band Treasurer</option>
-                    <option value="auditor">Band Auditor</option>
-                    <option value="resident_conductor">Resident Conductor</option>
-                    <option value="band_manager">Band Manager</option>
-                  </select>
+              <td class="py-3 px-4">
+                <div class="flex items-center space-x-1.5">
+                  <span 
+                    class="w-2 h-2 rounded-full flex-shrink-0"
+                    :class="member.reliability >= 90 ? 'bg-emerald-500' : member.reliability >= 80 ? 'bg-blue-500' : 'bg-rose-500'"
+                  ></span>
+                  <span class="font-extrabold text-xs text-slate-900 dark:text-white">
+                    {{ member.reliability }}%
+                  </span>
                 </div>
               </td>
 
-              <!-- Actions -->
-              <td class="py-3.5 px-4 text-right">
-                <div class="flex items-center justify-end space-x-1.5">
+              <!-- Actions (Clean Buttons - No Messy Dropdowns) -->
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end space-x-2">
+                  <!-- View Availability -->
                   <button 
                     @click="openAvailabilityView(member)"
                     type="button"
                     class="p-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-                    title="View Availability Slots"
+                    title="View Weekly Availability"
                   >
                     <Calendar class="w-4 h-4" />
                   </button>
 
+                  <!-- Super Admin Manage Button -->
                   <button 
-                    v-if="store.isSuperAdmin && member.role !== 'super_admin' && member.id !== store.user?.id"
-                    @click="promptDeleteMember(member)"
+                    v-if="store.isSuperAdmin"
+                    @click="openManageModal(member)"
                     type="button"
-                    class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-                    title="Delete Musician Account"
+                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center transition-all cursor-pointer min-h-[36px]"
                   >
-                    <Trash2 class="w-4 h-4" />
+                    <Settings class="w-3.5 h-3.5 mr-1" /> Manage
                   </button>
                 </div>
               </td>
             </tr>
 
             <tr v-if="sortedRoster.length === 0">
-              <td :colspan="store.isSuperAdmin ? 6 : 5" class="py-8 text-center text-slate-400 font-bold">
-                No musicians match your search or section filter.
+              <td colspan="6" class="py-10 text-center text-slate-400 font-bold">
+                No musicians match your search or filter.
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- MOBILE VIEW: DYNAMIC CARDS (Hidden on Tablet/Desktop) -->
+      <!-- MOBILE VIEW: CLEAN MEMBER CARDS (Hidden on Desktop/Tablet) -->
       <div 
         class="block md:hidden space-y-3"
         :class="sortedRoster.length > 10 ? 'max-h-[540px] overflow-y-auto pr-1' : ''"
@@ -897,26 +794,25 @@ onUnmounted(() => {
           <!-- Top Row: Musician Identity -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+              <div class="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
                 <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
-                <div class="flex items-center space-x-1.5 flex-wrap">
-                  <h3 class="font-black text-sm text-slate-900 dark:text-white truncate">
-                    {{ member.name }}
-                  </h3>
-                  <!-- Badge -->
-                  <span v-if="member.role === 'super_admin'" class="text-[9px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded">
-                    IT Admin
+                <h3 class="font-black text-sm text-slate-900 dark:text-white truncate">
+                  {{ member.name }}
+                </h3>
+                <div class="flex items-center space-x-1.5 mt-0.5 flex-wrap">
+                  <span 
+                    v-if="getMemberPositionId(member) !== 'member'" 
+                    class="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded shadow-xs"
+                  >
+                    {{ getMemberPosition(member).badge }}
                   </span>
-                  <span v-else-if="member.executive_title" class="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded">
-                    {{ member.executive_title.replace('_', ' ') }}
+                  <span class="text-xs text-slate-500 dark:text-neutral-400 capitalize">
+                    {{ member.instrument }}
                   </span>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-neutral-400 capitalize mt-0.5">
-                  {{ member.instrument }}
-                </p>
               </div>
             </div>
 
@@ -928,114 +824,166 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom Actions / Super Admin Mobile Controls -->
-          <div v-if="store.isSuperAdmin" class="pt-2 border-t border-slate-100 dark:border-neutral-800 space-y-2">
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">System Role</label>
-                <select 
-                  :value="member.role"
-                  @change="e => changeRole(member, e.target.value)"
-                  :disabled="member.role === 'super_admin' && member.id !== store.user?.id"
-                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-[11px] rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
-                >
-                  <option value="member">Musician</option>
-                  <option value="secretary_admin">Secretary</option>
-                  <option value="executive">Executive</option>
-                  <option value="super_admin">IT Admin</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Officer Title</label>
-                <select 
-                  :value="normalizeTitle(member.executive_title) || ''"
-                  @change="e => assignExecutiveTitle(member, e.target.value)"
-                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-[11px] rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
-                >
-                  <option value="">None</option>
-                  <option value="president">President</option>
-                  <option value="vice_president">Vice Pres</option>
-                  <option value="secretary">Secretary</option>
-                  <option value="treasurer">Treasurer</option>
-                  <option value="auditor">Auditor</option>
-                  <option value="resident_conductor">Conductor</option>
-                  <option value="band_manager">Manager</option>
-                </select>
-              </div>
-
-              <!-- Instrument Select for Super Admin on Mobile -->
-              <div class="col-span-2">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Instrument Section</label>
-                <select 
-                  :value="member.instrument"
-                  @change="e => changeInstrument(member, e.target.value)"
-                  class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-800 dark:text-white font-bold text-[11px] rounded-xl p-2 border border-slate-200 dark:border-neutral-700/80 min-h-[38px]"
-                >
-                  <option v-for="sec in sections.filter(s => s !== 'All')" :key="sec" :value="sec">
-                    {{ sec }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-1">
-              <button 
-                @click="toggleMemberRank(member)"
-                type="button"
-                :disabled="member.role === 'super_admin'"
-                class="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center min-h-[36px] cursor-pointer"
-              >
-                <Award class="w-3.5 h-3.5 mr-1" /> Toggle {{ member.rank === 'Senior' ? 'Junior' : 'Senior' }}
-              </button>
-
-              <div class="flex items-center space-x-2">
-                <button 
-                  @click="openAvailabilityView(member)"
-                  type="button"
-                  class="text-[11px] font-bold text-slate-600 dark:text-neutral-400 flex items-center px-2 py-1 bg-slate-100 dark:bg-[#27272a] rounded-lg min-h-[36px] cursor-pointer"
-                >
-                  <Calendar class="w-3.5 h-3.5 mr-1" /> Availability
-                </button>
-
-                <button 
-                  v-if="member.role !== 'super_admin' && member.id !== store.user?.id"
-                  @click="promptDeleteMember(member)"
-                  type="button"
-                  class="text-[11px] font-bold text-rose-500 hover:text-rose-700 flex items-center px-2 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-lg min-h-[36px] cursor-pointer"
-                >
-                  <Trash2 class="w-3.5 h-3.5 mr-1" /> Delete
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Non-Super Admin Mobile Bottom Bar -->
-          <div v-else class="pt-2 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between">
+          <!-- Bottom Actions Bar -->
+          <div class="pt-2.5 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(member)"
               type="button"
               class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center cursor-pointer min-h-[36px]"
             >
-              <Calendar class="w-3.5 h-3.5 mr-1" /> View Availability Slots
+              <Calendar class="w-3.5 h-3.5 mr-1" /> View Availability
+            </button>
+
+            <button 
+              v-if="store.isSuperAdmin"
+              @click="openManageModal(member)"
+              type="button"
+              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center cursor-pointer min-h-[36px]"
+            >
+              <Settings class="w-3.5 h-3.5 mr-1" /> Manage
             </button>
           </div>
         </div>
 
         <div v-if="sortedRoster.length === 0" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-8 text-center border border-slate-200 dark:border-neutral-800">
           <Users class="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
-          <p class="text-xs font-bold text-slate-500">No musicians match your filter.</p>
+          <p class="text-xs font-bold text-slate-500">No musicians match your search or filter.</p>
         </div>
       </div>
     </section>
 
-    <!-- 5. MEMBER AVAILABILITY MODAL -->
+    <!-- 5. ALL-IN-ONE MUSICIAN MANAGEMENT MODAL (SUPER ADMIN ONLY) -->
+    <div v-if="showManageModal && editingMember" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl text-left max-h-[90vh] flex flex-col">
+        
+        <!-- Modal Header with Musician Info -->
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+          <div class="flex items-center space-x-3 min-w-0 pr-2">
+            <div class="w-11 h-11 rounded-2xl overflow-hidden bg-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+              <img v-if="editingMember.profile_picture" :src="editingMember.profile_picture" :alt="editingMember.name" class="w-full h-full object-cover" />
+              <span v-else>{{ editingMember.avatar }}</span>
+            </div>
+            <div class="min-w-0">
+              <span class="text-[10px] font-black uppercase text-blue-500 tracking-wider">Manage Member Profile</span>
+              <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ editingMember.name }}</h3>
+            </div>
+          </div>
+          <button @click="showManageModal = false" class="text-slate-400 hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Modal Form Body -->
+        <div class="space-y-4 overflow-y-auto flex-1 pr-1">
+          
+          <!-- UNIFIED ROLE & LEADERSHIP POSITION SELECTOR -->
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-700 dark:text-neutral-300 mb-1.5 flex items-center">
+              <Crown class="w-3.5 h-3.5 mr-1 text-amber-500" /> Official Position & Leadership
+            </label>
+            <select 
+              v-model="managePositionId"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-2xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+            >
+              <option v-for="pos in POSITIONS" :key="pos.id" :value="pos.id">
+                {{ pos.label }}
+              </option>
+            </select>
+            <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-1">
+              Leadership posts are strictly single-officer appointments. Assigning a post automatically unassigns any previous holder.
+            </p>
+          </div>
+
+          <!-- INSTRUMENT SECTION -->
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-700 dark:text-neutral-300 mb-1.5 flex items-center">
+              <Music class="w-3.5 h-3.5 mr-1 text-blue-500" /> Instrument Section
+            </label>
+            <select 
+              v-model="manageInstrument"
+              class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-2xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+            >
+              <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
+            </select>
+          </div>
+
+          <!-- MUSICIAN RANK TOGGLE -->
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-700 dark:text-neutral-300 mb-1.5 flex items-center">
+              <Award class="w-3.5 h-3.5 mr-1 text-indigo-500" /> Musician Rank
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button 
+                type="button" 
+                @click="manageRank = 'Junior'"
+                class="py-2.5 px-3 rounded-xl border text-xs font-black transition-all flex items-center justify-center cursor-pointer min-h-[40px]"
+                :class="manageRank === 'Junior' 
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs' 
+                  : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700'"
+              >
+                Junior Rank
+              </button>
+              <button 
+                type="button" 
+                @click="manageRank = 'Senior'"
+                class="py-2.5 px-3 rounded-xl border text-xs font-black transition-all flex items-center justify-center cursor-pointer min-h-[40px]"
+                :class="manageRank === 'Senior' 
+                  ? 'bg-blue-600 text-white border-transparent shadow-xs' 
+                  : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700'"
+              >
+                Senior Rank
+              </button>
+            </div>
+          </div>
+
+          <!-- DANGER ZONE: DELETE ACCOUNT -->
+          <div v-if="editingMember.role !== 'super_admin' && editingMember.id !== store.user?.id" class="pt-3 border-t border-slate-100 dark:border-neutral-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-rose-600 dark:text-rose-400">Account Deletion</p>
+                <p class="text-[11px] text-slate-400">Permanently remove this musician from registry</p>
+              </div>
+              <button 
+                @click="promptDeleteMember(editingMember)"
+                type="button"
+                class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 font-bold text-xs rounded-xl border border-rose-200 dark:border-rose-900/40 cursor-pointer min-h-[36px]"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
+          <button 
+            @click="showManageModal = false" 
+            type="button" 
+            class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 active:scale-95 min-h-[44px] cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="saveMemberManagement" 
+            :disabled="isSavingManage"
+            type="button" 
+            class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md active:scale-95 min-h-[44px] cursor-pointer disabled:opacity-50"
+          >
+            {{ isSavingManage ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 6. MEMBER AVAILABILITY MODAL -->
     <div v-if="showAvailabilityModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div>
             <span class="text-[10px] font-black text-blue-500 uppercase tracking-wider">Availability Overview</span>
-            <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedMember?.name }}</h3>
+            <h3 class="font-black text-base text-slate-900 dark:text-white truncate">{{ selectedMemberForAvailability?.name }}</h3>
           </div>
           <button @click="showAvailabilityModal = false" class="text-slate-400 hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
             <X class="w-5 h-5" />
@@ -1063,7 +1011,7 @@ onUnmounted(() => {
 
           <div v-else class="p-4 bg-slate-50 dark:bg-[#27272a] rounded-2xl text-center text-xs text-slate-400 font-bold space-y-1">
             <p>No active free slots registered for this week yet.</p>
-            <p v-if="selectedMember?.id === store.user?.id" class="text-[11px] text-blue-500">
+            <p v-if="selectedMemberForAvailability?.id === store.user?.id" class="text-[11px] text-blue-500">
               You can set your weekly slots in Profile Settings.
             </p>
           </div>
@@ -1081,7 +1029,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 6. SUPER ADMIN DELETE CONFIRMATION MODAL -->
+    <!-- 7. SUPER ADMIN DELETE CONFIRMATION MODAL -->
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
