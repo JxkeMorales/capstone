@@ -24,18 +24,19 @@ export const useMainStore = defineStore('main', {
     isExecutive: (state) => state.currentRole === 'executive',
     isStandardMember: (state) => state.currentRole === 'member',
     
-    // Feature Permissions
+    // Feature Permissions (Super Admin universal control + Secretary Operational execution)
     canApproveAccounts: (state) => state.currentRole === 'super_admin',
     canAssignAdminRoles: (state) => state.currentRole === 'super_admin',
+    canDeleteAccounts: (state) => state.currentRole === 'super_admin',
     
-    canManageEvents: (state) => state.currentRole === 'secretary_admin',
-    canManageAnnouncements: (state) => state.currentRole === 'secretary_admin',
-    canPromoteMembers: (state) => state.currentRole === 'secretary_admin',
-    canConductRollCall: (state) => state.currentRole === 'secretary_admin',
-    canUseSchedulingAlgorithm: (state) => state.currentRole === 'secretary_admin',
+    canManageEvents: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
+    canManageAnnouncements: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
+    canPromoteMembers: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
+    canConductRollCall: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
+    canUseSchedulingAlgorithm: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
     
-    canViewExecutiveAnalytics: (state) => ['secretary_admin', 'executive', 'super_admin'].includes(state.currentRole),
-    canViewBudgetInfo: (state) => ['executive', 'secretary_admin'].includes(state.currentRole),
+    canViewExecutiveAnalytics: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
+    canViewBudgetInfo: (state) => ['super_admin', 'executive', 'secretary_admin'].includes(state.currentRole),
   },
   
   actions: {

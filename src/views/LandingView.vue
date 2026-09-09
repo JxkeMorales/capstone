@@ -49,6 +49,27 @@ const defaultPositions = [
     defaultInstrument: 'High Winds / Brass',
   },
   {
+    key: 'auditor',
+    titleCode: 'BAND AUDITOR',
+    role: 'Band Auditor',
+    responsibility: 'Audits resource disbursements, uniform registries, and inventory logs.',
+    defaultInstrument: 'Ensemble Brass',
+  },
+  {
+    key: 'resident_conductor',
+    titleCode: 'RESIDENT CONDUCTOR',
+    role: 'Resident Conductor',
+    responsibility: 'Artistic direction, sectional balance, musical scores, and concert baton.',
+    defaultInstrument: 'Concert Baton / Maestro',
+  },
+  {
+    key: 'band_manager',
+    titleCode: 'BAND MANAGER',
+    role: 'Band Manager',
+    responsibility: 'Performance logistics, venue liaison, transportation, and equipment transport.',
+    defaultInstrument: 'Operations Logistics',
+  },
+  {
     key: 'admin',
     titleCode: 'BAND ADMINISTRATOR',
     role: 'Band Administrator',
@@ -81,13 +102,16 @@ const fetchOfficers = async () => {
       .eq('is_verified', true)
 
     if (data && data.length > 0) {
-      const pres = data.find(p => p.executive_title === 'president')
-      const vp = data.find(p => p.executive_title === 'vice_president')
-      const sec = data.find(p => p.role === 'secretary_admin')
-      const treas = data.find(p => p.executive_title === 'treasurer')
-      const admin = data.find(p => p.role === 'super_admin')
+      const mapOfficer = (pos) => {
+        let member = null
+        if (pos.key === 'secretary') {
+          member = data.find(p => p.executive_title === 'secretary' || (p.role === 'secretary_admin' && !p.executive_title))
+        } else if (pos.key === 'admin') {
+          member = data.find(p => p.role === 'super_admin')
+        } else {
+          member = data.find(p => p.executive_title === pos.key)
+        }
 
-      const mapOfficer = (pos, member) => {
         if (member) {
           return {
             id: member.id,
@@ -116,13 +140,7 @@ const fetchOfficers = async () => {
         }
       }
 
-      officers.value = [
-        mapOfficer(defaultPositions[0], pres),
-        mapOfficer(defaultPositions[1], vp),
-        mapOfficer(defaultPositions[2], sec),
-        mapOfficer(defaultPositions[3], treas),
-        mapOfficer(defaultPositions[4], admin)
-      ]
+      officers.value = defaultPositions.map(pos => mapOfficer(pos))
     }
   } catch (err) {
     console.warn('Could not fetch officers for landing page:', err)
