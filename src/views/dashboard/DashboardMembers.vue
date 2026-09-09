@@ -54,28 +54,22 @@ const confirmDeleteTarget = ref(null)
 // Realtime Channel Reference
 let membersChannel = null
 
-// UNIFIED SYSTEM POSITIONS (ONE SINGLE APPOINTMENT SYSTEM - NO SEPARATE DROPDOWNS!)
+// UNIFIED SYSTEM POSITIONS (MATCHES SUPABASE DATABASE ENUMS PERFECTLY)
 const POSITIONS = [
   { id: 'member', label: 'Regular Musician', role: 'member', title: null, color: 'slate', badge: 'Musician' },
   { id: 'president', label: 'Band President', role: 'executive', title: 'president', color: 'amber', badge: 'Band President' },
   { id: 'vice_president', label: 'Band Vice President', role: 'executive', title: 'vice_president', color: 'amber', badge: 'Band Vice President' },
-  { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: 'secretary', color: 'indigo', badge: 'Band Secretary' },
+  { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: null, color: 'indigo', badge: 'Band Secretary' },
   { id: 'treasurer', label: 'Band Treasurer', role: 'executive', title: 'treasurer', color: 'emerald', badge: 'Band Treasurer' },
-  { id: 'auditor', label: 'Band Auditor', role: 'executive', title: 'auditor', color: 'teal', badge: 'Band Auditor' },
-  { id: 'resident_conductor', label: 'Resident Conductor', role: 'executive', title: 'resident_conductor', color: 'purple', badge: 'Resident Conductor' },
-  { id: 'band_manager', label: 'Band Manager', role: 'executive', title: 'band_manager', color: 'blue', badge: 'Band Manager' },
   { id: 'super_admin', label: 'IT Super Admin', role: 'super_admin', title: null, color: 'rose', badge: 'IT Super Admin' }
 ]
 
-// 7 HIERARCHICAL EXECUTIVE OFFICER POSTS (For Pinned Leadership at top)
+// HIERARCHICAL EXECUTIVE OFFICER POSTS (Pinned Leadership at top)
 const leadershipPosts = [
   { key: 'president', title: 'Band President' },
   { key: 'vice_president', title: 'Band Vice President' },
   { key: 'secretary', title: 'Band Secretary' },
   { key: 'treasurer', title: 'Band Treasurer' },
-  { key: 'auditor', title: 'Band Auditor' },
-  { key: 'resident_conductor', title: 'Resident Conductor' },
-  { key: 'band_manager', title: 'Band Manager' },
 ]
 
 // FULL INSTRUMENT LIST
@@ -120,14 +114,11 @@ const normalizeTitle = (str) => {
 // GET THE UNIFIED POSITION ID FOR ANY MEMBER
 const getMemberPositionId = (member) => {
   if (member.role === 'super_admin') return 'super_admin'
+  if (member.role === 'secretary_admin') return 'secretary'
   const t = normalizeTitle(member.executive_title)
   if (t === 'president') return 'president'
   if (t === 'vice_president') return 'vice_president'
-  if (t === 'secretary' || member.role === 'secretary_admin') return 'secretary'
   if (t === 'treasurer') return 'treasurer'
-  if (t === 'auditor') return 'auditor'
-  if (t === 'resident_conductor') return 'resident_conductor'
-  if (t === 'band_manager') return 'band_manager'
   return 'member'
 }
 
@@ -280,7 +271,8 @@ const saveMemberManagement = async () => {
 
   try {
     // 1. Single Officer Enforcement: Clear previous holder in local memory & DB if leadership post
-    if (newPos.title) {
+    const isLeadershipPost = ['president', 'vice_president', 'secretary', 'treasurer'].includes(newPos.id)
+    if (isLeadershipPost) {
       const prevHolder = members.value.find(m => m.id !== member.id && getMemberPositionId(m) === newPos.id)
       if (prevHolder) {
         prevHolder.executive_title = null
@@ -309,12 +301,12 @@ const saveMemberManagement = async () => {
 
     if (error) throw error
 
-    showToast(`Updated ${member.name} (${newPos.label} • ${newInst}).`)
+    showToast(`✓ Updated ${member.name} (${newPos.label} • ${newInst} • ${newRk}).`)
     showManageModal.value = false
     await fetchRoster(true)
   } catch (err) {
     console.error('Error saving member changes:', err)
-    showToast('Failed to save changes to database.')
+    showToast(`Error: ${err?.message || 'Failed to save changes.'}`)
     await fetchRoster(true)
   } finally {
     isSavingManage.value = false
