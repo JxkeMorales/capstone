@@ -135,6 +135,10 @@ CREATE POLICY "Secretary can update member ranks"
 ON public.profiles FOR UPDATE
 USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
 
+-- RLS: Super Admin can delete rejected or removed accounts
+CREATE POLICY "Super Admins can delete profiles"
+ON public.profiles FOR DELETE
+USING (public.get_auth_role(auth.uid()) = 'super_admin');
 
 -- RLS: Verified users can view verified profiles (used by public_roster view)
 CREATE POLICY "Verified users can view verified profiles"
@@ -179,9 +183,10 @@ CREATE POLICY "Verified users can read announcements"
 ON public.announcements FOR SELECT
 USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_verified = true));
 
-CREATE POLICY "Secretary Admin can manage announcements"
+CREATE POLICY "Secretary and Super Admin can manage announcements"
 ON public.announcements FOR ALL
-USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'))
+WITH CHECK (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
 
 
 -- --------------------------------------------------------------------
@@ -203,9 +208,10 @@ CREATE POLICY "Verified users can view events"
 ON public.events FOR SELECT
 USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_verified = true));
 
-CREATE POLICY "Secretary Admin can manage events"
+CREATE POLICY "Secretary and Super Admin can manage events"
 ON public.events FOR ALL
-USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'))
+WITH CHECK (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
 
 
 -- --------------------------------------------------------------------
@@ -230,6 +236,11 @@ CREATE POLICY "Admins can view all RSVPs"
 ON public.event_rsvps FOR SELECT
 USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'executive', 'super_admin'));
 
+CREATE POLICY "Admins can manage event RSVPs"
+ON public.event_rsvps FOR ALL
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'))
+WITH CHECK (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
+
 
 -- --------------------------------------------------------------------
 -- 9. MEMBER AVAILABILITY TABLE & RLS
@@ -249,9 +260,9 @@ CREATE POLICY "Members can manage own availability"
 ON public.member_availability FOR ALL
 USING (auth.uid() = user_id);
 
-CREATE POLICY "Secretary can view all member availability"
+CREATE POLICY "Admins can view all member availability"
 ON public.member_availability FOR SELECT
-USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
 
 
 -- --------------------------------------------------------------------

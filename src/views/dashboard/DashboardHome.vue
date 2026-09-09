@@ -351,28 +351,58 @@ const executeConfirmedAction = async () => {
   if (!id) return
 
   if (confirmActionType.value === 'delete_announcement') {
-    const { error } = await supabase.from('announcements').delete().eq('id', id)
-    if (!error) {
-      announcements.value = announcements.value.filter(a => a.id !== id)
-      localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
-      notifyOtherTabs('ANNOUNCEMENT_CHANGED')
-      showToast('Announcement deleted.')
+    const { data, error } = await supabase.from('announcements').delete().eq('id', id).select()
+    if (error) {
+      showToast(`Error deleting announcement: ${error.message}`)
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
     }
+    if (!data || data.length === 0) {
+      showToast('Could not delete announcement. Database permission denied.')
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
+    }
+    announcements.value = announcements.value.filter(a => a.id !== id)
+    localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
+    notifyOtherTabs('ANNOUNCEMENT_CHANGED')
+    showToast('Announcement deleted.')
   } else if (confirmActionType.value === 'delete_event') {
-    const { error } = await supabase.from('events').delete().eq('id', id)
-    if (!error) {
-      rawEvents.value = rawEvents.value.filter(e => e.id !== id)
-      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
-      notifyOtherTabs('EVENT_CHANGED')
-      showToast('Event deleted.')
+    const { data, error } = await supabase.from('events').delete().eq('id', id).select()
+    if (error) {
+      showToast(`Error deleting event: ${error.message}`)
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
     }
+    if (!data || data.length === 0) {
+      showToast('Could not delete event. Database permission denied.')
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
+    }
+    rawEvents.value = rawEvents.value.filter(e => e.id !== id)
+    localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+    notifyOtherTabs('EVENT_CHANGED')
+    showToast('Event deleted.')
   } else if (confirmActionType.value === 'reject_account') {
-    const { error } = await supabase.from('profiles').delete().eq('id', id)
-    if (!error) {
-      pendingAccounts.value = pendingAccounts.value.filter(a => a.id !== id)
-      notifyOtherTabs('PROFILE_CHANGED')
-      showToast('Registration declined & erased.')
+    const { data, error } = await supabase.from('profiles').delete().eq('id', id).select()
+    if (error) {
+      showToast(`Error declining account: ${error.message}`)
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
     }
+    if (!data || data.length === 0) {
+      showToast('Could not decline account. Database permission denied.')
+      showConfirmModal.value = false
+      confirmTargetId.value = null
+      return
+    }
+    pendingAccounts.value = pendingAccounts.value.filter(a => a.id !== id)
+    notifyOtherTabs('PROFILE_CHANGED')
+    showToast('Registration declined & erased.')
   }
 
   showConfirmModal.value = false

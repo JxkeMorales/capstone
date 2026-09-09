@@ -324,12 +324,16 @@ const executeDeleteMember = async () => {
   const target = confirmDeleteTarget.value
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .delete()
       .eq('id', target.id)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0) {
+      throw new Error('Database permission denied. Only Super Admin can delete member accounts.')
+    }
 
     members.value = members.value.filter(m => m.id !== target.id)
     showToast(`Permanently deleted ${target.name}.`)
@@ -338,7 +342,7 @@ const executeDeleteMember = async () => {
     }
   } catch (err) {
     console.error('Delete member error:', err)
-    showToast('Failed to delete member account.')
+    showToast(`Failed to delete member: ${err.message || 'Database error'}`)
   } finally {
     showDeleteModal.value = false
     confirmDeleteTarget.value = null

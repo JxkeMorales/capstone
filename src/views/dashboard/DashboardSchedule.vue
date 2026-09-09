@@ -234,15 +234,26 @@ const executeDeleteEvent = async () => {
   const id = targetEventIdToDelete.value
   if (!id) return
 
-  const { error } = await supabase.from('events').delete().eq('id', id)
-  if (!error) {
+  try {
+    const { data, error } = await supabase.from('events').delete().eq('id', id).select()
+    if (error) {
+      showToastNotification(`Error deleting event: ${error.message}`)
+      return
+    }
+    if (!data || data.length === 0) {
+      showToastNotification('Could not delete event. Database permission denied.')
+      return
+    }
     rawEvents.value = rawEvents.value.filter(e => e.id !== id)
     localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
     notifyOtherTabs('EVENT_CHANGED')
     showToastNotification('Event deleted successfully.')
+  } catch (err) {
+    showToastNotification(`Error: ${err?.message || 'Failed to delete event'}`)
+  } finally {
+    showDeleteConfirmModal.value = false
+    targetEventIdToDelete.value = null
   }
-  showDeleteConfirmModal.value = false
-  targetEventIdToDelete.value = null
 }
 
 onMounted(() => {
