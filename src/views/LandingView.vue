@@ -10,9 +10,7 @@ import {
   Shield, 
   Award, 
   Sparkles, 
-  Activity,
-  CheckCircle2,
-  UserCheck
+  Activity
 } from 'lucide-vue-next'
 import { supabase } from '@/supabase'
 
@@ -26,8 +24,10 @@ const defaultPositions = [
     role: 'Band President',
     shortTitle: 'President',
     shortCode: 'PR',
-    responsibility: 'Executive leadership, civic engagements, and official band representation.',
-    defaultInstrument: 'Principal Brass / Winds',
+    name: 'Position To Be Appointed',
+    image: null,
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'vice_president',
@@ -35,8 +35,10 @@ const defaultPositions = [
     role: 'Band Vice President',
     shortTitle: 'Vice Pres.',
     shortCode: 'VP',
-    responsibility: 'Assists band governance, coordinates sectional leaders and rehearsals.',
-    defaultInstrument: 'Woodwinds / Ensemble',
+    name: 'Band Vice President',
+    image: '/officers/bandvicepres.png',
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'secretary',
@@ -44,8 +46,10 @@ const defaultPositions = [
     role: 'Band Secretary',
     shortTitle: 'Secretary',
     shortCode: 'SEC',
-    responsibility: 'Roster management, gig call-time schedules, member attendance roll-calls, and availability logs.',
-    defaultInstrument: 'Percussion / Section Lead',
+    name: 'Band Secretary',
+    image: '/officers/bandsecretary.png',
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'treasurer',
@@ -53,8 +57,10 @@ const defaultPositions = [
     role: 'Band Treasurer',
     shortTitle: 'Treasurer',
     shortCode: 'TRE',
-    responsibility: 'Band financial accountability, gig compensation logistics, uniform maintenance, and instrument funds.',
-    defaultInstrument: 'High Winds / Brass',
+    name: 'Position To Be Appointed',
+    image: null,
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'auditor',
@@ -62,8 +68,10 @@ const defaultPositions = [
     role: 'Band Auditor',
     shortTitle: 'Auditor',
     shortCode: 'AUD',
-    responsibility: 'Audits resource disbursements, asset care records, musical instrument registries, and uniform logs.',
-    defaultInstrument: 'Ensemble Brass',
+    name: 'Band Auditor',
+    image: '/officers/bandauditor.png',
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'resident_conductor',
@@ -71,8 +79,10 @@ const defaultPositions = [
     role: 'Resident Conductor',
     shortTitle: 'Conductor',
     shortCode: 'MA',
-    responsibility: 'Artistic direction, sectional balance, musical score arrangements, rehearsals, and concert baton.',
-    defaultInstrument: 'Concert Baton / Maestro',
+    name: 'Resident Conductor',
+    image: '/officers/bandconductor.png',
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
     key: 'band_manager',
@@ -80,21 +90,25 @@ const defaultPositions = [
     role: 'Band Manager',
     shortTitle: 'Manager',
     shortCode: 'MGR',
-    responsibility: 'Performance operations, venue liaison, municipal event logistics, transport, and equipment trucks.',
-    defaultInstrument: 'Operations Logistics',
+    name: 'Band Manager',
+    image: '/officers/bandmanager.png',
+    responsibility: '',
+    defaultInstrument: '',
   },
   {
-    key: 'admin',
-    titleCode: 'BAND ADMINISTRATOR',
-    role: 'Band Administrator',
-    shortTitle: 'Admin',
-    shortCode: 'ADM',
-    responsibility: 'IT system operations, user account verifications, digital attendance infrastructure, and band PWA portal.',
-    defaultInstrument: 'Digital Systems & IT',
+    key: 'coordinator',
+    titleCode: 'BAND COORDINATOR',
+    role: 'Band Coordinator',
+    shortTitle: 'Coordinator',
+    shortCode: 'COO',
+    name: 'Band Coordinator',
+    image: '/officers/bandcoordinator.png',
+    responsibility: '',
+    defaultInstrument: '',
   }
 ]
 
-// Officers Data (Clean placeholders until assigned profiles load from database)
+// Officers Data (Configured with real photos & blank official duties for custom editing)
 const officers = ref(
   defaultPositions.map(pos => ({
     id: pos.key,
@@ -102,13 +116,11 @@ const officers = ref(
     role: pos.role,
     shortTitle: pos.shortTitle,
     shortCode: pos.shortCode,
-    name: 'Position To Be Appointed',
+    name: pos.name,
     instrument: pos.defaultInstrument,
-    rank: 'Appointment Pending',
-    reliability: 'Pending Assignment',
     responsibility: pos.responsibility,
-    image: null,
-    isAssigned: false
+    image: pos.image,
+    isAssigned: !!pos.image
   }))
 )
 
@@ -116,7 +128,7 @@ const fetchOfficers = async () => {
   try {
     const { data } = await supabase
       .from('profiles')
-      .select('id, full_name, instrument, role, executive_title, rank, reliability_score, profile_picture')
+      .select('id, full_name, instrument, role, executive_title, profile_picture')
       .eq('is_verified', true)
 
     if (data && data.length > 0) {
@@ -124,8 +136,8 @@ const fetchOfficers = async () => {
         let member = null
         if (pos.key === 'secretary') {
           member = data.find(p => p.executive_title === 'secretary' || (p.role === 'secretary_admin' && !p.executive_title))
-        } else if (pos.key === 'admin') {
-          member = data.find(p => p.role === 'super_admin')
+        } else if (pos.key === 'coordinator' || pos.key === 'admin') {
+          member = data.find(p => p.executive_title === 'coordinator' || p.role === 'super_admin')
         } else {
           member = data.find(p => p.executive_title === pos.key)
         }
@@ -137,12 +149,10 @@ const fetchOfficers = async () => {
             role: pos.role,
             shortTitle: pos.shortTitle,
             shortCode: member.full_name ? member.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : pos.shortCode,
-            name: member.full_name,
+            name: member.full_name || pos.name,
             instrument: member.instrument || pos.defaultInstrument,
-            rank: member.rank ? `${member.rank} Musician` : 'Senior Musician',
-            reliability: member.reliability_score ? `${member.reliability_score}% Verified` : '100% Verified',
             responsibility: pos.responsibility,
-            image: member.profile_picture || null,
+            image: member.profile_picture || pos.image,
             isAssigned: true
           }
         }
@@ -152,13 +162,11 @@ const fetchOfficers = async () => {
           role: pos.role,
           shortTitle: pos.shortTitle,
           shortCode: pos.shortCode,
-          name: 'Position To Be Appointed',
+          name: pos.name,
           instrument: pos.defaultInstrument,
-          rank: 'Appointment Pending',
-          reliability: 'Pending Assignment',
           responsibility: pos.responsibility,
-          image: null,
-          isAssigned: false
+          image: pos.image,
+          isAssigned: !!pos.image
         }
       }
 
@@ -416,7 +424,7 @@ const handleKeyDown = (e) => {
                     <h3 class="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight mb-1 drop-shadow-md">
                       {{ currentOfficer.name }}
                     </h3>
-                    <p class="text-xs font-medium text-slate-300 truncate flex items-center">
+                    <p v-if="currentOfficer.instrument" class="text-xs font-medium text-slate-300 truncate flex items-center">
                       <Music class="w-3.5 h-3.5 mr-1.5 text-blue-400 inline shrink-0" />
                       {{ currentOfficer.instrument }}
                     </p>
@@ -566,39 +574,17 @@ const handleKeyDown = (e) => {
                   {{ currentOfficer.name }}
                 </h3>
 
-                <p class="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center">
+                <p v-if="currentOfficer.instrument" class="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center">
                   <Music class="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>{{ currentOfficer.instrument }}</span>
                 </p>
               </div>
 
               <!-- Operational Responsibility -->
-              <div class="p-4 rounded-2xl bg-[#edf1f5] dark:bg-neutral-900/70 border border-slate-300/70 dark:border-neutral-800 mb-6 text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
-                <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1 font-mono">Official Duty</p>
-                <p>{{ currentOfficer.responsibility }}</p>
-              </div>
-
-              <!-- Concise Attributes (Rank & Verification) -->
-              <div class="grid grid-cols-2 gap-3 mb-2">
-                <div class="p-3.5 rounded-xl bg-[#edf1f5] dark:bg-neutral-900/60 border border-slate-300/70 dark:border-neutral-800/80 flex flex-col">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1">
-                    Musician Rank
-                  </span>
-                  <span class="text-xs sm:text-sm font-black text-slate-800 dark:text-white flex items-center truncate">
-                    <UserCheck class="w-4 h-4 mr-1.5 text-blue-500 shrink-0" />
-                    <span class="truncate">{{ currentOfficer.rank }}</span>
-                  </span>
-                </div>
-
-                <div class="p-3.5 rounded-xl bg-[#edf1f5] dark:bg-neutral-900/60 border border-slate-300/70 dark:border-neutral-800/80 flex flex-col">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1">
-                    Reliability Record
-                  </span>
-                  <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 flex items-center truncate">
-                    <CheckCircle2 class="w-4 h-4 mr-1.5 text-emerald-500 shrink-0" />
-                    <span class="truncate">{{ currentOfficer.reliability }}</span>
-                  </span>
-                </div>
+              <div class="p-5 rounded-2xl bg-[#edf1f5] dark:bg-neutral-900/70 border border-slate-300/70 dark:border-neutral-800 text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
+                <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-2 font-mono">Official Duty</p>
+                <p v-if="currentOfficer.responsibility" class="text-xs sm:text-sm">{{ currentOfficer.responsibility }}</p>
+                <p v-else class="text-xs text-slate-400 dark:text-neutral-600 italic">No duties specified yet.</p>
               </div>
 
             </div>
