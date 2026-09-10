@@ -140,7 +140,19 @@ const handleSubmit = async () => {
         await store.fetchProfile()
       }
       
-      await router.push('/dashboard')
+      try {
+        await router.push('/dashboard')
+      } catch (navErr) {
+        const isChunkErr = 
+          navErr?.message?.includes('Failed to fetch dynamically') ||
+          navErr?.message?.includes('Importing a module script failed') ||
+          navErr?.name === 'ChunkLoadError'
+        if (isChunkErr) {
+          window.location.href = '/dashboard'
+          return
+        }
+        throw navErr
+      }
 
     } else {
       if (!termsAccepted.value) {
@@ -179,6 +191,14 @@ const handleSubmit = async () => {
     }
   } catch (err) {
     console.error('Auth Error:', err)
+    const isChunkErr = 
+      err?.message?.includes('Failed to fetch dynamically') ||
+      err?.message?.includes('Importing a module script failed') ||
+      err?.name === 'ChunkLoadError'
+    if (isChunkErr) {
+      window.location.href = '/dashboard'
+      return
+    }
     errorMessage.value = err?.message || err?.error_description || (typeof err === 'string' ? err : 'Authentication error occurred.')
   } finally {
     isLoading.value = false

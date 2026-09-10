@@ -55,7 +55,26 @@ document.addEventListener('blur', (e) => {
       }
     }
   }
-}, true) // Use capture phase so it triggers before other blurs
+}, true)
+
+// GLOBAL AUTO-RECOVERY FOR OUTDATED DEPLOYMENT CHUNKS
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event?.reason
+  const msg = reason?.message || String(reason || '')
+  if (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    reason?.name === 'ChunkLoadError'
+  ) {
+    event.preventDefault()
+    console.warn('Recovering from outdated deployment bundle chunk error...', msg)
+    const lastReload = parseInt(sessionStorage.getItem('last_chunk_reload') || '0', 10)
+    if (Date.now() - lastReload > 8000) {
+      sessionStorage.setItem('last_chunk_reload', String(Date.now()))
+      window.location.reload()
+    }
+  }
+})
 
 app.mount('#app')
 
