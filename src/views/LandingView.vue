@@ -26,12 +26,8 @@ const defaultPositions = [
     role: 'Band President',
     shortTitle: 'President',
     shortCode: 'PR',
-    defaultName: "Hon. Roberto 'Doc' Valmonte",
+    responsibility: 'Executive leadership, civic engagements, and official band representation.',
     defaultInstrument: 'Principal Brass / Winds',
-    defaultImage: '/officers/officer_2.jpg',
-    defaultRank: 'Executive President',
-    defaultReliability: '100% Attested',
-    responsibility: 'Executive leadership, civic engagements, municipal ceremonies, and official band representation.',
   },
   {
     key: 'vice_president',
@@ -39,12 +35,8 @@ const defaultPositions = [
     role: 'Band Vice President',
     shortTitle: 'Vice Pres.',
     shortCode: 'VP',
-    defaultName: "Ma. Cristina 'Tina' Ramos",
-    defaultInstrument: 'Woodwinds / Ensemble Lead',
-    defaultImage: '/officers/officer_3.jpg',
-    defaultRank: 'Senior Section Lead',
-    defaultReliability: '100% Attested',
-    responsibility: 'Assists band governance, coordinates sectional leaders, rehearsal schedules, and member logistics.',
+    responsibility: 'Assists band governance, coordinates sectional leaders and rehearsals.',
+    defaultInstrument: 'Woodwinds / Ensemble',
   },
   {
     key: 'secretary',
@@ -52,12 +44,8 @@ const defaultPositions = [
     role: 'Band Secretary',
     shortTitle: 'Secretary',
     shortCode: 'SEC',
-    defaultName: "Larcade 'Lxr' Rivera",
-    defaultInstrument: 'Percussion / Section Lead',
-    defaultImage: '/officers/officer_4.jpg',
-    defaultRank: 'Senior Musician',
-    defaultReliability: '100% Attested',
     responsibility: 'Roster management, gig call-time schedules, member attendance roll-calls, and availability logs.',
+    defaultInstrument: 'Percussion / Section Lead',
   },
   {
     key: 'treasurer',
@@ -65,12 +53,8 @@ const defaultPositions = [
     role: 'Band Treasurer',
     shortTitle: 'Treasurer',
     shortCode: 'TRE',
-    defaultName: 'Maria Elena Santos',
-    defaultInstrument: 'High Winds / Brass',
-    defaultImage: '/officers/officer_5.jpg',
-    defaultRank: 'Financial Officer',
-    defaultReliability: '100% Attested',
     responsibility: 'Band financial accountability, gig compensation logistics, uniform maintenance, and instrument funds.',
+    defaultInstrument: 'High Winds / Brass',
   },
   {
     key: 'auditor',
@@ -78,12 +62,8 @@ const defaultPositions = [
     role: 'Band Auditor',
     shortTitle: 'Auditor',
     shortCode: 'AUD',
-    defaultName: 'Engr. Danilo Ramos',
-    defaultInstrument: 'Ensemble Brass',
-    defaultImage: '/officers/officer_6.jpg',
-    defaultRank: 'Auditing Master',
-    defaultReliability: '100% Attested',
     responsibility: 'Audits resource disbursements, asset care records, musical instrument registries, and uniform logs.',
+    defaultInstrument: 'Ensemble Brass',
   },
   {
     key: 'resident_conductor',
@@ -91,12 +71,8 @@ const defaultPositions = [
     role: 'Resident Conductor',
     shortTitle: 'Conductor',
     shortCode: 'MA',
-    defaultName: 'Maestro Felipe De Leon Jr.',
-    defaultInstrument: 'Concert Baton / Maestro',
-    defaultImage: '/officers/officer_1.jpg',
-    defaultRank: 'Resident Maestro',
-    defaultReliability: '100% Attested',
     responsibility: 'Artistic direction, sectional balance, musical score arrangements, rehearsals, and concert baton.',
+    defaultInstrument: 'Concert Baton / Maestro',
   },
   {
     key: 'band_manager',
@@ -104,12 +80,8 @@ const defaultPositions = [
     role: 'Band Manager',
     shortTitle: 'Manager',
     shortCode: 'MGR',
-    defaultName: 'Capt. Jose Mercado',
-    defaultInstrument: 'Operations Logistics',
-    defaultImage: '/officers/officer_7.jpg',
-    defaultRank: 'Operations Chief',
-    defaultReliability: '100% Attested',
     responsibility: 'Performance operations, venue liaison, municipal event logistics, transport, and equipment trucks.',
+    defaultInstrument: 'Operations Logistics',
   },
   {
     key: 'admin',
@@ -117,16 +89,12 @@ const defaultPositions = [
     role: 'Band Administrator',
     shortTitle: 'Admin',
     shortCode: 'ADM',
-    defaultName: 'Engr. Jake Morales',
-    defaultInstrument: 'Digital Systems & IT',
-    defaultImage: '/officers/officer_8.jpg',
-    defaultRank: 'IT Administrator',
-    defaultReliability: '100% Attested',
     responsibility: 'IT system operations, user account verifications, digital attendance infrastructure, and band PWA portal.',
+    defaultInstrument: 'Digital Systems & IT',
   }
 ]
 
-// Officers Data (Initialized with official representative roster)
+// Officers Data (Clean placeholders until assigned profiles load from database)
 const officers = ref(
   defaultPositions.map(pos => ({
     id: pos.key,
@@ -134,13 +102,13 @@ const officers = ref(
     role: pos.role,
     shortTitle: pos.shortTitle,
     shortCode: pos.shortCode,
-    name: pos.defaultName,
+    name: 'Position To Be Appointed',
     instrument: pos.defaultInstrument,
-    rank: pos.defaultRank,
-    reliability: pos.defaultReliability,
+    rank: 'Appointment Pending',
+    reliability: 'Pending Assignment',
     responsibility: pos.responsibility,
-    image: pos.defaultImage,
-    isAssigned: true
+    image: null,
+    isAssigned: false
   }))
 )
 
@@ -168,13 +136,13 @@ const fetchOfficers = async () => {
             titleCode: pos.titleCode,
             role: pos.role,
             shortTitle: pos.shortTitle,
-            shortCode: pos.shortCode,
+            shortCode: member.full_name ? member.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : pos.shortCode,
             name: member.full_name,
             instrument: member.instrument || pos.defaultInstrument,
-            rank: member.rank ? `${member.rank} Musician` : pos.defaultRank,
-            reliability: member.reliability_score ? `${member.reliability_score}% Verified` : pos.defaultReliability,
+            rank: member.rank ? `${member.rank} Musician` : 'Senior Musician',
+            reliability: member.reliability_score ? `${member.reliability_score}% Verified` : '100% Verified',
             responsibility: pos.responsibility,
-            image: member.profile_picture || pos.defaultImage,
+            image: member.profile_picture || null,
             isAssigned: true
           }
         }
@@ -184,13 +152,13 @@ const fetchOfficers = async () => {
           role: pos.role,
           shortTitle: pos.shortTitle,
           shortCode: pos.shortCode,
-          name: pos.defaultName,
+          name: 'Position To Be Appointed',
           instrument: pos.defaultInstrument,
-          rank: pos.defaultRank,
-          reliability: pos.defaultReliability,
+          rank: 'Appointment Pending',
+          reliability: 'Pending Assignment',
           responsibility: pos.responsibility,
-          image: pos.defaultImage,
-          isAssigned: true
+          image: null,
+          isAssigned: false
         }
       }
 
@@ -577,9 +545,9 @@ const handleKeyDown = (e) => {
               <!-- Top Status HUD -->
               <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-200/80 dark:border-neutral-800/80 mb-5">
                 <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="w-2.5 h-2.5 rounded-full" :class="currentOfficer.isAssigned ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
                   <span class="text-[11px] sm:text-xs font-black font-mono uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                    STATUS // ACTIVE EXECUTIVE COUNCIL
+                    {{ currentOfficer.isAssigned ? 'STATUS // ACTIVE EXECUTIVE COUNCIL' : 'STATUS // APPOINTMENT PENDING' }}
                   </span>
                 </div>
                 <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-300/60 dark:border-blue-500/20">
