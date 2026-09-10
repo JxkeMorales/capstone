@@ -4,6 +4,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  html, body {
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
   body {
     @apply bg-[#edf1f5] text-slate-800 dark:bg-[#121214] dark:text-neutral-100 transition-colors duration-300;
     -webkit-font-smoothing: antialiased;

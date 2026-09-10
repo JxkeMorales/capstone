@@ -428,7 +428,19 @@ const handleCreateAnnouncement = async () => {
 
 // SCHEDULE EVENT WITH INSTANT LOCAL LIST ADDITION
 const handleCreateEvent = async () => {
-  if (!newEvTitle.value || !newEvDate.value || !newEvLocation.value) return
+  if (!newEvTitle.value) {
+    showToast('Please enter an event title.')
+    return
+  }
+  if (!newEvDate.value) {
+    showToast('Please select an event date.')
+    return
+  }
+  if (!newEvLocation.value) {
+    showToast('Please specify a location.')
+    return
+  }
+  if (!store.user) return
   isSubmitting.value = true
 
   try {
