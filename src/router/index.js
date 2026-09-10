@@ -106,4 +106,21 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
+// Auto-reload latest assets when Vercel deploys and replaces dynamic chunk modules
+router.onError((error, to) => {
+  const isChunkError = 
+    error?.message?.includes('Failed to fetch dynamically imported module') ||
+    error?.message?.includes('Importing a module script failed') ||
+    error?.name === 'ChunkLoadError'
+
+  if (isChunkError) {
+    console.warn('New deployment detected, reloading latest application assets...', error)
+    if (to?.fullPath) {
+      window.location.href = to.fullPath
+    } else {
+      window.location.reload()
+    }
+  }
+})
+
 export default router
