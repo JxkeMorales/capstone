@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
-import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin } from 'lucide-vue-next'
+import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin, HelpCircle, BookOpen, ChevronRight, Sparkles, Award } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { useRouter } from 'vue-router'
@@ -14,6 +14,10 @@ const uiStore = useUIStore()
 
 const savedTheme = localStorage.getItem('smartband_theme')
 const isDark = ref(savedTheme !== 'light')
+
+// Comprehensive User Guide Modal State
+const showRoleGuideModal = ref(false)
+const activeGuideTab = ref('roles') // 'roles' | 'attendance' | 'availability' | 'pwa'
 
 // User Notification Settings (LocalStorage)
 const enableBanners = ref(localStorage.getItem('smartband_banners_enabled') !== 'false')
@@ -744,6 +748,16 @@ onUnmounted(() => {
           <span>My Profile</span>
         </RouterLink>
 
+        <!-- Role & Operational User Guide Modal Trigger -->
+        <button 
+          @click="showRoleGuideModal = true" 
+          type="button"
+          class="w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a] hover:text-amber-600 dark:hover:text-amber-400 text-left"
+        >
+          <HelpCircle class="w-5 h-5 flex-shrink-0 text-amber-500" />
+          <span>Role & User Guide</span>
+        </button>
+
       </nav>
 
       <!-- Desktop PWA Install Banner -->
@@ -799,23 +813,35 @@ onUnmounted(() => {
           <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
         </div>
 
-        <div class="flex items-center space-x-1">
-          <!-- Install App Header Trigger -->
+        <div class="flex items-center space-x-1 sm:space-x-1.5">
+          <!-- Install App Header Trigger (Responsive) -->
           <button 
             v-if="!isAppInstalled"
             @click="handleInstallPWA"
             type="button"
-            class="p-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center hover:bg-blue-500 transition-colors shadow-xs cursor-pointer min-h-[44px]"
+            class="px-2.5 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center hover:bg-blue-500 transition-colors shadow-xs cursor-pointer min-h-[40px] shrink-0"
             aria-label="Install SmartBand App"
           >
-            <Download class="w-4 h-4 mr-1" /> Install App
+            <Download class="w-4 h-4 sm:mr-1" />
+            <span class="hidden sm:inline">Install</span>
+          </button>
+
+          <!-- User Guide & Roles Help Trigger -->
+          <button 
+            @click="showRoleGuideModal = true" 
+            type="button"
+            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-amber-500 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer shrink-0"
+            aria-label="Open Role & User Guide"
+            title="Role Guide & Operational Manual"
+          >
+            <HelpCircle class="w-5 h-5" />
           </button>
 
           <!-- Quick Mobile Theme Switcher (Sun/Moon) -->
           <button 
             @click="toggleTheme" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer shrink-0"
             :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
             title="Toggle Light/Dark Theme"
           >
@@ -825,9 +851,9 @@ onUnmounted(() => {
 
           <!-- Notification & Settings Drawer Bell Trigger -->
           <button 
-            @click="showSettingsDrawer = true"
+            @click="showSettingsDrawer = true" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[44px] min-h-[44px] flex items-center justify-center relative cursor-pointer"
+            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center relative cursor-pointer shrink-0"
             aria-label="Open App Settings & Alerts Drawer"
             title="Open App Settings"
           >
@@ -883,14 +909,14 @@ onUnmounted(() => {
         </div>
       </Transition>
 
-      <!-- Main Router Page Body -->
-      <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24 md:pb-8">
+      <!-- Main Router Page Body (Generous bottom padding so bottom bar never covers buttons) -->
+      <main class="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-32 md:pb-12">
         <RouterView />
       </main>
 
-      <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal) -->
+      <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal, z-30 below modals) -->
       <nav 
-        class="md:hidden fixed bottom-0 left-0 w-full bg-[#f8fafc] dark:bg-[#1c1c1e] border-t border-slate-300/80 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-50"
+        class="md:hidden fixed bottom-0 left-0 w-full bg-[#f8fafc] dark:bg-[#1c1c1e] border-t border-slate-300/80 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-30"
         aria-label="Bottom Navigation Bar"
       >
         <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
@@ -1163,6 +1189,220 @@ onUnmounted(() => {
             Close
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- COMPREHENSIVE ROLE & OPERATIONAL USER GUIDE MODAL -->
+    <div v-if="showRoleGuideModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs">
+      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-2xl text-left max-h-[90vh] flex flex-col">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <BookOpen class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">SmartBand User & Role Guide</h3>
+              <p class="text-[11px] text-slate-500 dark:text-neutral-400">Operational responsibilities, turnout rules, and quick manuals</p>
+            </div>
+          </div>
+          <button @click="showRoleGuideModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#27272a] rounded-2xl text-xs font-bold shrink-0">
+          <button 
+            @click="activeGuideTab = 'roles'"
+            type="button"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
+            :class="activeGuideTab === 'roles' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Role Powers
+          </button>
+          <button 
+            @click="activeGuideTab = 'attendance'"
+            type="button"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
+            :class="activeGuideTab === 'attendance' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Turnout Math
+          </button>
+          <button 
+            @click="activeGuideTab = 'availability'"
+            type="button"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
+            :class="activeGuideTab === 'availability' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+          >
+            Availability
+          </button>
+          <button 
+            @click="activeGuideTab = 'pwa'"
+            type="button"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
+            :class="activeGuideTab === 'pwa' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+          >
+            PWA & Offline
+          </button>
+        </div>
+
+        <!-- Tab Body (Scrollable) -->
+        <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-600 dark:text-neutral-300 leading-relaxed">
+          
+          <!-- TAB 1: ROLES & RESPONSIBILITIES -->
+          <div v-if="activeGuideTab === 'roles'" class="space-y-3">
+            <div class="p-3.5 bg-slate-50 dark:bg-[#27272a]/60 rounded-2xl border border-slate-200 dark:border-neutral-700/80 space-y-1.5">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-black text-[10px] uppercase">Musician</span>
+                <h4 class="font-black text-slate-900 dark:text-white text-sm">Regular Band Member</h4>
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+                <li>RSVP to upcoming gigs and rehearsals (Attending or Declined).</li>
+                <li>Maintain your 7-day recurring weekly availability in <strong>My Profile</strong>.</li>
+                <li>Receive automated call-time alarms 10–15 minutes before rehearsals.</li>
+                <li>Maintain a high Reliability Score (100% baseline).</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-slate-50 dark:bg-[#27272a]/60 rounded-2xl border border-slate-200 dark:border-neutral-700/80 space-y-1.5">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-black text-[10px] uppercase">Secretary</span>
+                <h4 class="font-black text-slate-900 dark:text-white text-sm">Band Secretary</h4>
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+                <li>Schedule and announce new band rehearsals, civic parades, and feast processions.</li>
+                <li>Conduct live roll-calls with the <strong>Roll Call Log</strong> (mark Present, Absent, or Excused).</li>
+                <li>Use <strong>Check Member Availability</strong> to see who is free for upcoming days and sections.</li>
+                <li>Broadcast urgent RSVP reminder alerts to unconfirmed musicians.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-slate-50 dark:bg-[#27272a]/60 rounded-2xl border border-slate-200 dark:border-neutral-700/80 space-y-1.5">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 font-black text-[10px] uppercase">Executive</span>
+                <h4 class="font-black text-slate-900 dark:text-white text-sm">President, Conductor & Board</h4>
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+                <li>Inspect roster-wide turnout analytics and section performance (Woodwinds, Brass, Percussion).</li>
+                <li>Review the <strong>Musician Commitment Matrix</strong> to identify high flake risk members.</li>
+                <li>Sort members by most no-shows or lowest reliability to resolve lineup bottlenecks.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-slate-50 dark:bg-[#27272a]/60 rounded-2xl border border-slate-200 dark:border-neutral-700/80 space-y-1.5">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-black text-[10px] uppercase">Super Admin</span>
+                <h4 class="font-black text-slate-900 dark:text-white text-sm">IT Super Admin</h4>
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+                <li>Approve or decline new member account registrations and verify identity.</li>
+                <li>Moderate profile avatar photo uploads.</li>
+                <li>Promote musicians to appointed officer posts (Band Secretary, Conductor, etc.).</li>
+                <li>Generate and directly download official standardized PDF reports for municipal review.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- TAB 2: TURNOUT MATH & FLAKE DETECTION -->
+          <div v-else-if="activeGuideTab === 'attendance'" class="space-y-3">
+            <div class="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-200/80 dark:border-blue-900/40 space-y-2">
+              <h4 class="font-black text-slate-900 dark:text-white text-sm">How Attendance Scoring Works</h4>
+              <p class="text-[11px]">
+                Every member begins with a <strong>100% Reliability Score</strong>. Reliability reflects follow-through on commitments.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div class="p-3 bg-slate-50 dark:bg-[#27272a] rounded-xl border border-slate-200 dark:border-neutral-700 space-y-1">
+                <div class="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-black text-xs">
+                  <CheckCircle class="w-4 h-4" />
+                  <span>Present</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Musician confirmed attending and showed up to perform. Positive follow-through recorded.</p>
+              </div>
+
+              <div class="p-3 bg-slate-50 dark:bg-[#27272a] rounded-xl border border-slate-200 dark:border-neutral-700 space-y-1">
+                <div class="flex items-center space-x-1.5 text-blue-600 dark:text-blue-400 font-black text-xs">
+                  <Check class="w-4 h-4" />
+                  <span>Declined in Advance</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-neutral-400"><strong>0% penalty!</strong> Declining early allows section leaders to find instrument substitutes in time.</p>
+              </div>
+
+              <div class="p-3 bg-slate-50 dark:bg-[#27272a] rounded-xl border border-slate-200 dark:border-neutral-700 space-y-1">
+                <div class="flex items-center space-x-1.5 text-rose-600 dark:text-rose-400 font-black text-xs">
+                  <AlertCircle class="w-4 h-4" />
+                  <span>Unexcused No-Show (Flake)</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Musician RSVP'd "Attending" but failed to show up without prior notice. Applies a <strong>-10% Reliability penalty</strong>.</p>
+              </div>
+
+              <div class="p-3 bg-slate-50 dark:bg-[#27272a] rounded-xl border border-slate-200 dark:border-neutral-700 space-y-1">
+                <div class="flex items-center space-x-1.5 text-slate-600 dark:text-neutral-300 font-black text-xs">
+                  <ShieldCheck class="w-4 h-4 text-purple-500" />
+                  <span>Excused Absence</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Valid medical emergency or documented prior notice granted by Band Secretary. <strong>0% penalty</strong>.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: AVAILABILITY RULES -->
+          <div v-else-if="activeGuideTab === 'availability'" class="space-y-3">
+            <div class="p-4 bg-slate-50 dark:bg-[#27272a] rounded-2xl border border-slate-200 dark:border-neutral-700 space-y-2">
+              <h4 class="font-black text-slate-900 dark:text-white text-sm">Weekly Recurring Grid vs Events</h4>
+              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
+                In <strong>My Profile > Availability Grid</strong>, musicians configure their regular 7-day routine (Monday–Sunday, with Morning, Afternoon, and Evening slots).
+              </p>
+              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
+                When Secretary or Admin creates a new gig, the system cross-references this routine and notifies available musicians automatically!
+              </p>
+            </div>
+
+            <div class="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-1 text-amber-800 dark:text-amber-300">
+              <h5 class="font-bold text-xs flex items-center">
+                <AlertTriangle class="w-3.5 h-3.5 mr-1" /> Past Dates in Availability Checker
+              </h5>
+              <p class="text-[11px]">
+                In the Secretary/Admin availability checker, earlier weekdays that have already passed in the current week are disabled and greyed out to prevent querying historical days.
+              </p>
+            </div>
+          </div>
+
+          <!-- TAB 4: PWA & OFFLINE -->
+          <div v-else-if="activeGuideTab === 'pwa'" class="space-y-3">
+            <div class="p-4 bg-slate-50 dark:bg-[#27272a] rounded-2xl border border-slate-200 dark:border-neutral-700 space-y-2">
+              <h4 class="font-black text-slate-900 dark:text-white text-sm">Install as a Native App</h4>
+              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
+                SmartBand is a certified Progressive Web App (PWA). You can install it on your Android phone, iPhone, iPad, Windows PC, or Mac.
+              </p>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400 pt-1">
+                <li><strong>Chrome / Edge (PC/Mac/Android):</strong> Tap "Install App" in the top bar or click the install icon in your address bar.</li>
+                <li><strong>Safari (iOS / iPhone):</strong> Tap the <em>Share</em> button (square with arrow) → tap <em>Add to Home Screen</em>.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-1 text-emerald-800 dark:text-emerald-300">
+              <h5 class="font-bold text-xs flex items-center">
+                <CheckCircle class="w-3.5 h-3.5 mr-1" /> Offline Access
+              </h5>
+              <p class="text-[11px]">
+                Once installed, schedules, rosters, and emergency alarms remain active even when marching in remote parade routes without cellular reception.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
+          <button @click="showRoleGuideModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
+            Got It, Close Guide
+          </button>
+        </div>
+
       </div>
     </div>
 

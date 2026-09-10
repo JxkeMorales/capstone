@@ -893,12 +893,12 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Tab Switcher: Operations vs Reports -->
-      <div class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1.5 text-xs font-bold border border-slate-200/80 dark:border-neutral-800">
+      <!-- Tab Switcher: Operations vs Reports (Responsive) -->
+      <div class="flex flex-wrap sm:flex-nowrap rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1.5 text-xs font-bold border border-slate-200/80 dark:border-neutral-800 w-full sm:w-auto gap-1">
         <button 
           type="button" 
           @click="activeTab = 'operations'"
-          class="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all cursor-pointer"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[38px]"
           :class="activeTab === 'operations' 
             ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-sm font-black' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
@@ -910,7 +910,7 @@ onUnmounted(() => {
         <button 
           type="button" 
           @click="activeTab = 'reports'"
-          class="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all cursor-pointer"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[38px]"
           :class="activeTab === 'reports' 
             ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-sm font-black' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
@@ -1044,7 +1044,7 @@ onUnmounted(() => {
           <button 
             @click="triggerReNotifications"
             type="button"
-            class="py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+            class="py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[44px] shrink-0"
           >
             <Send class="w-4 h-4 mr-2" /> Alert Unconfirmed
           </button>
@@ -1328,23 +1328,23 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <!-- Search and Filter Controls -->
-            <div class="flex flex-wrap items-center gap-2">
+            <!-- Search and Filter Controls (Responsive Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full pt-1">
               <!-- Search -->
-              <div class="relative min-w-[160px]">
+              <div class="relative w-full">
                 <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   v-model="analyticsSearchQuery" 
                   type="text" 
                   placeholder="Search musician..."
-                  class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl text-xs border border-slate-200 dark:border-neutral-700 font-bold focus:outline-none focus:border-blue-500 min-h-[38px]"
+                  class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl text-xs border border-slate-200 dark:border-neutral-700 font-bold focus:outline-none focus:border-blue-500 min-h-[40px]"
                 />
               </div>
 
               <!-- Section Filter -->
               <select 
                 v-model="analyticsSectionFilter" 
-                class="bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[38px]"
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[40px] cursor-pointer"
               >
                 <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
               </select>
@@ -1352,7 +1352,7 @@ onUnmounted(() => {
               <!-- Sort Order -->
               <select 
                 v-model="analyticsSortBy" 
-                class="bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[38px]"
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[40px] cursor-pointer"
               >
                 <option value="flakes_desc">Sort: Most No-Shows First</option>
                 <option value="reliability_asc">Sort: Lowest Reliability First</option>
@@ -1489,10 +1489,10 @@ onUnmounted(() => {
         
         <!-- Controls & Header (Hidden when printing) -->
         <div class="no-print bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             <div>
               <div class="flex items-center space-x-2">
-                <FileText class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <FileText class="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
                 <h3 class="font-black text-lg text-slate-900 dark:text-white">Official Band Administrative Reports</h3>
               </div>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
@@ -1500,13 +1500,13 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <!-- Direct PDF Download & Print Action Buttons -->
-            <div class="flex items-center space-x-2">
+            <!-- Direct PDF Download & Print Action Buttons (Responsive) -->
+            <div class="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
               <button 
                 @click="downloadPdfReport" 
                 :disabled="isGeneratingPdf"
                 type="button" 
-                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px] disabled:opacity-50"
+                class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px] disabled:opacity-50"
               >
                 <Download class="w-4 h-4" />
                 <span>{{ isGeneratingPdf ? 'Downloading...' : 'Download PDF' }}</span>
@@ -1515,7 +1515,7 @@ onUnmounted(() => {
               <button 
                 @click="printReport" 
                 type="button" 
-                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#27272a] dark:hover:bg-[#323238] text-slate-700 dark:text-neutral-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer min-h-[44px]"
+                class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#27272a] dark:hover:bg-[#323238] text-slate-700 dark:text-neutral-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer min-h-[44px]"
                 title="Open browser print / print-to-PDF dialog"
               >
                 <Printer class="w-4 h-4" />

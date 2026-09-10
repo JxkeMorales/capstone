@@ -584,12 +584,12 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- Quick Category Pills -->
-      <div class="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0">
+      <!-- Quick Category Pills (Responsive Wrapping) -->
+      <div class="flex flex-wrap items-center gap-2">
         <!-- Instrument Section Dropdown -->
         <select 
-          v-model="activeSectionFilter"
-          class="bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-white font-bold text-xs rounded-2xl px-3 py-2 border border-slate-200 dark:border-neutral-800 shadow-xs min-h-[42px] cursor-pointer"
+          v-model="activeSectionFilter" 
+          class="bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-white font-bold text-xs rounded-2xl px-3 py-2 border border-slate-200 dark:border-neutral-800 shadow-xs min-h-[42px] cursor-pointer shrink-0"
         >
           <option value="All">All Sections</option>
           <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
@@ -644,9 +644,9 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <!-- DESKTOP / TABLET VIEW (TABLE) -->
+      <!-- DESKTOP / TABLET VIEW (TABLE WITH HORIZONTAL OVERFLOW SCROLLING) -->
       <div 
-        class="hidden md:block bg-white dark:bg-[#1c1c1e] rounded-3xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
+        class="hidden md:block bg-white dark:bg-[#1c1c1e] rounded-3xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto"
         :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
       >
         <table class="w-full text-left border-collapse text-xs">

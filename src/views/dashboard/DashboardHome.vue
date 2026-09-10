@@ -741,13 +741,13 @@ onUnmounted(() => {
     </div>
 
     <!-- RESPONSIVE GRID ON DESKTOP -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       
       <!-- AUTOMATIC EVENTS & GIGS SECTION -->
       <section class="space-y-3">
-        <div class="flex items-center justify-between px-1">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
           <!-- Upcoming vs Past Gigs Tab Pill Toggle -->
-          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold">
+          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold shrink-0">
             <button 
               @click="activeEventsTab = 'upcoming'"
               type="button"
@@ -773,8 +773,13 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <button v-if="store.canManageEvents" @click="showEventModal = true" type="button" class="text-xs font-black text-blue-600 dark:text-blue-400 flex items-center hover:underline cursor-pointer min-h-[44px]">
-            <Plus class="w-3.5 h-3.5 mr-0.5" /> Schedule Event
+          <button 
+            v-if="store.canManageEvents" 
+            @click="showEventModal = true" 
+            type="button" 
+            class="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-1.5 rounded-xl flex items-center transition-all cursor-pointer min-h-[36px] shrink-0 shadow-xs"
+          >
+            <Plus class="w-3.5 h-3.5 mr-1" /> Schedule Event
           </button>
         </div>
 
@@ -787,16 +792,16 @@ onUnmounted(() => {
               class="bg-slate-900 dark:bg-[#18181b] rounded-3xl p-5 shadow-lg relative overflow-hidden text-white border border-slate-800 dark:border-neutral-800"
             >
               <div class="relative z-10">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <span class="inline-block px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-black uppercase tracking-wider text-white">
                     {{ ev.type }}
                   </span>
                   
-                  <div class="flex items-center space-x-1.5">
+                  <div class="flex items-center space-x-1.5 shrink-0">
                     <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white font-extrabold text-[11px] rounded-full flex items-center cursor-pointer min-h-[36px]">
                       <Users class="w-3.5 h-3.5 mr-1" /> Attendees
                     </button>
-                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer" title="Delete Event">
+                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Event">
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -910,9 +915,9 @@ onUnmounted(() => {
 
       <!-- Announcements Section -->
       <section class="space-y-3">
-        <div class="flex items-center justify-between px-1">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
           <!-- Announcements Tab Pill Toggle -->
-          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold">
+          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold shrink-0">
             <button 
               @click="activeAnnouncementTab = 'recent'"
               type="button"
@@ -938,8 +943,13 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <button v-if="store.canManageAnnouncements" @click="showAnnouncementModal = true" type="button" class="text-xs font-black text-blue-600 dark:text-blue-400 flex items-center hover:underline cursor-pointer min-h-[44px]">
-            <Plus class="w-3.5 h-3.5 mr-0.5" /> Post
+          <button 
+            v-if="store.canManageAnnouncements" 
+            @click="showAnnouncementModal = true" 
+            type="button" 
+            class="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-1.5 rounded-xl flex items-center transition-all cursor-pointer min-h-[36px] shrink-0 shadow-xs"
+          >
+            <Plus class="w-3.5 h-3.5 mr-1" /> Post
           </button>
         </div>
         

@@ -489,7 +489,7 @@ onUnmounted(() => {
         v-if="store.canManageEvents"
         @click="showAddEventModal = true"
         type="button"
-        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-2 transition-all active:scale-95 cursor-pointer self-start sm:self-auto min-h-[44px]"
+        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-2 transition-all active:scale-95 cursor-pointer self-start sm:self-auto min-h-[44px] shrink-0"
       >
         <Plus class="w-4 h-4" />
         <span>Schedule New Gig</span>
@@ -497,12 +497,12 @@ onUnmounted(() => {
     </header>
 
     <!-- Schedule Tab Switcher (Upcoming vs Past Gigs) -->
-    <div class="flex items-center justify-between bg-white dark:bg-[#1c1c1e] p-2 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xs">
-      <div class="flex items-center space-x-1.5">
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#1c1c1e] p-2 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xs">
+      <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
         <button 
           @click="activeScheduleTab = 'upcoming'"
           type="button"
-          class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center"
+          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
           :class="activeScheduleTab === 'upcoming' 
             ? 'bg-blue-600 text-white shadow-xs' 
             : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
@@ -514,7 +514,7 @@ onUnmounted(() => {
         <button 
           @click="activeScheduleTab = 'past'"
           type="button"
-          class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center"
+          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
           :class="activeScheduleTab === 'past' 
             ? 'bg-blue-600 text-white shadow-xs' 
             : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
@@ -576,8 +576,8 @@ onUnmounted(() => {
           :key="ev.id"
           class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
         >
-          <div class="flex justify-between items-start">
-            <div>
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
+            <div class="min-w-0 flex-1">
               <div class="flex items-center space-x-1">
                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   {{ ev.type }}
@@ -589,13 +589,13 @@ onUnmounted(() => {
               <h3 class="font-black text-base text-slate-900 dark:text-white mt-1.5 leading-tight">{{ ev.title }}</h3>
             </div>
             
-            <div class="flex items-center space-x-1.5">
+            <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
               <!-- Secretary RSVP Attendance Tracker & Roll Call Trigger -->
               <button 
                 v-if="store.canConductRollCall || store.canManageEvents" 
                 @click="openAttendanceTracker(ev)" 
                 type="button" 
-                class="px-2.5 py-1.5 bg-slate-100 dark:bg-[#27272a] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 dark:hover:bg-[#323238] flex items-center cursor-pointer min-h-[44px]"
+                class="px-3 py-1.5 bg-slate-100 dark:bg-[#27272a] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 dark:hover:bg-[#323238] flex items-center cursor-pointer min-h-[40px]"
                 aria-label="Attendance & Roll Call Log"
               >
                 <Users class="w-3.5 h-3.5 mr-1" /> Roll Call Log
@@ -606,7 +606,7 @@ onUnmounted(() => {
                 v-if="store.canManageEvents" 
                 @click="promptDeleteEvent(ev.id)" 
                 type="button" 
-                class="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                class="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
                 title="Delete Event"
               >
                 <Trash2 class="w-4 h-4" />
