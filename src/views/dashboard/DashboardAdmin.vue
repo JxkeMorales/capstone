@@ -638,6 +638,45 @@ const generatedReportData = computed(() => {
 
 const isGeneratingPdf = ref(false)
 
+// Clear, human-readable file names for each administrative report
+const getReportFilename = () => {
+  const type = selectedReportType.value
+  const dateStamp = new Date().toISOString().split('T')[0]
+  
+  switch (type) {
+    case 'all_members':
+      return `Penaranda_Band_All_Members_${dateStamp}.pdf`
+    case 'active_members':
+      return `Penaranda_Band_Active_Members_${dateStamp}.pdf`
+    case 'inactive_members':
+      return `Penaranda_Band_Pending_Members_${dateStamp}.pdf`
+    case 'members_by_role': {
+      const roleMap = {
+        member: 'Musicians',
+        secretary_admin: 'Secretary',
+        executive: 'Executives',
+        super_admin: 'SuperAdmin'
+      }
+      const roleName = roleMap[selectedRoleFilter.value] || selectedRoleFilter.value
+      return `Penaranda_Band_Members_Role_${roleName}_${dateStamp}.pdf`
+    }
+    case 'officers':
+      return `Penaranda_Band_Officers_Leadership_${dateStamp}.pdf`
+    case 'all_schedules':
+      return `Penaranda_Band_All_Schedules_Gigs_${dateStamp}.pdf`
+    case 'schedules_by_type': {
+      const typeClean = (selectedEventTypeFilter.value || 'Gigs')
+        .split('(')[0]
+        .trim()
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .replace(/^_+|_+$/g, '')
+      return `Penaranda_Band_Schedules_${typeClean}_${dateStamp}.pdf`
+    }
+    default:
+      return `Penaranda_Band_Report_${dateStamp}.pdf`
+  }
+}
+
 // Direct PDF File Download using jsPDF & autoTable
 const downloadPdfReport = () => {
   isGeneratingPdf.value = true
@@ -767,13 +806,28 @@ const downloadPdfReport = () => {
       doc.text('Approved by (Peñaranda Marching Band 1870)', rightX, finalY + 21, { align: 'center' })
     }
 
-    // 6. Direct File Download Trigger
-    const safeTitle = (generatedReportData.value.title || selectedReportType.value)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '')
-    const filename = `PMB1870_${safeTitle}.pdf`
-    doc.save(filename)
+    // 6. Direct File Download Trigger with guaranteed filename & .pdf extension
+    const filename = getReportFilename()
+    const pdfBlob = new Blob([doc.output('blob')], { type: 'application/pdf' })
+    const blobUrl = URL.createObjectURL(pdfBlob)
+
+    const downloadLink = document.createElement('a')
+    downloadLink.href = blobUrl
+    downloadLink.download = filename
+    downloadLink.target = '_self'
+    downloadLink.style.display = 'none'
+
+    // Must be added to document body for Chromium/Edge/Firefox to respect the download attribute
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+
+    setTimeout(() => {
+      if (document.body.contains(downloadLink)) {
+        document.body.removeChild(downloadLink)
+      }
+      URL.revokeObjectURL(blobUrl)
+    }, 2000)
+
     showToast(`✓ Downloaded ${filename}`)
   } catch (err) {
     console.error('Error downloading PDF:', err)
