@@ -46,7 +46,9 @@ const notification = ref('')
 const isDispatchGenerated = ref(false)
 
 // Day and Week Accurate Availability State
-const selectedDayNeeded = ref('Monday')
+const dayNamesList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const todayDayIndex = new Date().getDay()
+const selectedDayNeeded = ref(dayNamesList[todayDayIndex])
 const selectedSlotNeeded = ref('Morning (08:00 AM - 12:00 PM)')
 const selectedInstrumentNeeded = ref('All')
 const availableUserIds = ref(new Set())
@@ -69,18 +71,37 @@ const timeSlots = [
 const weekDaysOptions = computed(() => {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const now = new Date()
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const currentDayIndex = now.getDay() // 0 is Sunday
   
   return dayNames.map((name, index) => {
     const d = new Date(now)
     const diff = index - currentDayIndex
     d.setDate(now.getDate() + diff)
+    const targetMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+    const isPast = targetMidnight < todayMidnight
+    const isToday = targetMidnight === todayMidnight
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    
+    let suffix = ''
+    if (isToday) {
+      suffix = ' • Today'
+    } else if (isPast) {
+      suffix = ' (Past - Disabled)'
+    }
+
     return {
       key: name,
-      fullLabel: `${name} (${dateStr})`
+      fullLabel: `${name} (${dateStr})${suffix}`,
+      isPast,
+      isToday
     }
   })
+})
+
+const isSelectedDayPast = computed(() => {
+  const opt = weekDaysOptions.value.find(d => d.key === selectedDayNeeded.value)
+  return opt ? opt.isPast : false
 })
 
 const showToast = (msg) => {
@@ -219,12 +240,19 @@ const executeRejectAndDeleteUser = async () => {
 
 // 7. AVAILABILITY CHECKER
 const runAvailabilityCheck = async () => {
+  const selectedOpt = weekDaysOptions.value.find(d => d.key === selectedDayNeeded.value)
+  if (selectedOpt && selectedOpt.isPast) {
+    showToast('Cannot check availability for a past date. Please select today or an upcoming day.')
+    return
+  }
+
   try {
+    const slotShort = selectedSlotNeeded.value.split(' ')[0]
     const { data: availData, error } = await supabase
       .from('member_availability')
       .select('*')
-      .eq('day_of_week', selectedDayNeeded.value.toLowerCase())
-      .eq('time_slot', selectedSlotNeeded.value.split(' ')[0])
+      .ilike('day_of_week', selectedDayNeeded.value)
+      .eq('time_slot', slotShort)
 
     if (error) console.warn('Availability query notice:', error)
 
@@ -878,8 +906,20 @@ onUnmounted(() => {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
             <div>
               <label for="day-select" class="block text-[10px] uppercase text-slate-400 mb-1.5">Target Day & Date</label>
-              <select id="day-select" v-model="selectedDayNeeded" class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[44px]">
-                <option v-for="d in weekDaysOptions" :key="d.key" :value="d.key">{{ d.fullLabel }}</option>
+              <select 
+                id="day-select" 
+                v-model="selectedDayNeeded" 
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[44px] cursor-pointer"
+              >
+                <option 
+                  v-for="d in weekDaysOptions" 
+                  :key="d.key" 
+                  :value="d.key"
+                  :disabled="d.isPast"
+                  :class="d.isPast ? 'text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800/80 italic' : 'text-slate-900 dark:text-white font-bold'"
+                >
+                  {{ d.fullLabel }}
+                </option>
               </select>
             </div>
             <div>
@@ -904,10 +944,15 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <p v-if="isSelectedDayPast" class="text-[11px] text-amber-500 dark:text-amber-400 font-bold flex items-center">
+            <AlertTriangle class="w-3.5 h-3.5 mr-1.5 shrink-0 inline" /> Selected day has already passed and cannot be checked. Please choose today or an upcoming day.
+          </p>
+
           <button 
             @click="runAvailabilityCheck"
             type="button"
-            class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
+            :disabled="isSelectedDayPast"
+            class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
           >
             <Cpu class="w-4 h-4 mr-2" /> Check Available Musicians
           </button>
