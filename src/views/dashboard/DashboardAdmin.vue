@@ -381,13 +381,13 @@ const memberAnalyticsMatrix = computed(() => {
     const calculatedScore = Math.max(0, 100 - (flakeCount * 10))
     const score = m.reliability_score !== undefined && m.reliability_score !== null ? m.reliability_score : calculatedScore
 
-    let riskTier = 'Exemplary'
+    let riskTier = 'Reliable'
     let riskColor = 'emerald'
     if (flakeCount >= 2 || score < 75) {
-      riskTier = 'High Flake Risk'
+      riskTier = 'High No-Show Risk'
       riskColor = 'rose'
     } else if (flakeCount === 1 || score < 90) {
-      riskTier = 'Moderate'
+      riskTier = 'Moderate Risk'
       riskColor = 'amber'
     }
 
@@ -943,10 +943,10 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- KPI 2: Total Flakes / No-Shows -->
+          <!-- KPI 2: Total Unexcused No-Shows -->
           <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
-              <span>Total Flakes / No-Shows</span>
+              <span>Unexcused No-Shows</span>
               <AlertTriangle class="w-4 h-4 text-rose-500" />
             </div>
             <div class="flex items-baseline space-x-2">
@@ -980,10 +980,10 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- KPI 4: High Flake Risk Members -->
+          <!-- KPI 4: High No-Show Risk Members -->
           <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
-              <span>High Flake Risk</span>
+              <span>Attendance Risk</span>
               <ShieldAlert class="w-4 h-4 text-amber-500" />
             </div>
             <div class="flex items-baseline space-x-2">
@@ -1017,8 +1017,8 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.woodwinds.attended }} / {{ sectionStats.woodwinds.promised }}</span>
-              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
-                {{ sectionStats.woodwinds.flakes }} Flakes
+              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+                {{ sectionStats.woodwinds.flakes }} No-Shows
               </span>
             </div>
           </div>
@@ -1040,8 +1040,8 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.brass.attended }} / {{ sectionStats.brass.promised }}</span>
-              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
-                {{ sectionStats.brass.flakes }} Flakes
+              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+                {{ sectionStats.brass.flakes }} No-Shows
               </span>
             </div>
           </div>
@@ -1063,8 +1063,8 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>
-              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500' : 'text-emerald-500'">
-                {{ sectionStats.percussion.flakes }} Flakes
+              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+                {{ sectionStats.percussion.flakes }} No-Shows
               </span>
             </div>
           </div>
@@ -1074,9 +1074,9 @@ onUnmounted(() => {
         <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white">Musician Attendance & Flake Matrix</h3>
+              <h3 class="font-black text-base text-slate-900 dark:text-white">Musician Attendance & Commitment Matrix</h3>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-                Detailed individual attendance track record, unexcused no-show flags, and reliability standings.
+                Individual attendance track record, verified turnout, unexcused no-show counts, and reliability standings.
               </p>
             </div>
 
@@ -1106,7 +1106,7 @@ onUnmounted(() => {
                 v-model="analyticsSortBy" 
                 class="bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-1.5 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[38px]"
               >
-                <option value="flakes_desc">Sort: Highest Flakes First</option>
+                <option value="flakes_desc">Sort: Most No-Shows First</option>
                 <option value="reliability_asc">Sort: Lowest Reliability First</option>
                 <option value="reliability_desc">Sort: Highest Reliability First</option>
                 <option value="name">Sort: Musician Name (A-Z)</option>
@@ -1124,10 +1124,10 @@ onUnmounted(() => {
                   <th class="px-3 py-3">Role / Post</th>
                   <th class="px-3 py-3 text-center">Promised</th>
                   <th class="px-3 py-3 text-center">Attended</th>
-                  <th class="px-3 py-3 text-center">Flakes (No-Show)</th>
+                  <th class="px-3 py-3 text-center">No-Shows</th>
                   <th class="px-3 py-3 text-center">Follow-Through</th>
                   <th class="px-3 py-3 text-center">Reliability Score</th>
-                  <th class="px-3 py-3 text-center">Risk Tier</th>
+                  <th class="px-3 py-3 text-center">Attendance Status</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-neutral-800">
@@ -1175,7 +1175,7 @@ onUnmounted(() => {
                     </span>
                   </td>
 
-                  <!-- Flakes (Promised vs Absent) -->
+                  <!-- No-Shows (Promised vs Absent) -->
                   <td class="px-3 py-3 text-center font-extrabold">
                     <span 
                       class="px-2 py-0.5 rounded-full font-black text-xs inline-flex items-center space-x-1"
@@ -1213,11 +1213,11 @@ onUnmounted(() => {
                   <!-- Risk Badge -->
                   <td class="px-3 py-3 text-center whitespace-nowrap">
                     <span 
-                      class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full"
+                      class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full"
                       :class="{
-                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400': member.riskTier === 'Exemplary',
-                        'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400': member.riskTier === 'Moderate',
-                        'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400': member.riskTier === 'High Flake Risk'
+                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400': member.riskTier === 'Reliable',
+                        'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400': member.riskTier === 'Moderate Risk',
+                        'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400': member.riskTier === 'High No-Show Risk'
                       }"
                     >
                       {{ member.riskTier }}
@@ -1315,85 +1315,77 @@ onUnmounted(() => {
         <!-- PRINTABLE OFFICIAL PDF SHEET PREVIEW -->
         <div 
           id="printable-report" 
-          class="bg-white text-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl space-y-6 max-w-5xl mx-auto printable-sheet"
+          class="bg-white text-slate-900 rounded-2xl p-8 sm:p-12 border border-slate-300 shadow-md space-y-5 max-w-4xl mx-auto printable-sheet"
         >
-          <!-- Official Letterhead Header -->
-          <div class="text-center border-b-2 border-slate-900 pb-4 space-y-1">
-            <div class="flex items-center justify-center space-x-3 mb-1">
-              <div class="p-2 rounded-xl bg-slate-900 text-white flex-shrink-0">
-                <Shield class="w-6 h-6" />
-              </div>
-              <div class="text-left">
-                <p class="text-[10px] uppercase font-black tracking-widest text-slate-500 leading-tight">
-                  Republic of the Philippines • Municipal Administration
-                </p>
-                <h2 class="text-lg sm:text-xl font-black text-slate-950 tracking-tight leading-tight">
-                  BANDA SAN JOSE ENTERPRISE REGISTRY
-                </h2>
-              </div>
-            </div>
-            <p class="text-[10px] uppercase font-extrabold tracking-wider text-slate-600">
-              Office of the IT Super Admin & Executive Band Council
+          <!-- Standard Official Letterhead Header -->
+          <div class="text-center pb-3 border-b-2 border-slate-800">
+            <h1 class="text-2xl font-black text-slate-900 tracking-wider uppercase">
+              PEÑARANDA MARCHING BAND 1870
+            </h1>
+            <p class="text-[11px] uppercase tracking-widest text-slate-600 font-bold mt-0.5">
+              Peñaranda, Nueva Ecija • Established 1870
             </p>
           </div>
 
           <!-- Document Title & Subtitle -->
           <div class="text-center space-y-1 pt-1">
-            <span class="inline-block px-3 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-widest border border-slate-300">
-              Official Master Document
-            </span>
-            <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight uppercase">
+            <h2 class="text-lg font-black text-slate-950 uppercase tracking-wide">
               {{ generatedReportData.title }}
-            </h3>
-            <p class="text-xs text-slate-600 font-medium italic">
+            </h2>
+            <p class="text-xs text-slate-600 font-normal italic">
               {{ generatedReportData.subtitle }}
             </p>
           </div>
 
-          <!-- Document Metadata Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+          <!-- Standard Document Metadata Row -->
+          <div class="flex flex-wrap items-center justify-between text-xs text-slate-700 border border-slate-300 bg-slate-50/80 px-4 py-2.5 rounded-lg font-medium">
             <div>
-              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Date Generated</span>
-              <span>{{ new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}</span>
+              <span class="text-slate-500">Date Generated: </span>
+              <strong>{{ new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}</strong>
             </div>
             <div>
-              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Document Control No.</span>
-              <span class="font-mono">SB-REP-{{ new Date().getFullYear() }}-{{ generatedReportData.rows.length }}R</span>
+              <span class="text-slate-500">Document Ref: </span>
+              <strong class="font-mono">PMB1870-REP-{{ new Date().getFullYear() }}-{{ generatedReportData.rows.length }}R</strong>
             </div>
-            <div class="col-span-2 sm:col-span-1">
-              <span class="text-[10px] uppercase font-extrabold text-slate-400 block">Generated By</span>
-              <span class="truncate block">{{ store.profile?.full_name || 'IT Super Admin' }} (Super Admin)</span>
+            <div>
+              <span class="text-slate-500">Total Records: </span>
+              <strong>{{ generatedReportData.rows.length }}</strong>
             </div>
           </div>
 
-          <!-- Official Table -->
+          <!-- Standard Data Grid Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
+            <table class="w-full text-left text-xs border-collapse border border-slate-300">
               <thead>
-                <tr class="bg-slate-100 text-slate-900 border-y-2 border-slate-900 text-[11px] font-black uppercase tracking-wider">
-                  <th v-for="col in generatedReportData.columns" :key="col" class="py-2.5 px-3 border-x border-slate-200">
+                <tr class="bg-slate-100 text-slate-900 text-[11px] font-bold uppercase tracking-wider">
+                  <th 
+                    v-for="col in generatedReportData.columns" 
+                    :key="col" 
+                    class="py-2.5 px-3 border border-slate-300"
+                    :class="{ 'text-center w-12': col === '#' }"
+                  >
                     {{ col }}
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200 font-medium">
+              <tbody class="divide-y divide-slate-200">
                 <tr 
                   v-for="(row, rIdx) in generatedReportData.rows" 
                   :key="rIdx"
-                  class="even:bg-slate-50/50 hover:bg-slate-100/60 transition-colors"
+                  class="even:bg-slate-50/60 hover:bg-slate-100/50"
                 >
                   <td 
                     v-for="(cell, cIdx) in row" 
                     :key="cIdx" 
-                    class="py-2.5 px-3 border-x border-slate-200 font-bold text-slate-900"
-                    :class="{ 'text-center': cIdx === 0 }"
+                    class="py-2 px-3 border border-slate-300 text-slate-800 font-medium"
+                    :class="{ 'text-center font-bold text-slate-600': cIdx === 0 }"
                   >
                     {{ cell }}
                   </td>
                 </tr>
 
                 <tr v-if="generatedReportData.rows.length === 0">
-                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-bold">
+                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-bold border border-slate-300">
                     No matching records found in database registry for this report query.
                   </td>
                 </tr>
@@ -1401,32 +1393,30 @@ onUnmounted(() => {
             </table>
           </div>
 
-          <!-- Total Count & Authenticity Notes -->
-          <div class="flex items-center justify-between text-xs font-bold text-slate-600 border-t border-slate-200 pt-3">
+          <!-- Total Count Footer Line -->
+          <div class="flex items-center justify-between text-xs text-slate-600 border-t border-slate-300 pt-2 font-medium">
             <span>Total Records Listed: <strong>{{ generatedReportData.rows.length }}</strong></span>
-            <span class="text-[10px] uppercase tracking-wider text-slate-400">Authentic System-Generated Registry Document</span>
+            <span class="text-[11px] text-slate-500 italic">Official Record of Peñaranda Marching Band 1870</span>
           </div>
 
-          <!-- Signatories Block -->
-          <div class="pt-8 grid grid-cols-2 gap-8 text-center border-t border-slate-300">
+          <!-- Standard Signatories Block -->
+          <div class="pt-8 grid grid-cols-2 gap-10 text-center text-xs">
             <div class="space-y-1">
-              <div class="w-48 mx-auto border-b-2 border-slate-900 pb-1">
-                <p class="font-black text-sm text-slate-900 uppercase">
+              <div class="w-48 mx-auto border-b border-slate-900 pb-1">
+                <p class="font-bold text-slate-900 uppercase">
                   {{ store.profile?.full_name || 'IT Super Admin' }}
                 </p>
               </div>
-              <p class="text-[10px] uppercase font-bold text-slate-500">IT Super Admin / System Registrar</p>
-              <p class="text-[9px] text-slate-400">Prepared & Exported</p>
+              <p class="text-[11px] font-medium text-slate-600">Prepared by (IT Super Admin)</p>
             </div>
 
             <div class="space-y-1">
-              <div class="w-48 mx-auto border-b-2 border-slate-900 pb-1">
-                <p class="font-black text-sm text-slate-900 uppercase">
-                  Executive Band Council
+              <div class="w-48 mx-auto border-b border-slate-900 pb-1">
+                <p class="font-bold text-slate-900 uppercase">
+                  Executive Board / Conductor
                 </p>
               </div>
-              <p class="text-[10px] uppercase font-bold text-slate-500">President / Resident Conductor</p>
-              <p class="text-[9px] text-slate-400">Attested & Approved</p>
+              <p class="text-[11px] font-medium text-slate-600">Approved by (Peñaranda Marching Band 1870)</p>
             </div>
           </div>
         </div>
