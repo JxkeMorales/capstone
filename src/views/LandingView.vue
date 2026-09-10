@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Music, 
@@ -232,6 +232,48 @@ const handleKeyDown = (e) => {
   } else if (e.key === 'ArrowRight') {
     nextOfficer()
   }
+}
+
+// Avatar Container Scrolling & Visibility Helpers
+const avatarScrollContainer = ref(null)
+const avatarRefs = ref([])
+
+const scrollToActiveAvatar = (idx) => {
+  nextTick(() => {
+    const el = avatarRefs.value[idx]
+    if (el && avatarScrollContainer.value) {
+      el.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      })
+    }
+  })
+}
+
+watch(selectedIndex, (newIdx) => {
+  scrollToActiveAvatar(newIdx)
+})
+
+const handleAvatarWheel = (e) => {
+  const container = avatarScrollContainer.value
+  if (!container) return
+  if (container.scrollWidth > container.clientWidth) {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault()
+      container.scrollLeft += e.deltaY
+    }
+  }
+}
+
+const scrollAvatars = (direction) => {
+  const container = avatarScrollContainer.value
+  if (!container) return
+  const scrollAmount = 140
+  container.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth'
+  })
 }
 </script>
 
@@ -483,21 +525,35 @@ const handleKeyDown = (e) => {
               </button>
             </div>
 
-            <!-- ROSTER QUICK-SELECT BAR (Scrollable on small viewports with no text truncation) -->
-            <div class="w-full max-w-xl mt-4 bg-[#f8fafc]/95 dark:bg-[#18181b]/90 backdrop-blur-xl p-3 sm:p-4 rounded-3xl border border-slate-300/80 dark:border-neutral-800 shadow-xl">
-              <div class="flex items-center space-x-2 sm:space-x-3 overflow-x-auto pb-1 pt-1 px-1 scrollbar-none snap-x scroll-smooth">
-                
+            <!-- ROSTER QUICK-SELECT BAR (All 8 officers visible on desktop, auto-centering & scrollable on mobile) -->
+            <div class="w-full max-w-2xl mt-4 bg-[#f8fafc]/95 dark:bg-[#18181b]/90 backdrop-blur-xl p-2.5 sm:p-4 rounded-3xl border border-slate-300/80 dark:border-neutral-800 shadow-xl relative">
+              
+              <!-- Left Scroll Assist Button (for narrow screens) -->
+              <button 
+                @click="scrollAvatars('left')" 
+                title="Scroll Left"
+                class="sm:hidden absolute left-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-slate-900/85 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-md border border-white/10 active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronLeft class="w-4 h-4" />
+              </button>
+
+              <div 
+                ref="avatarScrollContainer"
+                @wheel="handleAvatarWheel"
+                class="flex items-center space-x-2 sm:space-x-1 sm:justify-between overflow-x-auto pb-1 pt-1 px-8 sm:px-1 scrollbar-none sm:overflow-visible snap-x scroll-smooth"
+              >
                 <button
                   v-for="(officer, idx) in officers"
                   :key="officer.id"
+                  :ref="el => { if (el) avatarRefs[idx] = el }"
                   @click="selectOfficer(idx)"
-                  class="group flex flex-col items-center shrink-0 snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[62px] sm:min-w-[68px] py-1"
+                  class="group flex flex-col items-center shrink-0 sm:shrink snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[64px] sm:min-w-0 sm:flex-1 py-1"
                   :class="selectedIndex === idx ? 'scale-105' : 'opacity-65 hover:opacity-100 hover:scale-102'"
                 >
                   <!-- Circular Profile Avatar with Glowing Ring -->
-                  <div class="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                  <div class="relative w-12 h-12 sm:w-13 sm:h-13 md:w-14 md:h-14 flex items-center justify-center">
                     <div 
-                      class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center"
+                      class="w-12 h-12 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center"
                       :class="selectedIndex === idx 
                         ? 'ring-3 ring-blue-500 ring-offset-2 ring-offset-[#f8fafc] dark:ring-offset-[#18181b] shadow-lg shadow-blue-500/40' 
                         : 'border-2 border-slate-300 dark:border-neutral-700/80 group-hover:border-blue-400'"
@@ -508,7 +564,7 @@ const handleKeyDown = (e) => {
                         :alt="officer.name" 
                         class="w-full h-full object-cover object-top"
                       />
-                      <div v-else class="w-full h-full bg-gradient-to-br from-blue-700 to-indigo-900 text-white flex items-center justify-center font-black text-xs">
+                      <div v-else class="w-full h-full bg-gradient-to-br from-blue-700 to-indigo-900 text-white flex items-center justify-center font-black text-xs font-mono">
                         {{ officer.shortCode }}
                       </div>
                     </div>
@@ -523,7 +579,7 @@ const handleKeyDown = (e) => {
                   <!-- Complete Role Label (Never Truncated with ellipsis) -->
                   <div class="mt-1.5 text-center w-full">
                     <span 
-                      class="text-[10px] sm:text-[11px] font-black tracking-wide px-2 py-0.5 rounded-full transition-all block text-center"
+                      class="text-[9px] sm:text-[10px] md:text-[11px] font-black tracking-wide px-1.5 sm:px-0.5 py-0.5 rounded-full transition-all block text-center"
                       :class="selectedIndex === idx 
                         ? 'bg-blue-600 text-white shadow-xs' 
                         : 'text-slate-600 dark:text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'"
@@ -532,13 +588,22 @@ const handleKeyDown = (e) => {
                     </span>
                   </div>
                 </button>
-
               </div>
+
+              <!-- Right Scroll Assist Button (for narrow screens) -->
+              <button 
+                @click="scrollAvatars('right')" 
+                title="Scroll Right"
+                class="sm:hidden absolute right-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-slate-900/85 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-md border border-white/10 active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronRight class="w-4 h-4" />
+              </button>
+
             </div>
 
             <!-- Interactive Hint -->
             <div class="mt-2.5 flex items-center space-x-1 text-slate-500 dark:text-neutral-500 text-[11px] font-medium font-mono">
-              <span>← Swipe or click avatars to inspect officers →</span>
+              <span>← Click or swipe avatars to switch officers (1 to 8) →</span>
             </div>
 
           </div>
