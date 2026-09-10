@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Moon, CheckCircle2, AlertCircle, X, ShieldCheck, FileText, Smartphone, Award, Cpu, Eye, EyeOff } from 'lucide-vue-next'
+import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Moon, CheckCircle2, AlertCircle, X, ShieldCheck, FileText, Smartphone, Award, Cpu, Eye, EyeOff, Clock, Shield } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -138,7 +138,14 @@ const handleSubmit = async () => {
 
       if (data?.user) {
         store.user = data.user
-        await store.fetchProfile()
+        const prof = await store.fetchProfile(true)
+        if (prof && prof.is_verified === false && prof.role === 'member') {
+          await supabase.auth.signOut()
+          store.user = null
+          store.profile = null
+          errorMessage.value = 'Account Pending Verification: Your membership has not yet been physically verified by the IT Admin against the municipal master list. Access will be activated once approved.'
+          return
+        }
       }
       
       try {
@@ -188,7 +195,40 @@ const handleSubmit = async () => {
 
       if (error) throw error
 
+      // 1. Broadcast instant realtime alert across devices
+      try {
+        const syncChan = supabase.channel('smartband-realtime-sync')
+        await syncChan.subscribe()
+        await syncChan.send({
+          type: 'broadcast',
+          event: 'new_registration',
+          payload: {
+            email: sanitizedEmail,
+            full_name: fullName.value.trim(),
+            instrument: combinedInstrument,
+            timestamp: Date.now()
+          }
+        })
+        supabase.removeChannel(syncChan)
+      } catch (bcErr) {
+        console.warn('Realtime broadcast error on signup:', bcErr)
+      }
+
+      // 2. Broadcast instant cross-tab alert on current device
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('smartband_live_sync')
+          bc.postMessage({
+            type: 'NEW_REGISTRATION',
+            full_name: fullName.value.trim(),
+            email: sanitizedEmail
+          })
+          bc.close()
+        }
+      } catch (e) {}
+
       signupSuccess.value = true
+      password.value = ''
     }
   } catch (err) {
     console.error('Auth Error:', err)
@@ -326,15 +366,19 @@ const handleResetPassword = async () => {
               </button>
             </div>
 
-            <!-- Success Alert after Sign Up -->
-            <div v-if="signupSuccess" class="mb-5 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-left space-y-2">
-              <div class="flex items-center space-x-2 text-emerald-700 dark:text-emerald-300 font-black text-sm">
-                <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500" />
-                <span>Registration Submitted!</span>
+            <!-- Success Alert after Sign Up (Clear Notice of Pending Verification) -->
+            <div v-if="signupSuccess" class="mb-5 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-left space-y-2.5">
+              <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-black text-sm">
+                <Clock class="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>Registration Submitted for Verification</span>
               </div>
-              <p class="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-medium">
-                Your account is queued for physical verification by the IT Admin against the municipal band master list. You may now sign in.
+              <p class="text-xs text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
+                Your membership application has been received and queued for physical verification against the official municipal band master list by the IT Admin.
               </p>
+              <div class="p-2.5 bg-amber-100/70 dark:bg-amber-900/30 rounded-xl border border-amber-300/50 dark:border-amber-800/50 text-[11px] text-amber-900 dark:text-amber-200 font-bold flex items-center space-x-2">
+                <Shield class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <span>Please wait for administrator approval. You will be able to sign in once your account has been verified.</span>
+              </div>
             </div>
 
             <!-- Error Banner -->

@@ -386,21 +386,50 @@ const openAvailabilityView = async (member) => {
   }
 }
 
+let membersBroadcast = null
+
+const onWindowFocus = () => {
+  fetchRoster(true)
+}
+
 onMounted(() => {
   fetchRoster()
 
+  // 1. Supabase Realtime Channel
   membersChannel = supabase
     .channel('members-realtime-directory')
+    .on('broadcast', { event: 'new_registration' }, () => {
+      fetchRoster(true)
+    })
+    .on('broadcast', { event: 'account_status_changed' }, () => {
+      fetchRoster(true)
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
       fetchRoster(true)
     })
     .subscribe()
+
+  // 2. Inter-tab local broadcast
+  if ('BroadcastChannel' in window) {
+    membersBroadcast = new BroadcastChannel('smartband_live_sync')
+    membersBroadcast.onmessage = (e) => {
+      if (e.data?.type === 'NEW_REGISTRATION' || e.data?.type === 'ACCOUNT_STATUS_CHANGED') {
+        fetchRoster(true)
+      }
+    }
+  }
+
+  window.addEventListener('focus', onWindowFocus)
 })
 
 onUnmounted(() => {
   if (membersChannel) {
     supabase.removeChannel(membersChannel)
   }
+  if (membersBroadcast) {
+    membersBroadcast.close()
+  }
+  window.removeEventListener('focus', onWindowFocus)
 })
 </script>
 

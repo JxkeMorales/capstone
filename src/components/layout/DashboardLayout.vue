@@ -538,8 +538,14 @@ onMounted(() => {
     })
     .subscribe()
 
-  // 3. Supabase Realtime Broadcast Alerts (Immediate RSVP Re-notifications)
+  // 3. Supabase Realtime Broadcast Alerts (Immediate RSVP Re-notifications & Registration Sync)
   broadcastSub = supabase.channel('smartband-broadcast-alerts')
+    .on('broadcast', { event: 'new_registration' }, () => {
+      fetchPendingCount()
+    })
+    .on('broadcast', { event: 'account_status_changed' }, () => {
+      fetchPendingCount()
+    })
     .on('broadcast', { event: 'rsvp_reminder' }, (payload) => {
       const p = payload.payload || {}
       if (enableBanners.value) {
@@ -570,6 +576,9 @@ onMounted(() => {
   if ('BroadcastChannel' in window) {
     syncBroadcast = new BroadcastChannel('smartband_live_sync')
     syncBroadcast.onmessage = (e) => {
+      if (e.data?.type === 'NEW_REGISTRATION' || e.data?.type === 'ACCOUNT_STATUS_CHANGED') {
+        fetchPendingCount()
+      }
       if (e.data?.type === 'RSVP_REMINDER_BROADCAST') {
         if (enableBanners.value) {
           uiStore.playChime()
@@ -591,6 +600,9 @@ onMounted(() => {
       }
     }
   }
+
+  window.addEventListener('focus', fetchPendingCount)
+  setInterval(fetchPendingCount, 5000)
 
   // 5. Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
   const setupUserProfileSub = (userId) => {

@@ -58,8 +58,31 @@ const matchedDispatchRoster = ref([])
 const showConfirmModal = ref(false)
 const confirmUserTarget = ref(null)
 
-// Realtime Channel Reference
+// Realtime Channel References & Live Sync
 let adminChannel = null
+let adminLiveBroadcast = null
+let autoSyncTimer = null
+
+const notifyAccountStatusChange = async (status, user) => {
+  try {
+    const syncChan = supabase.channel('smartband-realtime-sync')
+    await syncChan.subscribe()
+    await syncChan.send({
+      type: 'broadcast',
+      event: 'account_status_changed',
+      payload: { status, userId: user?.id, full_name: user?.full_name, timestamp: Date.now() }
+    })
+    supabase.removeChannel(syncChan)
+  } catch (e) {}
+
+  try {
+    if ('BroadcastChannel' in window) {
+      const bc = new BroadcastChannel('smartband_live_sync')
+      bc.postMessage({ type: 'ACCOUNT_STATUS_CHANGED', status, userId: user?.id, timestamp: Date.now() })
+      bc.close()
+    }
+  } catch (e) {}
+}
 
 const timeSlots = [
   'Morning (08:00 AM - 12:00 PM)',
@@ -206,6 +229,7 @@ const approveUser = async (user) => {
     pendingAccounts.value = pendingAccounts.value.filter(u => u.id !== user.id)
     await fetchRoster()
     showToast(`✓ ${user.full_name} verified and approved.`)
+    notifyAccountStatusChange('verified', user)
   } catch (err) {
     console.error('Approval Error:', err)
     showToast('Failed to approve account.')
@@ -229,6 +253,7 @@ const executeRejectAndDeleteUser = async () => {
     pendingAccounts.value = pendingAccounts.value.filter(u => u.id !== target.id)
     memberRoster.value = memberRoster.value.filter(u => u.id !== target.id)
     showToast(`Removed ${target.full_name}.`)
+    notifyAccountStatusChange('rejected', target)
   } catch (err) {
     console.error('Delete Error:', err)
     showToast('Failed to delete registration.')
@@ -841,22 +866,33 @@ const printReport = () => {
   window.print()
 }
 
+const refreshAllAdminData = async () => {
+  await Promise.allSettled([
+    fetchPendingAccounts(),
+    fetchPendingAvatars(),
+    fetchRoster(),
+    fetchAnalyticsAndReportsData()
+  ])
+}
+
 onMounted(() => {
   if (store.isExecutive) {
     activeTab.value = 'reports'
   }
-  fetchPendingAccounts()
-  fetchPendingAvatars()
-  fetchRoster()
-  fetchAnalyticsAndReportsData()
+  refreshAllAdminData()
 
+  // 1. Supabase Realtime Channel: Listen to instant broadcasts + postgres changes
   adminChannel = supabase
-    .channel('admin-realtime')
+    .channel('smartband-realtime-sync')
+    .on('broadcast', { event: 'new_registration' }, (payload) => {
+      refreshAllAdminData()
+      showToast(`🔔 New Member Registration: ${payload.payload?.full_name || 'A musician'} applied for verification!`)
+    })
+    .on('broadcast', { event: 'account_status_changed' }, () => {
+      refreshAllAdminData()
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-      fetchPendingAccounts()
-      fetchPendingAvatars()
-      fetchRoster()
-      fetchAnalyticsAndReportsData()
+      refreshAllAdminData()
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'event_rsvps' }, () => {
       fetchAnalyticsAndReportsData()
@@ -865,12 +901,38 @@ onMounted(() => {
       fetchAnalyticsAndReportsData()
     })
     .subscribe()
+
+  // 2. Local Inter-Tab BroadcastChannel (Instant sync across open browser tabs)
+  if ('BroadcastChannel' in window) {
+    adminLiveBroadcast = new BroadcastChannel('smartband_live_sync')
+    adminLiveBroadcast.onmessage = (e) => {
+      if (e.data?.type === 'NEW_REGISTRATION' || e.data?.type === 'ACCOUNT_STATUS_CHANGED') {
+        refreshAllAdminData()
+      }
+    }
+  }
+
+  // 3. Window focus listener (re-fetch as soon as admin switches back to tab)
+  window.addEventListener('focus', refreshAllAdminData)
+
+  // 4. Fast polling fallback (every 4 seconds for reliable zero-reload updates)
+  autoSyncTimer = setInterval(() => {
+    fetchPendingAccounts()
+    fetchPendingAvatars()
+  }, 4000)
 })
 
 onUnmounted(() => {
   if (adminChannel) {
     supabase.removeChannel(adminChannel)
   }
+  if (adminLiveBroadcast) {
+    adminLiveBroadcast.close()
+  }
+  if (autoSyncTimer) {
+    clearInterval(autoSyncTimer)
+  }
+  window.removeEventListener('focus', refreshAllAdminData)
 })
 </script>
 

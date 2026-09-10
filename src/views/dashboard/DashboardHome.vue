@@ -636,7 +636,13 @@ onMounted(() => {
 
   // 2. Supabase Realtime WebSocket Channel
   homeChannel = supabase
-    .channel('home-realtime-v5')
+    .channel('smartband-realtime-sync-home')
+    .on('broadcast', { event: 'new_registration' }, () => {
+      fetchHomeData(true)
+    })
+    .on('broadcast', { event: 'account_status_changed' }, () => {
+      fetchHomeData(true)
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
       fetchHomeData(true)
     })
@@ -654,16 +660,23 @@ onMounted(() => {
     })
     .subscribe()
 
-  // 3. Silent Auto-Polling Fallback (Every 6 seconds)
+  // 3. Silent Auto-Polling Fallback (Every 4 seconds)
   pollTimer = setInterval(() => {
     fetchHomeData(true)
-  }, 6000)
+  }, 4000)
+
+  window.addEventListener('focus', onWindowFocus)
 })
+
+const onWindowFocus = () => {
+  fetchHomeData(true)
+}
 
 onUnmounted(() => {
   if (homeChannel) supabase.removeChannel(homeChannel)
   if (syncBroadcast) syncBroadcast.close()
   if (pollTimer) clearInterval(pollTimer)
+  window.removeEventListener('focus', onWindowFocus)
 })
 </script>
 
