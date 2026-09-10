@@ -62,3 +62,13 @@ CREATE POLICY "Super Admins can delete profiles"
 ON public.profiles FOR DELETE
 TO authenticated
 USING (public.get_auth_role(auth.uid()) = 'super_admin');
+
+
+-- 6. PROFILES TABLE: Public (anon + authenticated) can view verified band leadership on Landing Page
+DROP POLICY IF EXISTS "Public can view verified leadership profiles" ON public.profiles;
+
+CREATE POLICY "Public can view verified leadership profiles"
+ON public.profiles FOR SELECT
+TO anon, authenticated
+USING (is_verified = true AND (executive_title IS NOT NULL OR role IN ('secretary_admin', 'super_admin')));
+
