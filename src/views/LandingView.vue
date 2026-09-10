@@ -210,25 +210,25 @@ const handleKeyDown = (e) => {
     
     <!-- Navigation Bar (Soft Dimmed Glassmorphism in Light Mode) -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-[#edf1f5]/85 dark:bg-[#121214]/80 backdrop-blur-xl border-b border-slate-300/80 dark:border-neutral-800/50 transition-colors duration-300">
-      <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-900/20">
-            <Music class="w-6 h-6 text-white" />
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5 sm:space-x-3">
+          <div class="p-2 sm:p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-900/20">
+            <Music class="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <span class="text-xl font-black tracking-tight text-slate-800 dark:text-white">SmartBand</span>
+          <span class="text-lg sm:text-xl font-black tracking-tight text-slate-800 dark:text-white">SmartBand</span>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 sm:space-x-3">
           <button 
             @click="toggleTheme" 
             title="Toggle theme"
-            class="p-2.5 rounded-xl bg-slate-200/90 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition-all cursor-pointer border border-slate-300/60 dark:border-white/5"
+            class="p-2 sm:p-2.5 rounded-xl bg-slate-200/90 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition-all cursor-pointer border border-slate-300/60 dark:border-white/5 min-h-[40px] min-w-[40px] flex items-center justify-center"
           >
             <Sun v-if="!isDark" class="w-4 h-4 text-amber-600" />
             <Moon v-else class="w-4 h-4 text-blue-400" />
           </button>
           <button 
             @click="goToLogin" 
-            class="text-sm font-bold bg-slate-200/90 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white px-5 py-2.5 rounded-xl transition-all border border-slate-300/60 dark:border-white/5 cursor-pointer shadow-xs"
+            class="text-xs sm:text-sm font-bold bg-slate-200/90 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all border border-slate-300/60 dark:border-white/5 cursor-pointer shadow-xs min-h-[40px] flex items-center"
           >
             Member Login
           </button>

@@ -45,8 +45,8 @@ document.addEventListener('blur', (e) => {
     el.tagName === 'TEXTAREA'
   ) {
     if (el.value && typeof el.value === 'string') {
-      // Ignore text that's already uppercase or seems to be a URL
-      if (el.value.startsWith('http') || el.value.startsWith('www')) return
+      // Ignore text that's already uppercase, URLs, emails, or passwords
+      if (el.value.startsWith('http') || el.value.startsWith('www') || el.type === 'email' || el.type === 'password' || el.name === 'email' || el.id?.includes('email') || el.autocomplete === 'email') return
       
       const newVal = el.value.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
       if (el.value !== newVal) {

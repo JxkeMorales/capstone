@@ -127,9 +127,10 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
+    const sanitizedEmail = email.value.trim().toLowerCase()
     if (activeTab.value === 'signin') {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.value.trim(),
+        email: sanitizedEmail,
         password: password.value
       })
 
@@ -172,7 +173,7 @@ const handleSubmit = async () => {
         : primaryInstrument.value
 
       const { data, error } = await supabase.auth.signUp({
-        email: email.value.trim(),
+        email: sanitizedEmail,
         password: password.value,
         options: {
           data: {
@@ -210,7 +211,8 @@ const handleResetPassword = async () => {
   resetLoading.value = true
   errorMessage.value = ''
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.value.trim(), {
+    const targetEmail = resetEmail.value.trim().toLowerCase()
+    const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
       redirectTo: `${window.location.origin}/dashboard/profile`
     })
     if (error) throw error
