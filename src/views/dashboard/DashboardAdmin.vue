@@ -31,6 +31,8 @@ import {
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const store = useMainStore()
 
@@ -605,6 +607,153 @@ const generatedReportData = computed(() => {
 
   return { title: 'OFFICIAL REPORT', subtitle: '', columns: [], rows: [] }
 })
+
+const isGeneratingPdf = ref(false)
+
+// Direct PDF File Download using jsPDF & autoTable
+const downloadPdfReport = () => {
+  isGeneratingPdf.value = true
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    })
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    // 1. Header: PEÑARANDA MARCHING BAND 1870
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(15)
+    doc.setTextColor(15, 23, 42)
+    doc.text('PEÑARANDA MARCHING BAND 1870', pageWidth / 2, 45, { align: 'center' })
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(100, 116, 139)
+    doc.text('Peñaranda, Nueva Ecija • Established 1870', pageWidth / 2, 58, { align: 'center' })
+
+    // Divider Line
+    doc.setDrawColor(30, 41, 59)
+    doc.setLineWidth(1.5)
+    doc.line(40, 68, pageWidth - 40, 68)
+
+    // 2. Document Title & Subtitle
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(15, 23, 42)
+    doc.text(generatedReportData.value.title, pageWidth / 2, 88, { align: 'center' })
+
+    if (generatedReportData.value.subtitle) {
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(8)
+      doc.setTextColor(100, 116, 139)
+      doc.text(generatedReportData.value.subtitle, pageWidth / 2, 100, { align: 'center' })
+    }
+
+    // 3. Metadata Row
+    const metaY = 114
+    doc.setFillColor(248, 250, 252)
+    doc.setDrawColor(203, 213, 225)
+    doc.setLineWidth(0.5)
+    doc.roundedRect(40, metaY - 10, pageWidth - 80, 18, 3, 3, 'FD')
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(51, 65, 85)
+    doc.text(`Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, 48, metaY + 2)
+    doc.text(`Doc Ref: PMB1870-REP-${new Date().getFullYear()}-${generatedReportData.value.rows.length}R`, pageWidth / 2, metaY + 2, { align: 'center' })
+    doc.text(`Total Records: ${generatedReportData.value.rows.length}`, pageWidth - 48, metaY + 2, { align: 'right' })
+
+    // 4. Clean Standard Data Table
+    autoTable(doc, {
+      startY: 128,
+      head: [generatedReportData.value.columns],
+      body: generatedReportData.value.rows.length > 0 ? generatedReportData.value.rows : [['-', 'No records found in database query', '', '', '']],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [241, 245, 249],
+        textColor: [15, 23, 42],
+        fontStyle: 'bold',
+        fontSize: 8.5,
+        lineColor: [203, 213, 225],
+        lineWidth: 0.5,
+        halign: 'left'
+      },
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        textColor: [30, 41, 59],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.5,
+        cellPadding: 5
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 28 }
+      },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(7.5)
+        doc.setTextColor(148, 163, 184)
+        doc.text(
+          `Peñaranda Marching Band 1870 — Official Document — Page ${data.pageNumber}`,
+          pageWidth / 2,
+          pageHeight - 18,
+          { align: 'center' }
+        )
+      }
+    })
+
+    // 5. Signatories Block (placed on the final page)
+    const finalY = doc.lastAutoTable.finalY + 30
+    if (finalY < pageHeight - 65) {
+      doc.setDrawColor(51, 65, 85)
+      doc.setLineWidth(0.75)
+
+      const leftX = 130
+      const rightX = pageWidth - 130
+
+      doc.line(leftX - 50, finalY, leftX + 50, finalY)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.5)
+      doc.setTextColor(15, 23, 42)
+      doc.text(store.profile?.full_name || 'IT Super Admin', leftX, finalY + 11, { align: 'center' })
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7.5)
+      doc.setTextColor(100, 116, 139)
+      doc.text('Prepared by (IT Super Admin)', leftX, finalY + 21, { align: 'center' })
+
+      doc.line(rightX - 50, finalY, rightX + 50, finalY)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.5)
+      doc.setTextColor(15, 23, 42)
+      doc.text('Executive Board / Conductor', rightX, finalY + 11, { align: 'center' })
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7.5)
+      doc.setTextColor(100, 116, 139)
+      doc.text('Approved by (Peñaranda Marching Band 1870)', rightX, finalY + 21, { align: 'center' })
+    }
+
+    // 6. Direct File Download Trigger
+    const safeTitle = (generatedReportData.value.title || selectedReportType.value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+    const filename = `PMB1870_${safeTitle}.pdf`
+    doc.save(filename)
+    showToast(`✓ Downloaded ${filename}`)
+  } catch (err) {
+    console.error('Error downloading PDF:', err)
+    showToast('Failed to generate PDF download.')
+  } finally {
+    isGeneratingPdf.value = false
+  }
+}
 
 const printReport = () => {
   window.print()
@@ -1252,15 +1401,28 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <!-- Print / Save as PDF Button -->
-            <button 
-              @click="printReport" 
-              type="button" 
-              class="px-5 py-3 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px]"
-            >
-              <Printer class="w-4 h-4" />
-              <span>Print / Save as PDF</span>
-            </button>
+            <!-- Direct PDF Download & Print Action Buttons -->
+            <div class="flex items-center space-x-2">
+              <button 
+                @click="downloadPdfReport" 
+                :disabled="isGeneratingPdf"
+                type="button" 
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px] disabled:opacity-50"
+              >
+                <Download class="w-4 h-4" />
+                <span>{{ isGeneratingPdf ? 'Downloading...' : 'Download PDF' }}</span>
+              </button>
+
+              <button 
+                @click="printReport" 
+                type="button" 
+                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#27272a] dark:hover:bg-[#323238] text-slate-700 dark:text-neutral-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer min-h-[44px]"
+                title="Open browser print / print-to-PDF dialog"
+              >
+                <Printer class="w-4 h-4" />
+                <span>Print Dialog</span>
+              </button>
+            </div>
           </div>
 
           <!-- Report Selector & Sub-Filters -->
