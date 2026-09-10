@@ -266,14 +266,34 @@ const handleAvatarWheel = (e) => {
   }
 }
 
+// Infinite loop navigation for the profile switcher
 const scrollAvatars = (direction) => {
-  const container = avatarScrollContainer.value
-  if (!container) return
-  const scrollAmount = 140
-  container.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
-    behavior: 'smooth'
-  })
+  if (direction === 'left') {
+    prevOfficer()
+  } else {
+    nextOfficer()
+  }
+}
+
+// Touch Swipe Support for Character Carousel Stage
+const touchStartX = ref(0)
+const handleTouchStart = (e) => {
+  if (e.changedTouches && e.changedTouches[0]) {
+    touchStartX.value = e.changedTouches[0].screenX
+  }
+}
+const handleTouchEnd = (e) => {
+  if (e.changedTouches && e.changedTouches[0]) {
+    const touchEndX = e.changedTouches[0].screenX
+    const diff = touchStartX.value - touchEndX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        nextOfficer()
+      } else {
+        prevOfficer()
+      }
+    }
+  }
 }
 </script>
 
@@ -372,7 +392,11 @@ const scrollAvatars = (direction) => {
           <div class="lg:col-span-6 xl:col-span-7 flex flex-col items-center w-full">
             
             <!-- Character Cards Carousel Stage -->
-            <div class="relative w-full flex items-center justify-center min-h-[420px] sm:min-h-[460px] overflow-hidden py-4 select-none">
+            <div 
+              @touchstart="handleTouchStart"
+              @touchend="handleTouchEnd"
+              class="relative w-full flex items-center justify-center min-h-[420px] sm:min-h-[460px] overflow-hidden py-4 select-none"
+            >
               
               <!-- Left Navigation Arrow -->
               <button 
@@ -525,35 +549,36 @@ const scrollAvatars = (direction) => {
               </button>
             </div>
 
-            <!-- ROSTER QUICK-SELECT BAR (All 8 officers visible on desktop, auto-centering & scrollable on mobile) -->
-            <div class="w-full max-w-2xl mt-4 bg-[#f8fafc]/95 dark:bg-[#18181b]/90 backdrop-blur-xl p-2.5 sm:p-4 rounded-3xl border border-slate-300/80 dark:border-neutral-800 shadow-xl relative">
+            <!-- ROSTER QUICK-SELECT BAR (Infinite Style: Loops between 1st and last officer) -->
+            <div class="w-full max-w-2xl mt-4 bg-[#f8fafc]/95 dark:bg-[#18181b]/90 backdrop-blur-xl p-2.5 sm:p-3 md:p-4 rounded-3xl border border-slate-300/80 dark:border-neutral-800 shadow-xl relative flex items-center">
               
-              <!-- Left Scroll Assist Button (for narrow screens) -->
+              <!-- Left Profile Selector Arrow (Loops First to Last) -->
               <button 
-                @click="scrollAvatars('left')" 
-                title="Scroll Left"
-                class="sm:hidden absolute left-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-slate-900/85 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-md border border-white/10 active:scale-95 transition-all cursor-pointer"
+                @click="prevOfficer" 
+                title="Previous Officer (Infinite: Loops First to Last)"
+                aria-label="Previous Officer"
+                class="absolute left-1.5 sm:left-2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/90 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-lg border border-white/20 active:scale-90 hover:scale-110 transition-all cursor-pointer group"
               >
-                <ChevronLeft class="w-4 h-4" />
+                <ChevronLeft class="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-0.5 transition-transform" />
               </button>
 
               <div 
                 ref="avatarScrollContainer"
                 @wheel="handleAvatarWheel"
-                class="flex items-center space-x-2 sm:space-x-1 sm:justify-between overflow-x-auto pb-1 pt-1 px-8 sm:px-1 scrollbar-none sm:overflow-visible snap-x scroll-smooth"
+                class="flex items-center space-x-2 sm:space-x-1 sm:justify-between overflow-x-auto pb-1 pt-1 px-10 sm:px-11 scrollbar-none sm:overflow-visible snap-x scroll-smooth w-full"
               >
                 <button
                   v-for="(officer, idx) in officers"
                   :key="officer.id"
                   :ref="el => { if (el) avatarRefs[idx] = el }"
                   @click="selectOfficer(idx)"
-                  class="group flex flex-col items-center shrink-0 sm:shrink snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[64px] sm:min-w-0 sm:flex-1 py-1"
+                  class="group flex flex-col items-center shrink-0 sm:shrink snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[62px] sm:min-w-0 sm:flex-1 py-1"
                   :class="selectedIndex === idx ? 'scale-105' : 'opacity-65 hover:opacity-100 hover:scale-102'"
                 >
                   <!-- Circular Profile Avatar with Glowing Ring -->
-                  <div class="relative w-12 h-12 sm:w-13 sm:h-13 md:w-14 md:h-14 flex items-center justify-center">
+                  <div class="relative w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 flex items-center justify-center">
                     <div 
-                      class="w-12 h-12 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center"
+                      class="w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 rounded-full overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center"
                       :class="selectedIndex === idx 
                         ? 'ring-3 ring-blue-500 ring-offset-2 ring-offset-[#f8fafc] dark:ring-offset-[#18181b] shadow-lg shadow-blue-500/40' 
                         : 'border-2 border-slate-300 dark:border-neutral-700/80 group-hover:border-blue-400'"
@@ -572,14 +597,14 @@ const scrollAvatars = (direction) => {
                     <!-- Active Status Dot -->
                     <span 
                       v-if="selectedIndex === idx" 
-                      class="absolute -top-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#18181b]"
+                      class="absolute -top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#18181b]"
                     ></span>
                   </div>
 
                   <!-- Complete Role Label (Never Truncated with ellipsis) -->
-                  <div class="mt-1.5 text-center w-full">
+                  <div class="mt-1 text-center w-full">
                     <span 
-                      class="text-[9px] sm:text-[10px] md:text-[11px] font-black tracking-wide px-1.5 sm:px-0.5 py-0.5 rounded-full transition-all block text-center"
+                      class="text-[9px] sm:text-[10px] md:text-[10.5px] font-black tracking-wide px-1 sm:px-0.5 py-0.5 rounded-full transition-all block text-center"
                       :class="selectedIndex === idx 
                         ? 'bg-blue-600 text-white shadow-xs' 
                         : 'text-slate-600 dark:text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'"
@@ -590,20 +615,21 @@ const scrollAvatars = (direction) => {
                 </button>
               </div>
 
-              <!-- Right Scroll Assist Button (for narrow screens) -->
+              <!-- Right Profile Selector Arrow (Loops Last to First) -->
               <button 
-                @click="scrollAvatars('right')" 
-                title="Scroll Right"
-                class="sm:hidden absolute right-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-slate-900/85 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-md border border-white/10 active:scale-95 transition-all cursor-pointer"
+                @click="nextOfficer" 
+                title="Next Officer (Infinite: Loops Last to First)"
+                aria-label="Next Officer"
+                class="absolute right-1.5 sm:right-2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/90 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur shadow-lg border border-white/20 active:scale-90 hover:scale-110 transition-all cursor-pointer group"
               >
-                <ChevronRight class="w-4 h-4" />
+                <ChevronRight class="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
             </div>
 
             <!-- Interactive Hint -->
             <div class="mt-2.5 flex items-center space-x-1 text-slate-500 dark:text-neutral-500 text-[11px] font-medium font-mono">
-              <span>← Click or swipe avatars to switch officers (1 to 8) →</span>
+              <span>← Infinite Profile Selector: Click arrows or avatars to cycle (1 ⇄ 8) →</span>
             </div>
 
           </div>
