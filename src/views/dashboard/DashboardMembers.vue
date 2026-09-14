@@ -62,6 +62,10 @@ const POSITIONS = [
   { id: 'vice_president', label: 'Band Vice President', role: 'executive', title: 'vice_president', color: 'amber', badge: 'Band Vice President' },
   { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: null, color: 'indigo', badge: 'Band Secretary' },
   { id: 'treasurer', label: 'Band Treasurer', role: 'executive', title: 'treasurer', color: 'emerald', badge: 'Band Treasurer' },
+  { id: 'auditor', label: 'Band Auditor', role: 'executive', title: 'auditor', color: 'purple', badge: 'Band Auditor' },
+  { id: 'resident_conductor', label: 'Resident Conductor', role: 'executive', title: 'resident_conductor', color: 'amber', badge: 'Resident Conductor' },
+  { id: 'band_manager', label: 'Band Manager', role: 'executive', title: 'band_manager', color: 'cyan', badge: 'Band Manager' },
+  { id: 'coordinator', label: 'Band Coordinator', role: 'executive', title: 'coordinator', color: 'teal', badge: 'Band Coordinator' },
   { id: 'super_admin', label: 'IT Super Admin', role: 'super_admin', title: null, color: 'rose', badge: 'IT Super Admin' }
 ]
 
@@ -71,6 +75,10 @@ const leadershipPosts = [
   { key: 'vice_president', title: 'Band Vice President' },
   { key: 'secretary', title: 'Band Secretary' },
   { key: 'treasurer', title: 'Band Treasurer' },
+  { key: 'auditor', title: 'Band Auditor' },
+  { key: 'resident_conductor', title: 'Resident Conductor' },
+  { key: 'band_manager', title: 'Band Manager' },
+  { key: 'coordinator', title: 'Band Coordinator' }
 ]
 
 // FULL INSTRUMENT LIST
@@ -109,6 +117,7 @@ const normalizeTitle = (str) => {
   if (s.includes('audit')) return 'auditor'
   if (s.includes('conduct')) return 'resident_conductor'
   if (s.includes('manag')) return 'band_manager'
+  if (s.includes('coord')) return 'coordinator'
   return s.replace(/\s+/g, '_')
 }
 
@@ -120,6 +129,10 @@ const getMemberPositionId = (member) => {
   if (t === 'president') return 'president'
   if (t === 'vice_president') return 'vice_president'
   if (t === 'treasurer') return 'treasurer'
+  if (t === 'auditor') return 'auditor'
+  if (t === 'resident_conductor') return 'resident_conductor'
+  if (t === 'band_manager') return 'band_manager'
+  if (t === 'coordinator') return 'coordinator'
   return 'member'
 }
 
@@ -308,7 +321,11 @@ const saveMemberManagement = async () => {
     await fetchRoster(true)
   } catch (err) {
     console.error('Error saving member changes:', err)
-    showToast(`Error: ${err?.message || 'Failed to save changes.'}`)
+    if (err?.code === '22P02') {
+      showToast('Database Notice: Please execute Section 8 in fix_admin_permissions.sql in Supabase SQL Editor to enable this post.')
+    } else {
+      showToast(`Error: ${err?.message || 'Failed to save changes.'}`)
+    }
     await fetchRoster(true)
   } finally {
     isSavingManage.value = false
@@ -406,10 +423,12 @@ onMounted(() => {
 
   window.addEventListener('focus', onWindowFocus)
 
-  // 2. Fast auto-poll fallback (every 4 seconds for zero-reload updates)
+  // 2. Mobile-optimized auto-poll fallback (pauses in background to save battery/CPU)
   autoSyncTimer = setInterval(() => {
-    fetchRoster(true)
-  }, 4000)
+    if (typeof document !== 'undefined' && !document.hidden) {
+      fetchRoster(true)
+    }
+  }, 12000)
 })
 
 onUnmounted(() => {

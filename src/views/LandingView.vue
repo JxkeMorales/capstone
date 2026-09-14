@@ -240,7 +240,7 @@ const avatarRefs = ref([])
 
 const scrollToActiveAvatar = (idx) => {
   nextTick(() => {
-    const el = avatarRefs.value[idx]
+    const el = avatarRefs.value[idx] || (avatarRefs[idx])
     if (el && avatarScrollContainer.value) {
       el.scrollIntoView({
         behavior: 'smooth',
@@ -366,7 +366,7 @@ const handleTouchEnd = (e) => {
     </main>
 
     <!-- Officers Character Selection Section -->
-    <section class="py-16 lg:py-24 relative z-10 bg-[#e5ecf3]/70 dark:bg-[#151518]/90 border-t border-slate-300/80 dark:border-neutral-800/80 transition-colors duration-300">
+    <section id="officers" class="scroll-mt-24 py-16 lg:py-24 relative z-10 bg-[#e5ecf3]/70 dark:bg-[#151518]/90 border-t border-slate-300/80 dark:border-neutral-800/80 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-6">
         
         <!-- Section Header -->
@@ -565,12 +565,12 @@ const handleTouchEnd = (e) => {
               <div 
                 ref="avatarScrollContainer"
                 @wheel="handleAvatarWheel"
-                class="flex items-center space-x-2 sm:space-x-1 sm:justify-between overflow-x-auto pb-1 pt-1 px-10 sm:px-11 scrollbar-none sm:overflow-visible snap-x scroll-smooth w-full"
+                class="flex items-center space-x-2 sm:space-x-1 sm:justify-between overflow-x-auto pb-1 pt-1 px-12 sm:px-14 scrollbar-none sm:overflow-visible snap-x scroll-smooth w-full"
               >
                 <button
                   v-for="(officer, idx) in officers"
                   :key="officer.id"
-                  :ref="el => { if (el) avatarRefs[idx] = el }"
+                  :ref="el => { if (el) { avatarRefs.value[idx] = el; avatarRefs[idx] = el; } }"
                   @click="selectOfficer(idx)"
                   class="group flex flex-col items-center shrink-0 sm:shrink snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[62px] sm:min-w-0 sm:flex-1 py-1"
                   :class="selectedIndex === idx ? 'scale-105' : 'opacity-65 hover:opacity-100 hover:scale-102'"
@@ -604,7 +604,7 @@ const handleTouchEnd = (e) => {
                   <!-- Complete Role Label (Never Truncated with ellipsis) -->
                   <div class="mt-1 text-center w-full">
                     <span 
-                      class="text-[9px] sm:text-[10px] md:text-[10.5px] font-black tracking-wide px-1 sm:px-0.5 py-0.5 rounded-full transition-all block text-center"
+                      class="text-[9px] sm:text-[10px] md:text-[10.5px] font-black tracking-wide px-1 sm:px-0.5 py-0.5 rounded-full transition-all block text-center whitespace-nowrap"
                       :class="selectedIndex === idx 
                         ? 'bg-blue-600 text-white shadow-xs' 
                         : 'text-slate-600 dark:text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'"

@@ -113,3 +113,9 @@ BEGIN
   END IF;
 END $$;
 
+-- 8. EXPAND EXECUTIVE TITLE ENUM (Auditor, Resident Conductor, Band Manager, Band Coordinator)
+ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'auditor';
+ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'resident_conductor';
+ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'band_manager';
+ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'coordinator';
+

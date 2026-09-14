@@ -431,26 +431,59 @@ const handleResetPassword = async () => {
               <!-- SIGN UP SPECIFIC FIELDS -->
               <template v-if="activeTab === 'signup'">
                 
-                <!-- Full Name -->
-                <div class="space-y-1.5 text-left">
-                  <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Full Name (As listed on Band Master List)
-                  </label>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <User class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                <!-- Full Name & Mobile Number (2 columns on sm+) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                  <div class="space-y-1.5">
+                    <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                      Full Name (Master List)
+                    </label>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <User class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                      </div>
+                      <input 
+                        id="fullname-input"
+                        v-model="fullName"
+                        type="text" 
+                        placeholder="Juan Dela Cruz"
+                        autocomplete="name"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[42px]"
+                        required
+                      >
                     </div>
-                    <input 
-                      id="fullname-input"
-                      v-model="fullName"
-                      type="text" 
-                      placeholder="Juan Dela Cruz"
-                      autocomplete="name"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
-                      required
-                    >
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                        Mobile (11 digits)
+                      </label>
+                      <span class="text-[10px] font-black" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
+                        {{ contactNumber.length }}/11
+                      </span>
+                    </div>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Phone class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                      </div>
+                      <input 
+                        id="phone-input"
+                        :value="contactNumber"
+                        @input="handlePhoneInput"
+                        type="tel" 
+                        placeholder="09123456789"
+                        maxlength="11"
+                        autocomplete="tel"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[42px]"
+                        :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
+                        required
+                      >
+                    </div>
                   </div>
                 </div>
+                <p v-if="!isPhoneValid" class="text-[10px] font-bold text-rose-500 text-left -mt-1">
+                  Must start with 09 and contain exactly 11 digits (e.g. 09123456789).
+                </p>
 
                 <!-- Birth Date & Sex (2 columns) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
@@ -466,7 +499,7 @@ const handleResetPassword = async () => {
                         id="birthdate-input"
                         v-model="birthDate"
                         type="date" 
-                        class="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[44px]"
+                        class="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[42px]"
                         required
                       >
                     </div>
@@ -479,13 +512,13 @@ const handleResetPassword = async () => {
                     <div class="flex gap-2">
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[42px] flex items-center justify-center">
                           Male
                         </div>
                       </label>
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
-                        <div class="text-center py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[44px] flex items-center justify-center">
+                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[42px] flex items-center justify-center">
                           Female
                         </div>
                       </label>
@@ -493,78 +526,47 @@ const handleResetPassword = async () => {
                   </div>
                 </div>
 
-                <!-- Strict Philippine Mobile Number (09XXXXXXXXX) -->
-                <div class="space-y-1.5 text-left">
-                  <div class="flex items-center justify-between">
-                    <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                      Philippine Mobile Number (11 digits)
+                <!-- Primary & Secondary Instruments (2 columns on sm+) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                  <div class="space-y-1.5">
+                    <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                      Primary Instrument (Req.)
                     </label>
-                    <span class="text-[10px] font-black" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
-                      {{ contactNumber.length }}/11 digits
-                    </span>
-                  </div>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Phone class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                      </div>
+                      <select 
+                        id="primary-instrument-select"
+                        v-model="primaryInstrument"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px]"
+                        required
+                      >
+                        <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
+                          {{ inst.label }}
+                        </option>
+                      </select>
                     </div>
-                    <input 
-                      id="phone-input"
-                      :value="contactNumber"
-                      @input="handlePhoneInput"
-                      type="tel" 
-                      placeholder="09123456789"
-                      maxlength="11"
-                      autocomplete="tel"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
-                      :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
-                      required
-                    >
                   </div>
-                  <p v-if="!isPhoneValid" class="text-[10px] font-bold text-rose-500 mt-1">
-                    Must start with 09 and contain exactly 11 digits (e.g. 09123456789).
-                  </p>
-                </div>
 
-                <!-- Primary Instrument Played -->
-                <div class="space-y-1.5 text-left">
-                  <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Primary Instrument (Required)
-                  </label>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                  <div class="space-y-1.5">
+                    <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                      Secondary Instrument
+                    </label>
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
+                      </div>
+                      <select 
+                        id="secondary-instrument-select"
+                        v-model="secondaryInstrument"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px]"
+                      >
+                        <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
+                          {{ inst.label }}
+                        </option>
+                      </select>
                     </div>
-                    <select 
-                      id="primary-instrument-select"
-                      v-model="primaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
-                      required
-                    >
-                      <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
-                        {{ inst.label }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Secondary Instrument -->
-                <div class="space-y-1.5 text-left">
-                  <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                    Secondary Instrument (Optional / N/A)
-                  </label>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <Activity class="w-4 h-4 text-slate-400 dark:text-neutral-500" />
-                    </div>
-                    <select 
-                      id="secondary-instrument-select"
-                      v-model="secondaryInstrument"
-                      class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
-                    >
-                      <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
-                        {{ inst.label }}
-                      </option>
-                    </select>
                   </div>
                 </div>
 

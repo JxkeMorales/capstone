@@ -623,6 +623,12 @@ const rsvp = async (eventObj, status) => {
 
 let cleanupSync = null
 
+const handleVisibilityOrFocus = () => {
+  if (!document.hidden) {
+    fetchHomeData(true)
+  }
+}
+
 onMounted(() => {
   fetchHomeData()
 
@@ -634,22 +640,22 @@ onMounted(() => {
     }
   })
 
-  // 2. Silent Auto-Polling Fallback (Every 4 seconds)
+  // 2. Optimized Auto-Polling Fallback (Every 12s, paused if backgrounded)
   pollTimer = setInterval(() => {
-    fetchHomeData(true)
-  }, 4000)
+    if (!document.hidden) {
+      fetchHomeData(true)
+    }
+  }, 12000)
 
-  window.addEventListener('focus', onWindowFocus)
+  window.addEventListener('focus', handleVisibilityOrFocus)
+  document.addEventListener('visibilitychange', handleVisibilityOrFocus)
 })
-
-const onWindowFocus = () => {
-  fetchHomeData(true)
-}
 
 onUnmounted(() => {
   if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
-  window.removeEventListener('focus', onWindowFocus)
+  window.removeEventListener('focus', handleVisibilityOrFocus)
+  document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
 })
 </script>
 
@@ -787,33 +793,33 @@ onUnmounted(() => {
             <div 
               v-for="ev in upcomingEvents" 
               :key="ev.id"
-              class="bg-slate-900 dark:bg-[#18181b] rounded-3xl p-5 shadow-lg relative overflow-hidden text-white border border-slate-800 dark:border-neutral-800"
+              class="bg-white dark:bg-[#18181b] rounded-3xl p-5 shadow-sm dark:shadow-lg relative overflow-hidden border border-slate-200/90 dark:border-neutral-800 border-l-4 border-l-blue-600 dark:border-l-blue-500"
             >
               <div class="relative z-10">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <span class="inline-block px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-black uppercase tracking-wider text-white">
+                  <span class="inline-block px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-black uppercase tracking-wider border border-blue-100 dark:border-blue-900/50">
                     {{ ev.type }}
                   </span>
                   
                   <div class="flex items-center space-x-1.5 shrink-0">
-                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white font-extrabold text-[11px] rounded-full flex items-center cursor-pointer min-h-[36px]">
+                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white font-extrabold text-[11px] rounded-full flex items-center cursor-pointer min-h-[36px] transition-colors">
                       <Users class="w-3.5 h-3.5 mr-1" /> Attendees
                     </button>
-                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Event">
+                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors" title="Delete Event">
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
                 
-                <h3 class="text-xl font-black mb-2 leading-tight text-white">{{ ev.title }}</h3>
+                <h3 class="text-xl font-black mb-2 leading-tight text-slate-900 dark:text-white">{{ ev.title }}</h3>
                 
-                <div class="space-y-1.5 mb-4 text-xs font-bold opacity-90">
+                <div class="space-y-1.5 mb-4 text-xs font-bold text-slate-600 dark:text-neutral-300">
                   <div class="flex items-center">
-                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
+                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400 dark:text-neutral-400" />
                     <span>{{ ev.date }} at {{ ev.time }}</span>
                   </div>
                   <div class="flex items-center">
-                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-80" />
+                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400 dark:text-neutral-400" />
                     <span>{{ ev.location }}</span>
                   </div>
                 </div>
@@ -823,27 +829,27 @@ onUnmounted(() => {
                   <button 
                     @click="rsvp(ev, 'attending')"
                     type="button"
-                    class="bg-white hover:bg-slate-100 text-blue-900 font-black py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-md text-xs cursor-pointer min-h-[44px]"
+                    class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm text-xs cursor-pointer min-h-[44px]"
                   >
-                    <CheckCircle class="w-4 h-4 mr-1.5 text-emerald-600" />
+                    <CheckCircle class="w-4 h-4 mr-1.5 text-emerald-300" />
                     <span>I Will Attend</span>
                   </button>
                   <button 
                     @click="rsvp(ev, 'declined')"
                     type="button"
-                    class="bg-white/20 hover:bg-white/30 text-white font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 text-xs cursor-pointer min-h-[44px]"
+                    class="bg-slate-100 hover:bg-slate-200 dark:bg-[#27272a] dark:hover:bg-[#323236] text-slate-700 dark:text-white font-bold py-2.5 px-2 rounded-xl flex items-center justify-center transition-all active:scale-95 text-xs cursor-pointer min-h-[44px] border border-slate-200/80 dark:border-neutral-700/60"
                   >
-                    <XCircle class="w-4 h-4 mr-1.5 text-rose-300" />
+                    <XCircle class="w-4 h-4 mr-1.5 text-rose-500 dark:text-rose-400" />
                     <span>Cannot Attend</span>
                   </button>
                 </div>
                 
                 <!-- Color-Coded Confirmed RSVP Status -->
-                <div v-else class="flex items-center justify-between p-2.5 bg-black/20 rounded-xl backdrop-blur-sm">
-                  <span class="font-black text-xs uppercase tracking-wider" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-300' : 'text-rose-300'">
+                <div v-else class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-neutral-900/80 border border-slate-200/80 dark:border-neutral-800 rounded-xl">
+                  <span class="font-black text-xs uppercase tracking-wider" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
                     {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
                   </span>
-                  <button @click="ev.rsvpStatus = null" class="text-xs underline font-bold text-white/80 hover:text-white cursor-pointer min-h-[36px]">Change</button>
+                  <button @click="ev.rsvpStatus = null" class="text-xs underline font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer min-h-[36px]">Change</button>
                 </div>
               </div>
             </div>

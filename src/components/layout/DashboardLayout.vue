@@ -440,7 +440,8 @@ onMounted(() => {
   window.addEventListener('online', updateNetworkStatus)
   window.addEventListener('offline', updateNetworkStatus)
 
-  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+  const isPromptDismissed = localStorage.getItem('smartband_notif_prompt_dismissed') === 'true'
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default' && !isPromptDismissed) {
     showFirstTimeNotifPrompt.value = true
   }
 
@@ -602,7 +603,11 @@ onMounted(() => {
   }
 
   window.addEventListener('focus', fetchPendingCount)
-  setInterval(fetchPendingCount, 5000)
+  setInterval(() => {
+    if (typeof document !== 'undefined' && !document.hidden) {
+      fetchPendingCount()
+    }
+  }, 15000)
 
   // 5. Realtime subscription for current user's profile updates (avatar approvals, role changes, etc.)
   const setupUserProfileSub = (userId) => {
@@ -816,22 +821,32 @@ onUnmounted(() => {
     <!-- MAIN RESPONSIVE CANVAS AREA -->
     <div class="flex-1 min-w-0 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
       
-      <!-- MATTE BLACK MOBILE TOP HEADER -->
+      <!-- TOP HEADER (Desktop breadcrumb / Mobile Brand) -->
       <header class="sticky top-0 z-40 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-300/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
-          <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
-            <Music class="w-5 h-5" stroke-width="2.5" />
+          <!-- Mobile Brand Logo (Visible only on mobile screens when sidebar is hidden) -->
+          <div class="flex items-center space-x-2.5 md:hidden">
+            <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
+              <Music class="w-5 h-5" stroke-width="2.5" />
+            </div>
+            <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
           </div>
-          <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
+
+          <!-- Desktop Page Breadcrumb (Visible only when sidebar is present) -->
+          <div class="hidden md:flex items-center space-x-2 text-xs font-bold text-slate-500 dark:text-neutral-400">
+            <span class="text-blue-600 dark:text-blue-400 font-black tracking-wider uppercase">Portal</span>
+            <span>/</span>
+            <span class="text-slate-900 dark:text-white capitalize font-black">{{ route.name ? route.name.toString().replace('dashboard-', '').replace('-', ' ') : 'Dashboard' }}</span>
+          </div>
         </div>
 
         <div class="flex items-center space-x-1 sm:space-x-1.5">
-          <!-- Install App Header Trigger (Responsive) -->
+          <!-- Install App Header Trigger (Visible on mobile where sidebar install card is hidden) -->
           <button 
             v-if="!isAppInstalled"
             @click="handleInstallPWA"
             type="button"
-            class="px-2.5 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center hover:bg-blue-500 transition-colors shadow-xs cursor-pointer min-h-[40px] shrink-0"
+            class="md:hidden px-2.5 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center hover:bg-blue-500 transition-colors shadow-xs cursor-pointer min-h-[40px] shrink-0"
             aria-label="Install SmartBand App"
           >
             <Download class="w-4 h-4 sm:mr-1" />

@@ -493,12 +493,25 @@ const sectionStats = computed(() => {
   const percussionNames = ['drum', 'cymbals', 'snare', 'bass drum']
 
   const getStats = (matchers) => {
-    const members = list.filter(m => matchers.some(term => m.instrument.toLowerCase().includes(term)))
-    const promised = members.reduce((sum, m) => sum + m.promisedCount, 0)
-    const attended = members.reduce((sum, m) => sum + m.attendedCount, 0)
-    const flakes = members.reduce((sum, m) => sum + m.flakeCount, 0)
-    const rate = promised > 0 ? Math.round((attended / promised) * 100) : 100
-    return { count: members.length, promised, attended, flakes, rate }
+    const members = list.filter(m => matchers.some(term => (m.instrument || '').toLowerCase().includes(term)))
+    const promised = members.reduce((sum, m) => sum + (m.promisedCount || 0), 0)
+    const attended = members.reduce((sum, m) => sum + (m.attendedCount || 0), 0)
+    const flakes = members.reduce((sum, m) => sum + (m.flakeCount || 0), 0)
+    
+    let rate = 0
+    let displayRate = 'N/A'
+    if (members.length === 0) {
+      displayRate = 'N/A'
+      rate = 0
+    } else if (promised === 0) {
+      displayRate = 'N/A (No Gigs)'
+      rate = 100
+    } else {
+      rate = Math.round((attended / promised) * 100)
+      displayRate = `${rate}%`
+    }
+
+    return { count: members.length, promised, attended, flakes, rate, displayRate }
   }
 
   return {
@@ -871,10 +884,12 @@ onMounted(() => {
   // 2. Window focus listener (re-fetch as soon as admin switches back to tab)
   window.addEventListener('focus', refreshAllAdminData)
 
-  // 3. Fast auto-poll fallback (every 3 seconds - refreshes pending accounts, roster, and reports without page reload)
+  // 3. Mobile-optimized auto-poll fallback (pauses in background to save battery/CPU)
   autoSyncTimer = setInterval(() => {
-    refreshAllAdminData()
-  }, 3000)
+    if (typeof document !== 'undefined' && !document.hidden) {
+      refreshAllAdminData()
+    }
+  }, 12000)
 })
 
 onUnmounted(() => {
@@ -1272,10 +1287,10 @@ onUnmounted(() => {
             </div>
             <div class="flex items-baseline justify-between text-xs">
               <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.woodwinds.rate }}%</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.woodwinds.displayRate }}</span>
             </div>
             <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-blue-500 h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate}%` }"></div>
+              <div class="bg-blue-500 h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.woodwinds.attended }} / {{ sectionStats.woodwinds.promised }}</span>
@@ -1295,10 +1310,10 @@ onUnmounted(() => {
             </div>
             <div class="flex items-baseline justify-between text-xs">
               <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.brass.rate }}%</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.brass.displayRate }}</span>
             </div>
             <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${sectionStats.brass.rate}%` }"></div>
+              <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.brass.attended }} / {{ sectionStats.brass.promised }}</span>
@@ -1318,10 +1333,10 @@ onUnmounted(() => {
             </div>
             <div class="flex items-baseline justify-between text-xs">
               <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.percussion.rate }}%</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.percussion.displayRate }}</span>
             </div>
             <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate}%` }"></div>
+              <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
               <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>

@@ -415,6 +415,12 @@ const executeDeleteEvent = async () => {
 
 let cleanupSync = null
 
+const handleVisibilityOrFocus = () => {
+  if (!document.hidden) {
+    fetchEvents(true)
+  }
+}
+
 onMounted(() => {
   fetchEvents()
 
@@ -425,17 +431,21 @@ onMounted(() => {
     }
   })
 
-  window.addEventListener('focus', () => fetchEvents(true))
+  window.addEventListener('focus', handleVisibilityOrFocus)
+  document.addEventListener('visibilitychange', handleVisibilityOrFocus)
 
   pollTimer = setInterval(() => {
-    fetchEvents(true)
-  }, 4000)
+    if (!document.hidden) {
+      fetchEvents(true)
+    }
+  }, 12000)
 })
 
 onUnmounted(() => {
   if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
-  window.removeEventListener('focus', () => fetchEvents(true))
+  window.removeEventListener('focus', handleVisibilityOrFocus)
+  document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
 })
 </script>
 
