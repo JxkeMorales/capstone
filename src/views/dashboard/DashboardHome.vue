@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
+import { initRealtimeSync } from '@/utils/realtime'
 
 const store = useMainStore()
 
@@ -620,47 +621,20 @@ const rsvp = async (eventObj, status) => {
   }
 }
 
+let cleanupSync = null
+
 onMounted(() => {
   fetchHomeData()
 
-  // 1. Inter-Tab / Inter-Window Native BroadcastChannel Sync
-  if ('BroadcastChannel' in window) {
-    syncBroadcast = new BroadcastChannel('smartband_live_sync')
-    syncBroadcast.onmessage = () => {
-      fetchHomeData(true)
-      if (showAttendanceModal.value && selectedEventForAttendance.value) {
-        openAttendanceTracker(selectedEventForAttendance.value)
-      }
+  // 1. Centralized Master Realtime Sync (WebSockets + Inter-Tab)
+  cleanupSync = initRealtimeSync((event) => {
+    fetchHomeData(true)
+    if (showAttendanceModal.value && selectedEventForAttendance.value) {
+      openAttendanceTracker(selectedEventForAttendance.value)
     }
-  }
+  })
 
-  // 2. Supabase Realtime WebSocket Channel
-  homeChannel = supabase
-    .channel('smartband-realtime-sync-home')
-    .on('broadcast', { event: 'new_registration' }, () => {
-      fetchHomeData(true)
-    })
-    .on('broadcast', { event: 'account_status_changed' }, () => {
-      fetchHomeData(true)
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
-      fetchHomeData(true)
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-      fetchHomeData(true)
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'event_rsvps' }, () => {
-      fetchHomeData(true)
-      if (showAttendanceModal.value && selectedEventForAttendance.value) {
-        openAttendanceTracker(selectedEventForAttendance.value)
-      }
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-      fetchHomeData(true)
-    })
-    .subscribe()
-
-  // 3. Silent Auto-Polling Fallback (Every 4 seconds)
+  // 2. Silent Auto-Polling Fallback (Every 4 seconds)
   pollTimer = setInterval(() => {
     fetchHomeData(true)
   }, 4000)
@@ -673,8 +647,7 @@ const onWindowFocus = () => {
 }
 
 onUnmounted(() => {
-  if (homeChannel) supabase.removeChannel(homeChannel)
-  if (syncBroadcast) syncBroadcast.close()
+  if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
   window.removeEventListener('focus', onWindowFocus)
 })

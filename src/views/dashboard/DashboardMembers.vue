@@ -23,6 +23,7 @@ import {
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
+import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 
 const store = useMainStore()
 
@@ -303,6 +304,7 @@ const saveMemberManagement = async () => {
 
     showToast(`✓ Updated ${member.name} (${newPos.label} • ${newInst} • ${newRk}).`)
     showManageModal.value = false
+    await broadcastSync('account_status_changed', { userId: member.id })
     await fetchRoster(true)
   } catch (err) {
     console.error('Error saving member changes:', err)
@@ -337,6 +339,7 @@ const executeDeleteMember = async () => {
 
     members.value = members.value.filter(m => m.id !== target.id)
     showToast(`Permanently deleted ${target.name}.`)
+    await broadcastSync('account_status_changed', { userId: target.id })
     if (showManageModal.value && editingMember.value?.id === target.id) {
       showManageModal.value = false
     }
@@ -386,7 +389,8 @@ const openAvailabilityView = async (member) => {
   }
 }
 
-let membersBroadcast = null
+let cleanupSync = null
+let autoSyncTimer = null
 
 const onWindowFocus = () => {
   fetchRoster(true)
@@ -395,39 +399,25 @@ const onWindowFocus = () => {
 onMounted(() => {
   fetchRoster()
 
-  // 1. Supabase Realtime Channel
-  membersChannel = supabase
-    .channel('members-realtime-directory')
-    .on('broadcast', { event: 'new_registration' }, () => {
-      fetchRoster(true)
-    })
-    .on('broadcast', { event: 'account_status_changed' }, () => {
-      fetchRoster(true)
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-      fetchRoster(true)
-    })
-    .subscribe()
-
-  // 2. Inter-tab local broadcast
-  if ('BroadcastChannel' in window) {
-    membersBroadcast = new BroadcastChannel('smartband_live_sync')
-    membersBroadcast.onmessage = (e) => {
-      if (e.data?.type === 'NEW_REGISTRATION' || e.data?.type === 'ACCOUNT_STATUS_CHANGED') {
-        fetchRoster(true)
-      }
-    }
-  }
+  // 1. Centralized Master Realtime Sync (WebSockets + Inter-Tab)
+  cleanupSync = initRealtimeSync(() => {
+    fetchRoster(true)
+  })
 
   window.addEventListener('focus', onWindowFocus)
+
+  // 2. Fast auto-poll fallback (every 4 seconds for zero-reload updates)
+  autoSyncTimer = setInterval(() => {
+    fetchRoster(true)
+  }, 4000)
 })
 
 onUnmounted(() => {
-  if (membersChannel) {
-    supabase.removeChannel(membersChannel)
+  if (cleanupSync) {
+    cleanupSync()
   }
-  if (membersBroadcast) {
-    membersBroadcast.close()
+  if (autoSyncTimer) {
+    clearInterval(autoSyncTimer)
   }
   window.removeEventListener('focus', onWindowFocus)
 })

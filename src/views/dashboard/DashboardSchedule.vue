@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
+import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 
 const store = useMainStore()
 
@@ -183,9 +184,7 @@ const displayedEvents = computed(() => {
 })
 
 const notifyOtherTabs = (eventType) => {
-  if (syncBroadcast) {
-    try { syncBroadcast.postMessage({ type: eventType, time: Date.now() }) } catch(e){}
-  }
+  broadcastSync(eventType)
 }
 
 const fetchEvents = async (skipCache = false) => {
@@ -414,41 +413,29 @@ const executeDeleteEvent = async () => {
   }
 }
 
+let cleanupSync = null
+
 onMounted(() => {
   fetchEvents()
 
-  if ('BroadcastChannel' in window) {
-    syncBroadcast = new BroadcastChannel('smartband_live_sync')
-    syncBroadcast.onmessage = () => {
-      fetchEvents(true)
-      if (showAttendanceModal.value && selectedEventForAttendance.value) {
-        openAttendanceTracker(selectedEventForAttendance.value)
-      }
+  cleanupSync = initRealtimeSync((event) => {
+    fetchEvents(true)
+    if (showAttendanceModal.value && selectedEventForAttendance.value) {
+      openAttendanceTracker(selectedEventForAttendance.value)
     }
-  }
+  })
 
-  scheduleChannel = supabase
-    .channel('schedule-realtime-v4')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-      fetchEvents(true)
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'event_rsvps' }, () => {
-      fetchEvents(true)
-      if (showAttendanceModal.value && selectedEventForAttendance.value) {
-        openAttendanceTracker(selectedEventForAttendance.value)
-      }
-    })
-    .subscribe()
+  window.addEventListener('focus', () => fetchEvents(true))
 
   pollTimer = setInterval(() => {
     fetchEvents(true)
-  }, 6000)
+  }, 4000)
 })
 
 onUnmounted(() => {
-  if (scheduleChannel) supabase.removeChannel(scheduleChannel)
-  if (syncBroadcast) syncBroadcast.close()
+  if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
+  window.removeEventListener('focus', () => fetchEvents(true))
 })
 </script>
 

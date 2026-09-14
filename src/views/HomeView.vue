@@ -5,6 +5,7 @@ import { Music, Mail, Lock, ArrowRight, User, Calendar, Phone, Activity, Sun, Mo
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
+import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 
 const router = useRouter()
 const store = useMainStore()
@@ -14,6 +15,7 @@ const activeTab = ref('signin') // 'signin' or 'signup'
 const isDark = ref(true)
 
 onMounted(() => {
+  initRealtimeSync()
   const savedTheme = localStorage.getItem('smartband_theme')
   if (savedTheme === 'light') {
     isDark.value = false
@@ -195,37 +197,13 @@ const handleSubmit = async () => {
 
       if (error) throw error
 
-      // 1. Broadcast instant realtime alert across devices
-      try {
-        const syncChan = supabase.channel('smartband-realtime-sync')
-        await syncChan.subscribe()
-        await syncChan.send({
-          type: 'broadcast',
-          event: 'new_registration',
-          payload: {
-            email: sanitizedEmail,
-            full_name: fullName.value.trim(),
-            instrument: combinedInstrument,
-            timestamp: Date.now()
-          }
-        })
-        supabase.removeChannel(syncChan)
-      } catch (bcErr) {
-        console.warn('Realtime broadcast error on signup:', bcErr)
-      }
-
-      // 2. Broadcast instant cross-tab alert on current device
-      try {
-        if ('BroadcastChannel' in window) {
-          const bc = new BroadcastChannel('smartband_live_sync')
-          bc.postMessage({
-            type: 'NEW_REGISTRATION',
-            full_name: fullName.value.trim(),
-            email: sanitizedEmail
-          })
-          bc.close()
-        }
-      } catch (e) {}
+      // Instant global and cross-tab synchronization
+      await broadcastSync('new_registration', {
+        email: sanitizedEmail,
+        full_name: fullName.value.trim(),
+        instrument: combinedInstrument,
+        timestamp: Date.now()
+      })
 
       signupSuccess.value = true
       password.value = ''
