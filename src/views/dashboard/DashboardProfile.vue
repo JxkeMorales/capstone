@@ -79,7 +79,9 @@ const instrumentList = [
   'Bass / Tuba',
   'Bass Drum',
   'Snare Drum / Drums',
-  'Cymbals'
+  'Cymbals',
+  'Majorette',
+  'Color Guard / Flag'
 ]
 
 const handlePhoneEditInput = (e) => {

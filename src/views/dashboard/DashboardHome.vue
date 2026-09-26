@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight } from 'lucide-vue-next'
+import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync } from '@/utils/realtime'
+import { generateEventAttendancePdf } from '@/utils/pdfExport'
 
 const store = useMainStore()
 
@@ -91,6 +92,14 @@ const pastEvents = computed(() => {
   return rawEvents.value
     .filter(ev => new Date(ev.rawDate).getTime() < todayStart)
     .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
+})
+
+// Dedicated view of events the current user accepted/confirmed attendance for
+const myAcceptedEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() >= todayStart && ev.rsvpStatus === 'attending')
+    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
 })
 
 const notifyOtherTabs = (eventType) => {
@@ -370,6 +379,26 @@ const markAllAttendingAsPresent = async () => {
     showToast('Failed to batch-update attendance.')
   } finally {
     isBatchMarking.value = false
+  }
+}
+
+// EXPORT MINIMAL OFFICIAL ATTENDANCE PDF FOR THIS SPECIFIC EVENT
+const isExportingAttendancePdf = ref(false)
+const handleExportAttendancePdf = async () => {
+  if (!selectedEventForAttendance.value || isExportingAttendancePdf.value) return
+  isExportingAttendancePdf.value = true
+  try {
+    const filename = await generateEventAttendancePdf({
+      event: selectedEventForAttendance.value,
+      roster: rollCallRoster.value,
+      preparedByName: store.profile?.full_name || 'Band Secretary'
+    })
+    showToast(`✓ Downloaded ${filename}`)
+  } catch (err) {
+    console.error('Attendance export error:', err)
+    showToast('Failed to export attendance PDF.')
+  } finally {
+    isExportingAttendancePdf.value = false
   }
 }
 
@@ -750,8 +779,8 @@ onUnmounted(() => {
       <!-- AUTOMATIC EVENTS & GIGS SECTION -->
       <section class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-          <!-- Upcoming vs Past Gigs Tab Pill Toggle -->
-          <div class="flex items-center space-x-1.5 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold shrink-0">
+          <!-- Upcoming vs My Accepted vs Past Gigs Tab Pill Toggle -->
+          <div class="flex items-center space-x-1 p-1 bg-slate-200/70 dark:bg-[#27272a] rounded-xl text-xs font-bold shrink-0">
             <button 
               @click="activeEventsTab = 'upcoming'"
               type="button"
@@ -760,8 +789,21 @@ onUnmounted(() => {
                 ? 'bg-blue-600 text-white shadow-xs font-black' 
                 : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
             >
-              <Calendar class="w-3.5 h-3.5 mr-1 text-white" />
+              <Calendar class="w-3.5 h-3.5 mr-1" />
               <span>Upcoming ({{ upcomingEvents.length }})</span>
+            </button>
+
+            <!-- Dedicated View for User's Accepted Gigs -->
+            <button 
+              @click="activeEventsTab = 'accepted'"
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all min-h-[36px] flex items-center cursor-pointer"
+              :class="activeEventsTab === 'accepted' 
+                ? 'bg-emerald-600 text-white shadow-xs font-black' 
+                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+            >
+              <CheckCircle class="w-3.5 h-3.5 mr-1" :class="activeEventsTab === 'accepted' ? 'text-white' : 'text-emerald-500'" />
+              <span>My Accepted ({{ myAcceptedEvents.length }})</span>
             </button>
 
             <button 
@@ -859,6 +901,71 @@ onUnmounted(() => {
             <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
             <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">No upcoming events scheduled right now.</p>
             <p class="text-xs text-slate-400 dark:text-neutral-500 mt-1">Past events have been automatically archived to the Past Gigs tab.</p>
+          </div>
+        </div>
+
+        <!-- 2. DEDICATED VIEW FOR USER'S ACCEPTED EVENTS -->
+        <div v-else-if="activeEventsTab === 'accepted'">
+          <div v-if="myAcceptedEvents.length > 0" class="space-y-3">
+            <div 
+              v-for="ev in myAcceptedEvents" 
+              :key="ev.id"
+              class="bg-white dark:bg-[#18181b] rounded-3xl p-5 shadow-sm dark:shadow-lg relative overflow-hidden border border-emerald-200/90 dark:border-emerald-950/60 border-l-4 border-l-emerald-600 dark:border-l-emerald-500"
+            >
+              <div class="relative z-10">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="inline-block px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-200/60 dark:border-emerald-900/50">
+                      {{ ev.type }}
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-600 text-white shadow-xs">
+                      ✓ Your Attendance Confirmed
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center space-x-1.5 shrink-0">
+                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white font-extrabold text-[11px] rounded-full flex items-center cursor-pointer min-h-[36px] transition-colors">
+                      <Users class="w-3.5 h-3.5 mr-1" /> Attendees
+                    </button>
+                  </div>
+                </div>
+                
+                <h3 class="text-xl font-black mb-2 leading-tight text-slate-900 dark:text-white">{{ ev.title }}</h3>
+                
+                <div class="space-y-1.5 mb-4 text-xs font-bold text-slate-600 dark:text-neutral-300">
+                  <div class="flex items-center">
+                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-emerald-500" />
+                    <span>{{ ev.date }} at {{ ev.time }}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-emerald-500" />
+                    <span>{{ ev.location }}</span>
+                  </div>
+                </div>
+
+                <!-- Confirmed Status Banner & Change Option -->
+                <div class="flex items-center justify-between p-3 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-2xl">
+                  <div class="flex items-center space-x-2 text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span class="font-extrabold text-xs">You are scheduled to attend this call-time.</span>
+                  </div>
+                  <button @click="ev.rsvpStatus = null" class="text-xs underline font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer min-h-[36px]">Change</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-8 text-center border border-slate-200/80 dark:border-neutral-800 space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
+              <CheckCircle class="w-6 h-6" />
+            </div>
+            <p class="text-base font-bold text-slate-800 dark:text-white">No accepted events on your schedule yet.</p>
+            <p class="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto">
+              Browse the <strong>Upcoming</strong> tab and click <strong>"I Will Attend"</strong> to add rehearsals and gigs directly to your schedule!
+            </p>
+            <button @click="activeEventsTab = 'upcoming'" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black transition-colors cursor-pointer shadow-xs">
+              View Upcoming Events
+            </button>
           </div>
         </div>
 
@@ -1030,16 +1137,29 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <button 
-            v-if="store.canConductRollCall"
-            @click="markAllAttendingAsPresent" 
-            :disabled="isBatchMarking"
-            type="button" 
-            class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
-          >
-            <CheckCircle class="w-4 h-4" />
-            <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark All Attending as Present' }}</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              v-if="store.canConductRollCall"
+              @click="markAllAttendingAsPresent" 
+              :disabled="isBatchMarking"
+              type="button" 
+              class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
+            >
+              <CheckCircle class="w-4 h-4" />
+              <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark Attending as Present' }}</span>
+            </button>
+
+            <button 
+              @click="handleExportAttendancePdf"
+              :disabled="isExportingAttendancePdf"
+              type="button"
+              class="py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px] shrink-0"
+              title="Export official printable attendance sheet PDF"
+            >
+              <Download class="w-4 h-4" />
+              <span>{{ isExportingAttendancePdf ? 'Exporting...' : 'Export Attendance PDF' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Filter Sub-Tabs -->

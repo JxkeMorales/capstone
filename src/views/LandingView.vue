@@ -237,6 +237,9 @@ const handleKeyDown = (e) => {
 // Avatar Container Scrolling & Visibility Helpers
 const avatarScrollContainer = ref(null)
 const avatarRefs = ref([])
+const setAvatarRef = (el, idx) => {
+  if (el) avatarRefs.value[idx] = el
+}
 
 const scrollToActiveAvatar = (idx) => {
   nextTick(() => {
@@ -304,8 +307,8 @@ const handleTouchEnd = (e) => {
     <nav class="fixed top-0 left-0 right-0 z-50 bg-[#edf1f5]/85 dark:bg-[#121214]/80 backdrop-blur-xl border-b border-slate-300/80 dark:border-neutral-800/50 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         <div class="flex items-center space-x-2.5 sm:space-x-3">
-          <div class="p-2 sm:p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-900/20">
-            <Music class="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div class="w-10 h-10 rounded-xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5">
+            <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
           </div>
           <span class="text-lg sm:text-xl font-black tracking-tight text-slate-800 dark:text-white">SmartBand</span>
         </div>
@@ -570,7 +573,7 @@ const handleTouchEnd = (e) => {
                 <button
                   v-for="(officer, idx) in officers"
                   :key="officer.id"
-                  :ref="el => { if (el) { avatarRefs.value[idx] = el; avatarRefs[idx] = el; } }"
+                  :ref="el => setAvatarRef(el, idx)"
                   @click="selectOfficer(idx)"
                   class="group flex flex-col items-center shrink-0 sm:shrink snap-center transition-all duration-300 cursor-pointer focus:outline-none min-w-[62px] sm:min-w-0 sm:flex-1 py-1"
                   :class="selectedIndex === idx ? 'scale-105' : 'opacity-65 hover:opacity-100 hover:scale-102'"
