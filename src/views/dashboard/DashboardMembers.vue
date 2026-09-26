@@ -58,6 +58,8 @@ let membersChannel = null
 // UNIFIED SYSTEM POSITIONS (MATCHES SUPABASE DATABASE ENUMS PERFECTLY)
 const POSITIONS = [
   { id: 'member', label: 'Regular Musician', role: 'member', title: null, color: 'slate', badge: 'Musician' },
+  { id: 'majorette', label: 'Majorette', role: 'member', title: 'majorette', color: 'rose', badge: 'Majorette' },
+  { id: 'flag_bearer', label: 'Color Guard / Flag', role: 'member', title: 'flag_bearer', color: 'pink', badge: 'Color Guard' },
   { id: 'president', label: 'Band President', role: 'executive', title: 'president', color: 'amber', badge: 'Band President' },
   { id: 'vice_president', label: 'Band Vice President', role: 'executive', title: 'vice_president', color: 'amber', badge: 'Band Vice President' },
   { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: null, color: 'indigo', badge: 'Band Secretary' },
@@ -98,7 +100,9 @@ const instrumentList = [
   'Bass / Tuba', 
   'Bass Drum',
   'Snare Drum', 
-  'Cymbals'
+  'Cymbals',
+  'Majorette',
+  'Color Guard / Flag'
 ]
 
 const showToast = (msg) => {
@@ -110,6 +114,8 @@ const showToast = (msg) => {
 const normalizeTitle = (str) => {
   if (!str) return ''
   const s = str.toLowerCase().trim()
+  if (s.includes('majorette')) return 'majorette'
+  if (s.includes('flag') || s.includes('guard')) return 'flag_bearer'
   if (s.includes('vice')) return 'vice_president'
   if (s.includes('pres')) return 'president'
   if (s.includes('sec')) return 'secretary'
@@ -133,6 +139,8 @@ const getMemberPositionId = (member) => {
   if (t === 'resident_conductor') return 'resident_conductor'
   if (t === 'band_manager') return 'band_manager'
   if (t === 'coordinator') return 'coordinator'
+  if (t === 'majorette' || (member.instrument || '').toLowerCase().includes('majorette')) return 'majorette'
+  if (t === 'flag_bearer' || (member.instrument || '').toLowerCase().includes('flag') || (member.instrument || '').toLowerCase().includes('guard')) return 'flag_bearer'
   return 'member'
 }
 
@@ -453,14 +461,22 @@ onUnmounted(() => {
         </div>
         <div class="min-w-0">
           <div class="flex items-center space-x-2">
-            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Band Directory</span>
+            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              {{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}
+            </span>
             <span v-if="store.isSuperAdmin" class="text-[10px] font-black uppercase bg-rose-500 text-white px-2.5 py-0.5 rounded-full">
               Super Admin Mode
+            </span>
+            <span v-else-if="store.isOfficerOrAdmin" class="text-[10px] font-black uppercase bg-blue-600 text-white px-2.5 py-0.5 rounded-full">
+              Officer Mode
             </span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">
             Musician Registry
           </h1>
+          <p v-if="!store.isOfficerOrAdmin" class="text-xs text-slate-500 dark:text-neutral-400 font-medium">
+            Official roster of band members and instrument sections.
+          </p>
         </div>
       </div>
 
@@ -533,7 +549,8 @@ onUnmounted(() => {
                   <Music class="w-3 h-3 mr-1 text-slate-400 shrink-0" />
                   {{ pos.officer.instrument }}
                 </p>
-                <div class="flex items-center space-x-1.5 mt-2">
+                <!-- Only visible to Officers & Admins -->
+                <div v-if="store.isOfficerOrAdmin" class="flex items-center space-x-1.5 mt-2">
                   <span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-300">
                     {{ pos.officer.rank }}
                   </span>
@@ -545,8 +562,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom Actions -->
-          <div class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
+          <!-- Bottom Actions (Only for Officers & Admins) -->
+          <div v-if="store.isOfficerOrAdmin" class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(pos.officer)"
               type="button"
@@ -633,8 +650,8 @@ onUnmounted(() => {
           <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
         </select>
 
-        <!-- Tier Filter Buttons -->
-        <div class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1 text-xs font-bold border border-slate-200/80 dark:border-neutral-800 shrink-0">
+        <!-- Tier Filter Buttons (Senior/Junior filtered for officers only) -->
+        <div v-if="store.isOfficerOrAdmin" class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1 text-xs font-bold border border-slate-200/80 dark:border-neutral-800 shrink-0">
           <button 
             type="button" 
             @click="activeTierFilter = 'all'"
@@ -694,9 +711,9 @@ onUnmounted(() => {
               <th scope="col" class="py-3.5 px-4">Musician</th>
               <th scope="col" class="py-3.5 px-4">Section / Instrument</th>
               <th scope="col" class="py-3.5 px-4">Role & Leadership</th>
-              <th scope="col" class="py-3.5 px-4">Rank</th>
-              <th scope="col" class="py-3.5 px-4">Reliability</th>
-              <th scope="col" class="py-3.5 px-4 text-right">Actions</th>
+              <th v-if="store.isOfficerOrAdmin" scope="col" class="py-3.5 px-4">Rank</th>
+              <th v-if="store.isOfficerOrAdmin" scope="col" class="py-3.5 px-4">Reliability</th>
+              <th v-if="store.isOfficerOrAdmin" scope="col" class="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/80">
@@ -717,8 +734,12 @@ onUnmounted(() => {
                     <span class="font-black text-slate-900 dark:text-white text-xs truncate block">
                       {{ member.name }}
                     </span>
-                    <span class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
+                    <!-- Contact info visible only to Officers/Admins -->
+                    <span v-if="store.isOfficerOrAdmin" class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
                       {{ member.contact || 'Registered Member' }}
+                    </span>
+                    <span v-else class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
+                      Verified Member
                     </span>
                   </div>
                 </div>
@@ -754,8 +775,8 @@ onUnmounted(() => {
                 </span>
               </td>
 
-              <!-- Rank -->
-              <td class="py-3 px-4">
+              <!-- Rank (Officers & Admins Only) -->
+              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4">
                 <span 
                   class="text-[10px] font-black px-2.5 py-1 rounded-lg border inline-flex items-center"
                   :class="member.rank === 'Senior' 
@@ -766,8 +787,8 @@ onUnmounted(() => {
                 </span>
               </td>
 
-              <!-- Reliability -->
-              <td class="py-3 px-4">
+              <!-- Reliability (Officers & Admins Only) -->
+              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4">
                 <div class="flex items-center space-x-1.5">
                   <span 
                     class="w-2 h-2 rounded-full flex-shrink-0"
@@ -779,8 +800,8 @@ onUnmounted(() => {
                 </div>
               </td>
 
-              <!-- Actions (Clean Buttons - No Messy Dropdowns) -->
-              <td class="py-3 px-4 text-right">
+              <!-- Actions (Officers & Admins Only) -->
+              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4 text-right">
                 <div class="flex items-center justify-end space-x-2">
                   <!-- View Availability -->
                   <button 
@@ -806,7 +827,7 @@ onUnmounted(() => {
             </tr>
 
             <tr v-if="sortedRoster.length === 0">
-              <td colspan="6" class="py-10 text-center text-slate-400 font-bold">
+              <td :colspan="store.isOfficerOrAdmin ? 6 : 3" class="py-10 text-center text-slate-400 font-bold">
                 No musicians match your search or filter.
               </td>
             </tr>
@@ -850,7 +871,8 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="text-right shrink-0">
+            <!-- Rank & Reliability: Officers & Admins Only -->
+            <div v-if="store.isOfficerOrAdmin" class="text-right shrink-0">
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded" :class="member.rank === 'Senior' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400' : 'bg-slate-100 dark:bg-[#27272a] text-slate-600 dark:text-neutral-400'">
                 {{ member.rank }}
               </span>
@@ -858,8 +880,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom Actions Bar -->
-          <div class="pt-2.5 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between">
+          <!-- Bottom Actions Bar (Officers & Admins Only) -->
+          <div v-if="store.isOfficerOrAdmin" class="pt-2.5 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(member)"
               type="button"

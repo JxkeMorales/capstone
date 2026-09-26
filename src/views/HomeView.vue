@@ -83,9 +83,9 @@ const isPhoneValid = computed(() => {
   return /^09\d{9}$/.test(contactNumber.value)
 })
 
-// Complete 16-Instrument Municipal Band Section List
+// Complete 18-Instrument / Section Municipal Band List
 const instrumentOptions = [
-  { value: '', label: 'Select Primary Instrument...' },
+  { value: '', label: 'Select Primary Section / Instrument...' },
   { value: 'Clarinet', label: 'Clarinet' },
   { value: 'Bass Clarinet', label: 'Bass Clarinet' },
   { value: 'Flute', label: 'Flute' },
@@ -101,7 +101,9 @@ const instrumentOptions = [
   { value: 'Bass / Tuba', label: 'Bass / Tuba' },
   { value: 'Bass Drum', label: 'Bass Drum' },
   { value: 'Snare Drum / Drums', label: 'Snare Drum / Drums' },
-  { value: 'Cymbals', label: 'Cymbals' }
+  { value: 'Cymbals', label: 'Cymbals' },
+  { value: 'Majorette', label: 'Majorette' },
+  { value: 'Color Guard / Flag', label: 'Color Guard / Flag' }
 ]
 
 const secondaryInstrumentOptions = [
@@ -121,7 +123,9 @@ const secondaryInstrumentOptions = [
   { value: 'Bass / Tuba', label: 'Bass / Tuba' },
   { value: 'Bass Drum', label: 'Bass Drum' },
   { value: 'Snare Drum / Drums', label: 'Snare Drum / Drums' },
-  { value: 'Cymbals', label: 'Cymbals' }
+  { value: 'Cymbals', label: 'Cymbals' },
+  { value: 'Majorette', label: 'Majorette' },
+  { value: 'Color Guard / Flag', label: 'Color Guard / Flag' }
 ]
 
 const handleSubmit = async () => {
@@ -265,9 +269,16 @@ const handleResetPassword = async () => {
         
         <!-- Left Hero Section (Desktop View) -->
         <div class="space-y-6 text-left hidden md:block">
-          <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
-            <Music class="w-4 h-4" />
-            <span>SmartBand Municipal PWA</span>
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shrink-0">
+              <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
+            </div>
+            <div>
+              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
+                <span>Peñaranda Band 1870</span>
+              </div>
+              <p class="text-[11px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest mt-0.5">Municipal Enterprise PWA</p>
+            </div>
           </div>
 
           <h1 class="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
@@ -309,11 +320,11 @@ const handleResetPassword = async () => {
             
             <!-- Mobile Brand Header -->
             <div class="text-center md:hidden mb-6 space-y-2">
-              <div class="inline-flex p-3 bg-blue-600 rounded-2xl shadow-sm text-white mx-auto">
-                <Music class="w-8 h-8" stroke-width="2.5" />
+              <div class="w-14 h-14 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white mx-auto flex items-center justify-center p-1">
+                <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
               </div>
               <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
-              <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">Municipal Band Operations System</p>
+              <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">Peñaranda Band 1870 • Municipal Operations</p>
             </div>
 
             <!-- Sign In / Sign Up Segmented Tab Bar -->

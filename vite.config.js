@@ -10,12 +10,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'icons.svg', 'apple-touch-icon.png'],
+      includeAssets: ['band1870logo.jpg', 'favicon.svg', 'icons.svg', 'apple-touch-icon.png'],
       devOptions: {
         enabled: true
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg}'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         skipWaiting: true,
@@ -48,14 +48,14 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/favicon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
+            src: '/band1870logo.jpg',
+            sizes: '512x512',
+            type: 'image/jpeg',
             purpose: 'any maskable'
           },
           {
             src: '/favicon.svg',
-            sizes: '512x512',
+            sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any maskable'
           }

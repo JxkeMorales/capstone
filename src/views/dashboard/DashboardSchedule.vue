@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown } from 'lucide-vue-next'
+import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
+import { generateEventAttendancePdf } from '@/utils/pdfExport'
 
 const store = useMainStore()
 
@@ -171,8 +172,19 @@ const pastEvents = computed(() => {
     .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
 })
 
+const myAcceptedEvents = computed(() => {
+  const todayStart = getTodayStart()
+  return rawEvents.value
+    .filter(ev => new Date(ev.rawDate).getTime() >= todayStart && ev.rsvpStatus === 'attending')
+    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+})
+
 const displayedEvents = computed(() => {
-  const targetList = activeScheduleTab.value === 'upcoming' ? upcomingEvents.value : pastEvents.value
+  const targetList = activeScheduleTab.value === 'upcoming' 
+    ? upcomingEvents.value 
+    : activeScheduleTab.value === 'accepted' 
+      ? myAcceptedEvents.value 
+      : pastEvents.value
   if (activeFilters.value.includes('All')) return targetList
   
   return targetList.filter(e => {
@@ -382,6 +394,26 @@ const markAllAttendingAsPresent = async () => {
   }
 }
 
+// EXPORT MINIMAL OFFICIAL ATTENDANCE PDF FOR THIS SPECIFIC EVENT
+const isExportingAttendancePdf = ref(false)
+const handleExportAttendancePdf = async () => {
+  if (!selectedEventForAttendance.value || isExportingAttendancePdf.value) return
+  isExportingAttendancePdf.value = true
+  try {
+    const filename = await generateEventAttendancePdf({
+      event: selectedEventForAttendance.value,
+      roster: rollCallRoster.value,
+      preparedByName: store.profile?.full_name || 'Band Secretary'
+    })
+    showToastNotification(`✓ Downloaded ${filename}`)
+  } catch (err) {
+    console.error('Attendance export error:', err)
+    showToastNotification('Failed to export attendance PDF.')
+  } finally {
+    isExportingAttendancePdf.value = false
+  }
+}
+
 const promptDeleteEvent = (id) => {
   targetEventIdToDelete.value = id
   showDeleteConfirmModal.value = true
@@ -506,6 +538,18 @@ onUnmounted(() => {
         >
           <Calendar class="w-4 h-4 mr-1.5" />
           <span>Upcoming Gigs ({{ upcomingEvents.length }})</span>
+        </button>
+
+        <button 
+          @click="activeScheduleTab = 'accepted'"
+          type="button"
+          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+          :class="activeScheduleTab === 'accepted' 
+            ? 'bg-emerald-600 text-white shadow-xs' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+        >
+          <CheckCircle2 class="w-4 h-4 mr-1.5" :class="activeScheduleTab === 'accepted' ? 'text-white' : 'text-emerald-500'" />
+          <span>My Accepted ({{ myAcceptedEvents.length }})</span>
         </button>
 
         <button 
@@ -665,16 +709,29 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <button 
-            v-if="store.canConductRollCall"
-            @click="markAllAttendingAsPresent" 
-            :disabled="isBatchMarking"
-            type="button" 
-            class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
-          >
-            <CheckCircle class="w-4 h-4" />
-            <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark All Attending as Present' }}</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              v-if="store.canConductRollCall"
+              @click="markAllAttendingAsPresent" 
+              :disabled="isBatchMarking"
+              type="button" 
+              class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
+            >
+              <CheckCircle2 class="w-4 h-4" />
+              <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark Attending as Present' }}</span>
+            </button>
+
+            <button 
+              @click="handleExportAttendancePdf"
+              :disabled="isExportingAttendancePdf"
+              type="button"
+              class="py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px] shrink-0"
+              title="Export official printable attendance sheet PDF"
+            >
+              <Download class="w-4 h-4" />
+              <span>{{ isExportingAttendancePdf ? 'Exporting...' : 'Export Attendance PDF' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Filter Sub-Tabs -->

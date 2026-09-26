@@ -672,18 +672,18 @@ onUnmounted(() => {
 <template>
   <div class="min-h-screen bg-[#edf1f5] dark:bg-[#121214] text-slate-800 dark:text-neutral-100 flex transition-colors duration-300">
     
-    <!-- DESKTOP LEFT NAVIGATION SIDEBAR (Neutral Matte Charcoal) -->
-    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-[#f8fafc] dark:bg-[#1c1c1e] border-r border-slate-300/80 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <!-- DESKTOP LEFT NAVIGATION SIDEBAR (Fixed Viewport, Never Scrolls With Page) -->
+    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-[#f8fafc] dark:bg-[#1c1c1e] border-r border-slate-300/80 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 fixed top-0 left-0 bottom-0 z-30 h-screen overflow-y-auto">
       
       <!-- Brand Logo -->
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <div class="bg-blue-600 p-2 rounded-2xl shadow-md text-white">
-            <Music class="w-6 h-6" stroke-width="2.5" />
+          <div class="w-10 h-10 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-0.5">
+            <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
           </div>
           <div>
             <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
-            <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Enterprise PWA</span>
+            <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Band 1870 PWA</span>
           </div>
         </div>
 
@@ -733,7 +733,7 @@ onUnmounted(() => {
             : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
         >
           <Users class="w-5 h-5 flex-shrink-0" />
-          <span>Band Directory & Ranks</span>
+          <span>{{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}</span>
         </RouterLink>
 
         <!-- Dynamic Admin / Secretary / Executive Analytics Tab Labeling -->
@@ -818,16 +818,17 @@ onUnmounted(() => {
 
     </aside>
 
-    <!-- MAIN RESPONSIVE CANVAS AREA -->
-    <div class="flex-1 min-w-0 min-h-screen flex flex-col max-w-6xl mx-auto w-full">
+    <!-- MAIN RESPONSIVE CANVAS AREA (Offset on desktop for fixed sidebar) -->
+    <div class="flex-1 min-w-0 min-h-screen flex flex-col w-full md:pl-64 lg:pl-72">
+      <div class="flex-1 min-w-0 flex flex-col max-w-6xl mx-auto w-full">
       
       <!-- TOP HEADER (Desktop breadcrumb / Mobile Brand) -->
       <header class="sticky top-0 z-40 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-300/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
           <!-- Mobile Brand Logo (Visible only on mobile screens when sidebar is hidden) -->
           <div class="flex items-center space-x-2.5 md:hidden">
-            <div class="bg-blue-600 p-1.5 rounded-xl shadow-sm text-white">
-              <Music class="w-5 h-5" stroke-width="2.5" />
+            <div class="w-8 h-8 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5">
+              <img src="/band1870logo.jpg" alt="Logo" class="w-full h-full object-contain" />
             </div>
             <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
           </div>
@@ -1008,6 +1009,7 @@ onUnmounted(() => {
         </div>
       </nav>
 
+      </div>
     </div>
 
     <!-- HIGH-VISIBILITY 5-SECOND CALL-TIME ALARM MODAL -->

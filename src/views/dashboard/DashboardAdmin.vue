@@ -34,6 +34,7 @@ import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { getBandLogoBase64 } from '@/utils/pdfExport'
 
 const store = useMainStore()
 
@@ -336,6 +337,7 @@ const analyticsSortBy = ref('flakes_desc') // 'flakes_desc' | 'reliability_asc' 
 const selectedReportType = ref('all_members')
 const selectedRoleFilter = ref('member')
 const selectedEventTypeFilter = ref('Practice & Rehearsal (Ensayo)')
+const selectedSpecificEventId = ref('')
 
 const reportTypeOptions = [
   { id: 'all_members', label: '1. List of All Band Members' },
@@ -344,7 +346,9 @@ const reportTypeOptions = [
   { id: 'members_by_role', label: '4. List of All Band Members Filtered by Roles' },
   { id: 'officers', label: '5. List of Band Leadership & Officers' },
   { id: 'all_schedules', label: '6. List of All Band Schedules & Gigs' },
-  { id: 'schedules_by_type', label: '7. List of Schedules Filtered by Types' }
+  { id: 'schedules_by_type', label: '7. List of Schedules Filtered by Types' },
+  { id: 'past_events', label: '8. Past Events & Gigs History Report' },
+  { id: 'event_attendance', label: '9. Specific Event Roll-Call & Attendance Report' }
 ]
 
 const eventTypeOptions = [
@@ -491,6 +495,7 @@ const sectionStats = computed(() => {
   const woodwindNames = ['clarinet', 'flute', 'sax', 'piccolo']
   const brassNames = ['trumpet', 'trombone', 'horn', 'tuba', 'baritone', 'euphonium']
   const percussionNames = ['drum', 'cymbals', 'snare', 'bass drum']
+  const auxiliaryNames = ['majorette', 'flag', 'guard']
 
   const getStats = (matchers) => {
     const members = list.filter(m => matchers.some(term => (m.instrument || '').toLowerCase().includes(term)))
@@ -517,7 +522,8 @@ const sectionStats = computed(() => {
   return {
     woodwinds: getStats(woodwindNames),
     brass: getStats(brassNames),
-    percussion: getStats(percussionNames)
+    percussion: getStats(percussionNames),
+    auxiliary: getStats(auxiliaryNames)
   }
 })
 
@@ -650,6 +656,106 @@ const generatedReportData = computed(() => {
     }
   }
 
+  if (type === 'past_events') {
+    const past = allEvents.value
+      .filter(e => new Date(e.event_date) < new Date())
+      .sort((a, b) => new Date(b.event_date) - new Date(a.event_date))
+
+    return {
+      title: 'OFFICIAL PAST EVENTS & GIGS HISTORY REPORT',
+      subtitle: 'Archived log of completed rehearsals, parades, and municipal services with turnout tallies',
+      columns: ['#', 'Event Title', 'Category', 'Date Completed', 'Location', 'Attendance Turnout'],
+      rows: past.map((e, idx) => {
+        const evRsvps = allRsvps.value.filter(r => r.event_id === e.id)
+        const present = evRsvps.filter(r => r.status === 'present').length
+        const flakes = evRsvps.filter(r => r.status === 'absent').length
+        const turnout = `${present} Present ${flakes > 0 ? `(${flakes} No-Shows)` : ''}`
+        return [
+          idx + 1,
+          e.title,
+          e.event_type || 'Gig',
+          new Date(e.event_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          e.location || 'Municipal Bandstand',
+          turnout
+        ]
+      })
+    }
+  }
+
+  if (type === 'event_attendance') {
+    const targetEvent = allEvents.value.find(e => e.id === selectedSpecificEventId.value) || allEvents.value[0]
+    if (!targetEvent) {
+      return {
+        title: 'SPECIFIC EVENT ROLL-CALL & ATTENDANCE REPORT',
+        subtitle: 'No events found in schedule database',
+        columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'RSVP Record'],
+        rows: []
+      }
+    }
+
+    const eventRsvps = allRsvps.value.filter(r => r.event_id === targetEvent.id)
+    const verifiedMembers = allProfiles.value.filter(m => m.is_verified)
+
+    const statusWeight = (status) => {
+      if (status === 'present') return 1
+      if (status === 'excused' || status === 'declined') return 2
+      if (status === 'absent') return 3
+      return 4
+    }
+
+    const memberRows = verifiedMembers.map(m => {
+      const rsvp = eventRsvps.find(r => r.user_id === m.id)
+      const st = rsvp?.status || 'none'
+      let statusLabel = 'Unconfirmed'
+      let rsvpNote = 'No Response'
+
+      if (st === 'present') {
+        statusLabel = 'Present (Attended)'
+        rsvpNote = 'Confirmed & Present'
+      } else if (st === 'absent') {
+        statusLabel = 'Absent (No-Show)'
+        rsvpNote = 'Failed Call-Time'
+      } else if (st === 'excused') {
+        statusLabel = 'Excused / Unavailable'
+        rsvpNote = 'Authorized Absence'
+      } else if (st === 'declined') {
+        statusLabel = 'Unavailable (Declined)'
+        rsvpNote = 'Declined Invitation'
+      } else if (st === 'attending') {
+        statusLabel = 'Committed (Pending)'
+        rsvpNote = 'Will Attend'
+      }
+
+      return {
+        member: m,
+        weight: statusWeight(st),
+        statusLabel,
+        rsvpNote
+      }
+    }).sort((a, b) => {
+      if (a.weight !== b.weight) return a.weight - b.weight
+      return (a.member.full_name || '').localeCompare(b.member.full_name || '')
+    })
+
+    const presentCount = memberRows.filter(r => r.statusLabel.startsWith('Present')).length
+    const absentCount = memberRows.filter(r => r.statusLabel.startsWith('Absent')).length
+    const excusedCount = memberRows.filter(r => r.statusLabel.includes('Excused') || r.statusLabel.includes('Unavailable')).length
+
+    return {
+      title: `EVENT ROLL-CALL & ATTENDANCE: ${targetEvent.title.toUpperCase()}`,
+      subtitle: `${targetEvent.event_type} • ${new Date(targetEvent.event_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} • ${targetEvent.location || 'Municipal'} [Present: ${presentCount} | Absent: ${absentCount} | Excused: ${excusedCount}]`,
+      columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'RSVP Record'],
+      rows: memberRows.map((item, idx) => [
+        idx + 1,
+        item.member.full_name,
+        item.member.instrument || 'Clarinet',
+        item.member.rank || 'Junior',
+        item.statusLabel,
+        item.rsvpNote
+      ])
+    }
+  }
+
   return { title: 'OFFICIAL REPORT', subtitle: '', columns: [], rows: [] }
 })
 
@@ -689,13 +795,21 @@ const getReportFilename = () => {
         .replace(/^_+|_+$/g, '')
       return `Penaranda_Band_Schedules_${typeClean}_${dateStamp}.pdf`
     }
+    case 'past_events':
+      return `Penaranda_Band_Past_Events_History_${dateStamp}.pdf`
+    case 'event_attendance': {
+      const targetEvent = allEvents.value.find(e => e.id === selectedSpecificEventId.value) || allEvents.value[0]
+      const evName = (targetEvent?.title || 'Event').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 25)
+      return `Penaranda_Band_Attendance_${evName}_${dateStamp}.pdf`
+    }
     default:
       return `Penaranda_Band_Report_${dateStamp}.pdf`
   }
 }
 
 // Direct PDF File Download using jsPDF & autoTable
-const downloadPdfReport = () => {
+// Direct PDF File Download using jsPDF & autoTable
+const downloadPdfReport = async () => {
   isGeneratingPdf.value = true
   try {
     const doc = new jsPDF({
@@ -707,77 +821,89 @@ const downloadPdfReport = () => {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
 
-    // 1. Header: PEÑARANDA MARCHING BAND 1870
+    // 1. Header with Peñaranda Band 1870 Crest Logo
+    const logoBase64 = await getBandLogoBase64()
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'JPEG', 40, 26, 42, 48)
+      } catch (e) {
+        console.warn('Logo embed error in PDF:', e)
+      }
+    }
+
+    const headerLeft = logoBase64 ? 94 : 40
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(15)
+    doc.setFontSize(14)
     doc.setTextColor(15, 23, 42)
-    doc.text('PEÑARANDA MARCHING BAND 1870', pageWidth / 2, 45, { align: 'center' })
+    doc.text('PEÑARANDA MARCHING BAND 1870', headerLeft, 42)
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8.5)
     doc.setTextColor(100, 116, 139)
-    doc.text('Peñaranda, Nueva Ecija • Established 1870', pageWidth / 2, 58, { align: 'center' })
+    doc.text('Peñaranda, Nueva Ecija • Established 1870 • Municipal Music Unit', headerLeft, 55)
+    doc.text('Official Administrative Document & Music Operations System', headerLeft, 67)
 
     // Divider Line
-    doc.setDrawColor(30, 41, 59)
-    doc.setLineWidth(1.5)
-    doc.line(40, 68, pageWidth - 40, 68)
+    doc.setDrawColor(203, 213, 225)
+    doc.setLineWidth(1)
+    doc.line(40, 82, pageWidth - 40, 82)
 
     // 2. Document Title & Subtitle
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.setTextColor(15, 23, 42)
-    doc.text(generatedReportData.value.title, pageWidth / 2, 88, { align: 'center' })
+    doc.text(generatedReportData.value.title, pageWidth / 2, 98, { align: 'center' })
 
     if (generatedReportData.value.subtitle) {
-      doc.setFont('helvetica', 'italic')
+      doc.setFont('helvetica', 'normal')
       doc.setFontSize(8)
       doc.setTextColor(100, 116, 139)
-      doc.text(generatedReportData.value.subtitle, pageWidth / 2, 100, { align: 'center' })
+      doc.text(generatedReportData.value.subtitle, pageWidth / 2, 110, { align: 'center' })
     }
 
-    // 3. Metadata Row
-    const metaY = 114
-    doc.setFillColor(248, 250, 252)
+    // 3. Metadata Row (Minimal clean box)
+    const metaY = 124
+    doc.setFillColor(250, 250, 250)
     doc.setDrawColor(203, 213, 225)
     doc.setLineWidth(0.5)
-    doc.roundedRect(40, metaY - 10, pageWidth - 80, 18, 3, 3, 'FD')
+    doc.roundedRect(40, metaY - 10, pageWidth - 80, 20, 3, 3, 'FD')
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(51, 65, 85)
-    doc.text(`Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, 48, metaY + 2)
-    doc.text(`Doc Ref: PMB1870-REP-${new Date().getFullYear()}-${generatedReportData.value.rows.length}R`, pageWidth / 2, metaY + 2, { align: 'center' })
-    doc.text(`Total Records: ${generatedReportData.value.rows.length}`, pageWidth - 48, metaY + 2, { align: 'right' })
+    doc.text(`Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, 48, metaY + 3)
+    doc.text(`Doc Ref: PMB1870-REP-${new Date().getFullYear()}-${generatedReportData.value.rows.length}R`, pageWidth / 2, metaY + 3, { align: 'center' })
+    doc.text(`Total Records: ${generatedReportData.value.rows.length}`, pageWidth - 48, metaY + 3, { align: 'right' })
 
-    // 4. Clean Standard Data Table
+    // 4. Clean Minimal Data Table (Pure white, no alternating gray)
     autoTable(doc, {
-      startY: 128,
+      startY: 142,
       head: [generatedReportData.value.columns],
       body: generatedReportData.value.rows.length > 0 ? generatedReportData.value.rows : [['-', 'No records found in database query', '', '', '']],
-      theme: 'grid',
+      theme: 'plain',
       headStyles: {
-        fillColor: [241, 245, 249],
+        fillColor: [248, 250, 252],
         textColor: [15, 23, 42],
         fontStyle: 'bold',
         fontSize: 8.5,
         lineColor: [203, 213, 225],
-        lineWidth: 0.5,
+        lineWidth: 0.75,
         halign: 'left'
       },
       styles: {
         font: 'helvetica',
         fontSize: 8,
         textColor: [30, 41, 59],
-        lineColor: [226, 232, 240],
+        fillColor: [255, 255, 255], // Pure white rows, NOT alternating gray
+        lineColor: [226, 232, 240], // Light hairline border
         lineWidth: 0.5,
-        cellPadding: 5
+        cellPadding: 5.5
       },
       alternateRowStyles: {
-        fillColor: [248, 250, 252]
+        fillColor: [255, 255, 255] // Pure white
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 28 }
+        0: { halign: 'center', cellWidth: 26 }
       },
       margin: { left: 40, right: 40 },
       didDrawPage: (data) => {
@@ -1276,7 +1402,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Section Turnout Breakdown Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- Woodwinds -->
           <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between">
@@ -1342,6 +1468,29 @@ onUnmounted(() => {
               <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>
               <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
                 {{ sectionStats.percussion.flakes }} No-Shows
+              </span>
+            </div>
+          </div>
+
+          <!-- Majorette & Color Guard (Auxiliary) -->
+          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Majorette & Guard</span>
+              <span class="text-[10px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-full">
+                {{ sectionStats.auxiliary.count }} Members
+              </span>
+            </div>
+            <div class="flex items-baseline justify-between text-xs">
+              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
+              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.auxiliary.displayRate }}</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-rose-500 h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+              <span>Attended: {{ sectionStats.auxiliary.attended }} / {{ sectionStats.auxiliary.promised }}</span>
+              <span :class="sectionStats.auxiliary.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+                {{ sectionStats.auxiliary.flakes }} No-Shows
               </span>
             </div>
           </div>
@@ -1599,6 +1748,23 @@ onUnmounted(() => {
                 <option v-for="t in eventTypeOptions" :key="t" :value="t">{{ t }}</option>
               </select>
             </div>
+
+            <!-- Sub-Filter for Specific Event (If report 9 selected) -->
+            <div v-if="selectedReportType === 'event_attendance'">
+              <label for="event-specific-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                Select Specific Event
+              </label>
+              <select 
+                id="event-specific-select"
+                v-model="selectedSpecificEventId" 
+                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+              >
+                <option value="">-- Latest / Select Event --</option>
+                <option v-for="ev in allEvents" :key="ev.id" :value="ev.id">
+                  {{ ev.title }} ({{ new Date(ev.event_date).toLocaleDateString() }})
+                </option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1607,13 +1773,16 @@ onUnmounted(() => {
           id="printable-report" 
           class="bg-white text-slate-900 rounded-2xl p-8 sm:p-12 border border-slate-300 shadow-md space-y-5 max-w-4xl mx-auto printable-sheet"
         >
-          <!-- Standard Official Letterhead Header -->
+          <!-- Standard Official Letterhead Header with Crest Logo -->
           <div class="text-center pb-3 border-b-2 border-slate-800">
+            <div class="w-16 h-18 mx-auto mb-2 flex items-center justify-center">
+              <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
+            </div>
             <h1 class="text-2xl font-black text-slate-900 tracking-wider uppercase">
               PEÑARANDA MARCHING BAND 1870
             </h1>
             <p class="text-[11px] uppercase tracking-widest text-slate-600 font-bold mt-0.5">
-              Peñaranda, Nueva Ecija • Established 1870
+              Peñaranda, Nueva Ecija • Established 1870 • Municipal Music Unit
             </p>
           </div>
 
@@ -1643,7 +1812,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Standard Data Grid Table -->
+          <!-- Standard Data Grid Table (Pure white rows, minimal lines) -->
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse border border-slate-300">
               <thead>
@@ -1662,7 +1831,7 @@ onUnmounted(() => {
                 <tr 
                   v-for="(row, rIdx) in generatedReportData.rows" 
                   :key="rIdx"
-                  class="even:bg-slate-50/60 hover:bg-slate-100/50"
+                  class="bg-white hover:bg-slate-50/70"
                 >
                   <td 
                     v-for="(cell, cIdx) in row" 
