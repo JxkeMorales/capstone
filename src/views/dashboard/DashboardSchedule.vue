@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download } from 'lucide-vue-next'
+import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download, Send } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
@@ -414,6 +414,64 @@ const handleExportAttendancePdf = async () => {
   }
 }
 
+// ALERT UNCONFIRMED MEMBERS FOR THIS SPECIFIC EVENT
+const isAlertingEventUnconfirmed = ref(false)
+
+const alertUnconfirmedForEvent = async () => {
+  if (!selectedEventForAttendance.value || isAlertingEventUnconfirmed.value) return
+  isAlertingEventUnconfirmed.value = true
+
+  const ev = selectedEventForAttendance.value
+  const alertTitle = `🚨 Urgent RSVP: ${ev.title}`
+  const alertMsg = `Please confirm your attendance for ${ev.title} on ${ev.date || 'upcoming schedule'} at ${ev.location || 'designated venue'}.`
+  const senderName = store.profile?.full_name || 'Band Secretary'
+
+  try {
+    // 1. BroadcastChannel local
+    if ('BroadcastChannel' in window) {
+      try {
+        const ch = new BroadcastChannel('smartband_live_sync')
+        ch.postMessage({ type: 'RSVP_REMINDER_BROADCAST', title: alertTitle, message: alertMsg, timestamp: Date.now() })
+        ch.close()
+      } catch (e) {}
+    }
+
+    // 2. Centralized broadcastSync
+    await broadcastSync('rsvp_reminder', { title: alertTitle, message: alertMsg, sender: senderName })
+
+    // 3. Direct WebSocket channel send
+    try {
+      const alertChan = supabase.channel('smartband-broadcast-alerts', { config: { broadcast: { ack: true } } })
+      if (alertChan.state === 'joined') {
+        await alertChan.send({ type: 'broadcast', event: 'rsvp_reminder', payload: { title: alertTitle, message: alertMsg, sender: senderName } })
+      }
+    } catch (e) {}
+
+    // 4. Create an official Announcement so all devices receive it and offline users see it upon login
+    try {
+      await supabase.from('announcements').insert({
+        author_id: store.user?.id || null,
+        title: alertTitle,
+        content: alertMsg,
+        category: 'Urgent Call-to-Action'
+      })
+    } catch (e) {}
+
+    // 5. Trigger Web Push Notification
+    try {
+      await supabase.functions.invoke('push-announcement', {
+        body: { record: { title: alertTitle, category: alertMsg } }
+      })
+    } catch (e) {}
+
+    showToastNotification(`✓ RSVP reminder sent to ${attendanceCounts.value.unconfirmed} unconfirmed members!`)
+  } catch (err) {
+    showToastNotification('Failed to send reminder alerts.')
+  } finally {
+    isAlertingEventUnconfirmed.value = false
+  }
+}
+
 const promptDeleteEvent = (id) => {
   targetEventIdToDelete.value = id
   showDeleteConfirmModal.value = true
@@ -719,6 +777,18 @@ onUnmounted(() => {
             >
               <CheckCircle2 class="w-4 h-4" />
               <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark Attending as Present' }}</span>
+            </button>
+
+            <button 
+              v-if="(store.isAdmin || store.isSuperAdmin) && attendanceCounts.unconfirmed > 0"
+              @click="alertUnconfirmedForEvent"
+              :disabled="isAlertingEventUnconfirmed"
+              type="button"
+              class="py-2 px-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px] shrink-0"
+              title="Send targeted RSVP reminder to unconfirmed members for this event"
+            >
+              <Send class="w-4 h-4" />
+              <span>{{ isAlertingEventUnconfirmed ? 'Alerting...' : `Alert Unconfirmed (${attendanceCounts.unconfirmed})` }}</span>
             </button>
 
             <button 

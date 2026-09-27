@@ -145,11 +145,26 @@ export const broadcastSync = async (event, payload = {}) => {
 
   // 3. Send over Supabase WebSocket across remote devices
   try {
-    if (!supabaseMasterChannel) {
+    // Ensure channels are initialized
+    if (!supabaseMasterChannel || !supabaseAlertsChannel) {
       initRealtimeSync()
     }
 
-    // Wait until subscribed (up to 2 seconds)
+    // Wait until alerts channel is subscribed (up to 2 seconds)
+    if (supabaseAlertsChannel && supabaseAlertsChannel.state !== 'joined') {
+      await new Promise((resolve) => {
+        let count = 0
+        const iv = setInterval(() => {
+          count++
+          if (supabaseAlertsChannel.state === 'joined' || count > 20) {
+            clearInterval(iv)
+            resolve()
+          }
+        }, 100)
+      })
+    }
+
+    // Wait until master channel is subscribed (up to 2 seconds)
     if (supabaseMasterChannel && supabaseMasterChannel.state !== 'joined') {
       await new Promise((resolve) => {
         let count = 0
@@ -165,9 +180,9 @@ export const broadcastSync = async (event, payload = {}) => {
 
     const promises = []
 
-    if (supabaseMasterChannel) {
+    if (supabaseAlertsChannel && supabaseAlertsChannel.state === 'joined') {
       promises.push(
-        supabaseMasterChannel.send({
+        supabaseAlertsChannel.send({
           type: 'broadcast',
           event,
           payload: { ...payload, timestamp }
@@ -175,9 +190,9 @@ export const broadcastSync = async (event, payload = {}) => {
       )
     }
 
-    if (supabaseAlertsChannel) {
+    if (supabaseMasterChannel && supabaseMasterChannel.state === 'joined') {
       promises.push(
-        supabaseAlertsChannel.send({
+        supabaseMasterChannel.send({
           type: 'broadcast',
           event,
           payload: { ...payload, timestamp }
