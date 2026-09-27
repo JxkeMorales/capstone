@@ -454,12 +454,17 @@ onMounted(() => {
   announceSub = supabase.channel('public:announcements')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
       if (enableBanners.value) {
-        uiStore.playChime()
+        const isUrgent = payload.new?.category?.toLowerCase().includes('urgent') || payload.new?.title?.toLowerCase().includes('urgent')
+        if (isUrgent && enableSiren.value) {
+          playAlarmSiren(3)
+        } else {
+          uiStore.playChime()
+        }
         uiStore.addToast({
-          title: `📢 New Announcement: ${payload.new.title}`,
-          message: payload.new.category || 'Band Update',
-          type: 'info',
-          duration: 10000
+          title: `📢 ${payload.new.title}`,
+          message: payload.new.content || payload.new.category || 'Band Update',
+          type: isUrgent ? 'warning' : 'info',
+          duration: 12000
         })
       }
     })
@@ -540,7 +545,9 @@ onMounted(() => {
     .subscribe()
 
   // 3. Supabase Realtime Broadcast Alerts (Immediate RSVP Re-notifications & Registration Sync)
-  broadcastSub = supabase.channel('smartband-broadcast-alerts')
+  broadcastSub = supabase.channel('smartband-broadcast-alerts', {
+    config: { broadcast: { ack: true } }
+  })
     .on('broadcast', { event: 'new_registration' }, () => {
       fetchPendingCount()
     })
@@ -548,14 +555,18 @@ onMounted(() => {
       fetchPendingCount()
     })
     .on('broadcast', { event: 'rsvp_reminder' }, (payload) => {
-      const p = payload.payload || {}
+      const p = payload?.payload || payload || {}
       if (enableBanners.value) {
-        uiStore.playChime()
+        if (enableSiren.value) {
+          playAlarmSiren(3)
+        } else {
+          uiStore.playChime()
+        }
         uiStore.addToast({
           title: p.title || '🚨 Urgent: RSVP Attendance Confirmation Required',
           message: p.message || 'The Band Secretary requests you confirm attendance for upcoming gigs.',
           type: 'warning',
-          duration: 10000
+          duration: 12000
         })
       }
 
@@ -564,14 +575,16 @@ onMounted(() => {
         const body = p.message || 'Please confirm your attendance for upcoming band events.'
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification(title, { body, icon: '/favicon.svg', vibrate: [300, 100, 300] })
+            reg.showNotification(title, { body, icon: '/favicon.svg', vibrate: [300, 100, 300, 100, 300] })
           }).catch(() => {})
         } else {
           try { new Notification(title, { body, icon: '/favicon.svg' }) } catch(e){}
         }
       }
     })
-    .subscribe()
+    .subscribe((status) => {
+      console.log('[DashboardLayout] smartband-broadcast-alerts status:', status)
+    })
 
   // 4. Inter-Tab / Local BroadcastChannel Sync
   if ('BroadcastChannel' in window) {
@@ -582,12 +595,16 @@ onMounted(() => {
       }
       if (e.data?.type === 'RSVP_REMINDER_BROADCAST') {
         if (enableBanners.value) {
-          uiStore.playChime()
+          if (enableSiren.value) {
+            playAlarmSiren(3)
+          } else {
+            uiStore.playChime()
+          }
           uiStore.addToast({
             title: e.data.title || '🚨 Urgent RSVP Call-to-Action!',
             message: e.data.message || 'The Band Secretary requests attendance confirmation for upcoming gigs.',
             type: 'warning',
-            duration: 10000
+            duration: 12000
           })
         }
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {

@@ -27,7 +27,8 @@ import {
   Clock,
   MapPin,
   Filter,
-  Download
+  Download,
+  Loader2
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
@@ -286,41 +287,119 @@ const runAvailabilityCheck = async () => {
 }
 
 // 8. RE-NOTIFICATION DISPATCH WITH BROADCAST SYNC
-const triggerReNotifications = async () => {
-  // Local inter-tab broadcast
-  if ('BroadcastChannel' in window) {
-    const ch = new BroadcastChannel('smartband_live_sync')
-    ch.postMessage({ 
-      type: 'RSVP_REMINDER_BROADCAST', 
-      title: '🚨 Urgent RSVP Call-to-Action!',
-      message: 'The Band Secretary requests all musicians confirm attendance for upcoming gigs.',
-      timestamp: Date.now() 
-    })
-    ch.close()
-  }
+const isAlertingUnconfirmed = ref(false)
 
-  // Supabase Realtime Broadcast to notify any remote devices/clients in real-time
+const triggerReNotifications = async () => {
+  if (isAlertingUnconfirmed.value) return
+  isAlertingUnconfirmed.value = true
+
+  const alertTitle = '🚨 Urgent RSVP Call-to-Action!'
+  const alertMsg = 'The Band Secretary requests all musicians confirm attendance for upcoming gigs immediately.'
+  const senderName = store.profile?.full_name || 'Band Secretary'
+
   try {
-    const alertChan = supabase.channel('smartband-broadcast-alerts')
-    alertChan.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
+    // 1. Local inter-tab broadcast (same device across tabs)
+    if ('BroadcastChannel' in window) {
+      try {
+        const ch = new BroadcastChannel('smartband_live_sync')
+        ch.postMessage({ 
+          type: 'RSVP_REMINDER_BROADCAST', 
+          title: alertTitle,
+          message: alertMsg,
+          timestamp: Date.now() 
+        })
+        ch.close()
+      } catch (e) {}
+    }
+
+    // 2. Centralized broadcastSync (sends over WebSocket to all open remote devices)
+    await broadcastSync('rsvp_reminder', {
+      title: alertTitle,
+      message: alertMsg,
+      sender: senderName
+    })
+
+    // 3. Direct channel broadcast with guaranteed subscription check (DO NOT remove channel!)
+    try {
+      const alertChan = supabase.channel('smartband-broadcast-alerts', {
+        config: { broadcast: { ack: true } }
+      })
+
+      if (alertChan.state === 'joined') {
         await alertChan.send({
           type: 'broadcast',
           event: 'rsvp_reminder',
           payload: {
-            title: '🚨 Urgent RSVP Call-to-Action!',
-            message: 'The Band Secretary requests all musicians confirm attendance for upcoming gigs immediately.',
-            sender: store.profile?.full_name || 'Band Secretary'
+            title: alertTitle,
+            message: alertMsg,
+            sender: senderName
           }
         })
-        supabase.removeChannel(alertChan)
+      } else {
+        await new Promise((resolve) => {
+          let done = false
+          alertChan.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED' && !done) {
+              done = true
+              await alertChan.send({
+                type: 'broadcast',
+                event: 'rsvp_reminder',
+                payload: {
+                  title: alertTitle,
+                  message: alertMsg,
+                  sender: senderName
+                }
+              })
+              resolve()
+            }
+          })
+          setTimeout(() => {
+            if (!done) {
+              done = true
+              resolve()
+            }
+          }, 2500)
+        })
       }
-    })
-  } catch (e) {
-    console.warn('Realtime broadcast error:', e)
-  }
+    } catch (wsErr) {
+      console.warn('Direct WebSocket broadcast error:', wsErr)
+    }
 
-  showToast('✓ RSVP reminder notifications dispatched to unconfirmed musicians.')
+    // 4. Create an official Announcement in the database so ALL devices receive it via postgres_changes, and offline users see it upon login!
+    try {
+      await supabase
+        .from('announcements')
+        .insert({
+          author_id: store.user?.id || null,
+          title: '🚨 Urgent: RSVP Attendance Confirmation Required',
+          content: 'The Band Secretary requests all unconfirmed musicians and auxiliary members to check upcoming event schedules and confirm their RSVP attendance immediately.',
+          category: 'Urgent Call-to-Action'
+        })
+    } catch (annErr) {
+      console.warn('Announcement creation note:', annErr)
+    }
+
+    // 5. Trigger Web Push Notification via Edge Function (for mobile devices with push notifications enabled)
+    try {
+      await supabase.functions.invoke('push-announcement', {
+        body: {
+          record: {
+            title: alertTitle,
+            category: alertMsg
+          }
+        }
+      })
+    } catch (pushErr) {
+      console.warn('Web push trigger note:', pushErr)
+    }
+
+    showToast('✓ RSVP reminder notifications dispatched to all devices successfully.')
+  } catch (err) {
+    console.error('Error dispatching RSVP alerts:', err)
+    showToast('Failed to dispatch some reminder notifications.')
+  } finally {
+    isAlertingUnconfirmed.value = false
+  }
 }
 
 // 9. DATA ANALYTICS & MASTER REPORT GENERATION ENGINE
@@ -1198,10 +1277,13 @@ onUnmounted(() => {
           </div>
           <button 
             @click="triggerReNotifications"
+            :disabled="isAlertingUnconfirmed"
             type="button"
-            class="py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[44px] shrink-0"
+            class="py-3 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[44px] shrink-0 transition-all"
           >
-            <Send class="w-4 h-4 mr-2" /> Alert Unconfirmed
+            <Loader2 v-if="isAlertingUnconfirmed" class="w-4 h-4 mr-2 animate-spin" />
+            <Send v-else class="w-4 h-4 mr-2" />
+            {{ isAlertingUnconfirmed ? 'Dispatching...' : 'Alert Unconfirmed' }}
           </button>
         </div>
       </section>
