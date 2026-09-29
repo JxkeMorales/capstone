@@ -535,40 +535,34 @@ onUnmounted(() => {
   if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
   window.removeEventListener('focus', handleVisibilityOrFocus)
-  document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
-})
+  })
 </script>
 
 <template>
-  <div class="p-4 sm:p-5 space-y-6 relative">
+  <div class="space-y-6 relative">
     
     <!-- Floating Toast Notification -->
     <Transition name="toast">
       <div 
         v-if="toastMessage" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-extrabold text-xs"
+        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#202124] text-slate-900 dark:text-white px-4 py-3 rounded-full shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-medium text-xs"
         role="status"
         aria-live="polite"
       >
-        <div class="flex items-center space-x-1">
-          <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
+        <div class="flex items-center space-x-2">
+          <CheckCircle2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{{ toastMessage }}</span>
         </div>
-        <button @click="toastMessage = ''" class="ml-2 text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer" aria-label="Close Toast">
+        <button @click="toastMessage = ''" class="ml-2 text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer rounded-full" aria-label="Close Toast">
           <X class="w-3.5 h-3.5" />
         </button>
       </div>
     </Transition>
 
     <header class="pt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-      <div class="flex items-center space-x-3.5">
-        <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-xs flex-shrink-0">
-          <Calendar class="w-5 h-5" />
-        </div>
-        <div class="min-w-0">
-          <p class="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider leading-tight mb-0.5">Calendar & Logs</p>
-          <h1 class="text-2xl font-black text-slate-900 dark:text-white leading-tight truncate">Schedule & Events</h1>
-        </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">Calendar &amp; Logs</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Schedule &amp; Events</h1>
       </div>
 
       <!-- Schedule New Gig Button for Secretary & Admin -->
@@ -576,93 +570,90 @@ onUnmounted(() => {
         v-if="store.canManageEvents"
         @click="showAddEventModal = true"
         type="button"
-        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-2 transition-all active:scale-95 cursor-pointer self-start sm:self-auto min-h-[44px] shrink-0"
+        class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer self-start sm:self-auto min-h-[38px] shrink-0"
       >
         <Plus class="w-4 h-4" />
-        <span>Schedule New Gig</span>
+        <span>Schedule Gig</span>
       </button>
     </header>
 
-    <!-- Schedule Tab Switcher (Upcoming vs Past Gigs) -->
-    <div class="flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#1c1c1e] p-2 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xs">
-      <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+    <!-- Schedule Tab Switcher & Filter Row -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium border border-slate-200/60 dark:border-neutral-800">
         <button 
           @click="activeScheduleTab = 'upcoming'"
           type="button"
-          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+          class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[34px] flex items-center justify-center"
           :class="activeScheduleTab === 'upcoming' 
-            ? 'bg-blue-600 text-white shadow-xs' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
+            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <Calendar class="w-4 h-4 mr-1.5" />
-          <span>Upcoming Gigs ({{ upcomingEvents.length }})</span>
+          <Calendar class="w-3.5 h-3.5 mr-1.5" />
+          <span>Upcoming ({{ upcomingEvents.length }})</span>
         </button>
 
         <button 
           @click="activeScheduleTab = 'accepted'"
           type="button"
-          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+          class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[34px] flex items-center justify-center"
           :class="activeScheduleTab === 'accepted' 
-            ? 'bg-emerald-600 text-white shadow-xs' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
+            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <CheckCircle2 class="w-4 h-4 mr-1.5" :class="activeScheduleTab === 'accepted' ? 'text-white' : 'text-emerald-500'" />
-          <span>My Accepted ({{ myAcceptedEvents.length }})</span>
+          <CheckCircle2 class="w-3.5 h-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Attending ({{ myAcceptedEvents.length }})</span>
         </button>
 
         <button 
           @click="activeScheduleTab = 'past'"
           type="button"
-          class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+          class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[34px] flex items-center justify-center"
           :class="activeScheduleTab === 'past' 
-            ? 'bg-blue-600 text-white shadow-xs' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
+            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <History class="w-4 h-4 mr-1.5" />
-          <span>Past Gigs ({{ pastEvents.length }})</span>
+          <History class="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+          <span>Past ({{ pastEvents.length }})</span>
         </button>
       </div>
 
-      <span class="text-xs font-extrabold text-slate-400 dark:text-neutral-500 pr-2 hidden sm:inline">
-        {{ rawEvents.length }} Total Records
-      </span>
-    </div>
+      <!-- Filter Button -->
+      <div class="relative inline-block">
+        <button 
+          @click="openFilter"
+          type="button"
+          class="flex items-center space-x-1.5 px-3.5 py-1.5 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-full text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all text-xs font-medium min-h-[34px] cursor-pointer shadow-xs"
+          aria-label="Filter Events"
+        >
+          <Filter class="w-3.5 h-3.5" :class="{ 'text-slate-900 dark:text-white': !activeFilters.includes('All') }" />
+          <span>Filter</span>
+          <span v-if="!activeFilters.includes('All')" class="w-2 h-2 bg-slate-900 dark:bg-white rounded-full"></span>
+        </button>
 
-    <!-- Multi-Select Filter Button -->
-    <div class="relative z-10 inline-block w-auto mt-1 mb-2">
-      <button 
-        @click="openFilter"
-        type="button"
-        class="flex items-center justify-center w-[44px] h-[44px] bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-2xl text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-[#27272a] transition-all shadow-xs cursor-pointer"
-        aria-label="Filter Events"
-      >
-        <Filter class="w-5 h-5" :class="{ 'text-blue-600 dark:text-blue-400': !activeFilters.includes('All') }" />
-        <div v-if="!activeFilters.includes('All')" class="absolute top-2.5 right-2.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white dark:border-[#1c1c1e]"></div>
-      </button>
-
-      <!-- Filter Dropdown Menu -->
-      <div v-if="showFilterMenu" class="absolute left-0 mt-2 w-56 bg-white dark:bg-[#27272a] rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 overflow-hidden z-50">
-        <div class="p-3 bg-slate-50 dark:bg-[#1c1c1e] border-b border-slate-200 dark:border-neutral-800">
-          <h3 class="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">Filter Events</h3>
-        </div>
-        <div class="max-h-60 overflow-y-auto p-2 space-y-1">
-          <label 
-            v-for="filter in filterCategories" 
-            :key="filter"
-            class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1e] cursor-pointer transition-colors"
-          >
-            <input 
-              type="checkbox" 
-              :checked="tempFilters.includes(filter)"
-              @change="toggleTempFilter(filter)"
-              class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 cursor-pointer"
+        <!-- Filter Dropdown Menu -->
+        <div v-if="showFilterMenu" class="absolute right-0 mt-2 w-64 bg-white dark:bg-[#202124] rounded-3xl shadow-xl border border-slate-200 dark:border-neutral-800 overflow-hidden z-50 p-2">
+          <div class="px-3 py-2 border-b border-slate-100 dark:border-neutral-800">
+            <h3 class="text-xs font-semibold text-slate-700 dark:text-neutral-300">Filter by Category</h3>
+          </div>
+          <div class="max-h-60 overflow-y-auto p-1 space-y-1">
+            <label 
+              v-for="filter in filterCategories" 
+              :key="filter"
+              class="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
             >
-            <span class="text-sm font-semibold text-slate-700 dark:text-neutral-300">{{ filter === 'All' ? 'Select All' : filter }}</span>
-          </label>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-[#1c1c1e] border-t border-slate-200 dark:border-neutral-800 flex items-center justify-end space-x-2">
-          <button @click="showFilterMenu = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer">Cancel</button>
-          <button @click="applyFilters" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-colors shadow-xs cursor-pointer">Apply</button>
+              <input 
+                type="checkbox" 
+                :checked="tempFilters.includes(filter)"
+                @change="toggleTempFilter(filter)"
+                class="w-4 h-4 rounded border-slate-300 dark:border-neutral-700 text-slate-900 focus:ring-0 cursor-pointer"
+              >
+              <span class="text-xs font-medium text-slate-700 dark:text-neutral-300">{{ filter === 'All' ? 'Select All' : filter }}</span>
+            </label>
+          </div>
+          <div class="p-2 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end space-x-2">
+            <button @click="showFilterMenu = false" class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer">Cancel</button>
+            <button @click="applyFilters" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white rounded-full text-xs font-medium shadow-xs cursor-pointer">Apply</button>
+          </div>
         </div>
       </div>
     </div>
@@ -673,19 +664,19 @@ onUnmounted(() => {
         <div 
           v-for="ev in displayedEvents" 
           :key="ev.id"
-          class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+          class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
         >
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
             <div class="min-w-0 flex-1">
-              <div class="flex items-center space-x-1">
-                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
                   {{ ev.type }}
                 </span>
-                <span v-if="activeScheduleTab === 'past'" class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                  ✓ Completed
+                <span v-if="activeScheduleTab === 'past'" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400">
+                  Completed
                 </span>
               </div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white mt-1.5 leading-tight">{{ ev.title }}</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white mt-1 leading-snug">{{ ev.title }}</h3>
             </div>
             
             <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
@@ -694,10 +685,10 @@ onUnmounted(() => {
                 v-if="store.canConductRollCall || store.canManageEvents" 
                 @click="openAttendanceTracker(ev)" 
                 type="button" 
-                class="px-3 py-1.5 bg-slate-100 dark:bg-[#27272a] text-slate-800 dark:text-slate-200 font-extrabold text-[11px] rounded-lg shadow-xs hover:bg-slate-200 dark:hover:bg-[#323238] flex items-center cursor-pointer min-h-[40px]"
+                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px] transition-colors"
                 aria-label="Attendance & Roll Call Log"
               >
-                <Users class="w-3.5 h-3.5 mr-1" /> Roll Call Log
+                <Users class="w-3.5 h-3.5 mr-1" /> Roll Call
               </button>
 
               <!-- Secretary / Admin Delete Button -->
@@ -705,15 +696,15 @@ onUnmounted(() => {
                 v-if="store.canManageEvents" 
                 @click="promptDeleteEvent(ev.id)" 
                 type="button" 
-                class="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
+                class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer"
                 title="Delete Event"
               >
-                <Trash2 class="w-4 h-4" />
+                <Trash2 class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 dark:text-neutral-300 bg-slate-50 dark:bg-[#27272a] p-2.5 rounded-xl">
+          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-neutral-400 bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl">
             <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
             <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
             <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
@@ -721,47 +712,47 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="bg-white dark:bg-[#1c1c1e] rounded-2xl p-8 text-center border border-slate-200 dark:border-neutral-800">
+      <div v-else class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200 dark:border-neutral-800">
         <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
-        <p class="text-sm font-bold text-slate-700 dark:text-neutral-300">
+        <p class="text-sm font-semibold text-slate-700 dark:text-neutral-300">
           {{ activeScheduleTab === 'upcoming' ? 'No upcoming events scheduled in this category.' : 'No past events found in this category.' }}
         </p>
       </div>
     </section>
 
     <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[90vh] flex flex-col">
+    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="min-w-0 pr-2">
-            <div class="flex items-center space-x-1 mb-1">
-              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400">
+            <div class="flex items-center space-x-1.5 mb-1">
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
                 {{ selectedEventForAttendance?.type || 'Event' }}
               </span>
-              <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">Roll-Call Log</span>
+              <span class="text-[10px] text-slate-400 dark:text-neutral-500">Roll-Call Log</span>
             </div>
-            <h3 class="font-black text-lg text-slate-900 dark:text-white truncate">
+            <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">
               {{ selectedEventForAttendance?.title }}
             </h3>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
               {{ selectedEventForAttendance?.date }} at {{ selectedEventForAttendance?.time }} • {{ selectedEventForAttendance?.location }}
             </p>
           </div>
-          <button @click="showAttendanceModal = false" class="text-slate-400 hover:text-white min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showAttendanceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Quick Summary Metrics & Batch Action -->
-        <div class="bg-slate-50 dark:bg-[#27272a] p-3 rounded-2xl border border-slate-200/80 dark:border-neutral-700/80 space-y-2.5">
+        <div class="bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl border border-slate-200/80 dark:border-neutral-800 space-y-2.5">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-slate-600 dark:text-neutral-300">Turnout Tally</span>
-            <div class="flex items-center space-x-2 font-black text-[11px]">
+            <span class="font-medium text-slate-600 dark:text-neutral-400">Turnout Tally</span>
+            <div class="flex items-center space-x-2 font-medium text-[11px]">
               <span class="text-emerald-600 dark:text-emerald-400">{{ attendanceCounts.present }} Present</span>
               <span>•</span>
-              <span class="text-rose-600 dark:text-rose-400">{{ attendanceCounts.absent }} Absent (No-Show)</span>
+              <span class="text-rose-600 dark:text-rose-400">{{ attendanceCounts.absent }} Absent</span>
               <span>•</span>
               <span class="text-amber-600 dark:text-amber-400">{{ attendanceCounts.excused }} Excused</span>
             </div>
@@ -773,75 +764,75 @@ onUnmounted(() => {
               @click="markAllAttendingAsPresent" 
               :disabled="isBatchMarking"
               type="button" 
-              class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px]"
+              class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[36px]"
             >
-              <CheckCircle2 class="w-4 h-4" />
-              <span>{{ isBatchMarking ? 'Updating Attendance...' : '⚡ Mark Attending as Present' }}</span>
+              <CheckCircle2 class="w-3.5 h-3.5" />
+              <span>{{ isBatchMarking ? 'Updating...' : 'Mark Attending as Present' }}</span>
             </button>
 
             <button 
               v-if="(store.isAdmin || store.isSuperAdmin) && attendanceCounts.unconfirmed > 0"
               @click="alertUnconfirmedForEvent"
               :disabled="isAlertingEventUnconfirmed"
-              type="button"
-              class="py-2 px-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px] shrink-0"
+              type="button" 
+              class="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[36px] shrink-0"
               title="Send targeted RSVP reminder to unconfirmed members for this event"
             >
-              <Send class="w-4 h-4" />
-              <span>{{ isAlertingEventUnconfirmed ? 'Alerting...' : `Alert Unconfirmed (${attendanceCounts.unconfirmed})` }}</span>
+              <Send class="w-3.5 h-3.5" />
+              <span>{{ isAlertingEventUnconfirmed ? 'Alerting...' : `Alert (${attendanceCounts.unconfirmed})` }}</span>
             </button>
 
             <button 
               @click="handleExportAttendancePdf"
               :disabled="isExportingAttendancePdf"
-              type="button"
-              class="py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 min-h-[38px] shrink-0"
+              type="button" 
+              class="py-2 px-3 border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[36px] shrink-0"
               title="Export official printable attendance sheet PDF"
             >
-              <Download class="w-4 h-4" />
-              <span>{{ isExportingAttendancePdf ? 'Exporting...' : 'Export Attendance PDF' }}</span>
+              <Download class="w-3.5 h-3.5" />
+              <span>{{ isExportingAttendancePdf ? 'Exporting...' : 'Export PDF' }}</span>
             </button>
           </div>
         </div>
 
-        <!-- Filter Sub-Tabs -->
-        <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#27272a] rounded-xl text-[11px] font-bold overflow-x-auto">
+        <!-- Filter Sub-Tabs (Pill Chips) -->
+        <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium overflow-x-auto border border-slate-200/60 dark:border-neutral-800">
           <button 
             @click="attendanceTabFilter = 'all'"
             type="button"
-            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'all' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'all' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
             All ({{ attendanceCounts.total }})
           </button>
           <button 
             @click="attendanceTabFilter = 'attending'"
             type="button"
-            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#1c1c1e] text-emerald-600 dark:text-emerald-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#2d2f31] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
             RSVP Attending ({{ attendanceCounts.attending }})
           </button>
           <button 
             @click="attendanceTabFilter = 'declined'"
             type="button"
-            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'declined' ? 'bg-white dark:bg-[#1c1c1e] text-rose-600 dark:text-rose-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'declined' ? 'bg-white dark:bg-[#2d2f31] text-rose-600 dark:text-rose-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
             Declined ({{ attendanceCounts.declined }})
           </button>
           <button 
             @click="attendanceTabFilter = 'unconfirmed'"
             type="button"
-            class="px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-white shadow-xs font-black' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
+            :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
             No Response ({{ attendanceCounts.unconfirmed }})
           </button>
         </div>
 
         <!-- Attendance Roster List -->
-        <div v-if="isLoadingAttendance" class="py-12 text-center text-xs font-bold text-slate-400">
+        <div v-if="isLoadingAttendance" class="py-12 text-center text-xs font-medium text-slate-400">
           Loading band attendance roster...
         </div>
 
@@ -849,38 +840,33 @@ onUnmounted(() => {
           <div 
             v-for="member in filteredRollCallRoster" 
             :key="member.userId"
-            class="p-3 bg-white dark:bg-[#27272a] rounded-2xl border border-slate-200/80 dark:border-neutral-700/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-xs transition-colors"
-            :class="{
-              'border-l-4 border-l-emerald-500': member.currentStatus === 'present',
-              'border-l-4 border-l-rose-500': member.currentStatus === 'absent',
-              'border-l-4 border-l-amber-500': member.currentStatus === 'excused'
-            }"
+            class="p-3 bg-white dark:bg-[#202124] rounded-2xl border border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-xs transition-colors"
           >
             <!-- Member Details -->
             <div class="flex items-center space-x-2.5 min-w-0">
-              <div class="w-9 h-9 rounded-xl overflow-hidden bg-blue-600 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
+              <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
                 <img v-if="member.profile_picture" :src="member.profile_picture" alt="" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
-                <p class="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                <p class="font-semibold text-xs text-slate-900 dark:text-white truncate">
                   {{ member.name }}
                 </p>
                 <div class="flex items-center space-x-1.5 mt-0.5">
-                  <span class="text-[10px] font-bold text-slate-500 dark:text-neutral-400 capitalize">
+                  <span class="text-[11px] text-slate-500 dark:text-neutral-400 capitalize">
                     {{ member.instrument }}
                   </span>
                   <span>•</span>
                   <!-- Initial RSVP Tag -->
                   <span 
-                    class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded"
+                    class="text-[10px] font-medium px-2 py-0.2 rounded-full"
                     :class="{
-                      'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300': member.initialRsvp === 'attending',
-                      'bg-slate-200 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400': member.initialRsvp === 'declined',
-                      'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
+                      'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400': member.initialRsvp === 'attending',
+                      'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400': member.initialRsvp === 'declined',
+                      'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
                     }"
                   >
-                    {{ member.initialRsvp === 'attending' ? 'RSVP: Attending' : member.initialRsvp === 'declined' ? 'RSVP: Declined' : 'No RSVP' }}
+                    {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'No Response' }}
                   </span>
                 </div>
               </div>
@@ -893,13 +879,13 @@ onUnmounted(() => {
                 @click="setMemberAttendance(member, 'present')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer min-h-[34px] flex items-center"
+                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
                 :class="member.currentStatus === 'present' 
-                  ? 'bg-emerald-600 text-white shadow-xs' 
-                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-300 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/40'"
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' 
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700'"
                 title="Mark Present"
               >
-                <CheckCircle class="w-3.5 h-3.5 mr-1" /> Present
+                <CheckCircle2 class="w-3 h-3 mr-1 text-emerald-500" /> Present
               </button>
 
               <!-- Absent / Flake Button -->
@@ -907,13 +893,13 @@ onUnmounted(() => {
                 @click="setMemberAttendance(member, 'absent')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer min-h-[34px] flex items-center"
+                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
                 :class="member.currentStatus === 'absent' 
                   ? 'bg-rose-600 text-white shadow-xs' 
-                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-600 dark:text-neutral-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40'"
-                title="Mark Absent / No-Show"
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40'"
+                title="Mark Absent"
               >
-                <XCircle class="w-3.5 h-3.5 mr-1" /> Absent
+                <XCircle class="w-3 h-3 mr-1" /> Absent
               </button>
 
               <!-- Excused Button -->
@@ -921,10 +907,10 @@ onUnmounted(() => {
                 @click="setMemberAttendance(member, 'excused')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center"
+                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
                 :class="member.currentStatus === 'excused' 
-                  ? 'bg-amber-500 text-white shadow-xs font-black' 
-                  : 'bg-slate-100 dark:bg-[#1c1c1e] text-slate-500 dark:text-neutral-400 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40'"
+                  ? 'bg-amber-600 text-white shadow-xs' 
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40'"
                 title="Mark Excused Absence"
               >
                 Excused
@@ -934,11 +920,11 @@ onUnmounted(() => {
             <!-- Read-Only Status Tag for Regular Viewers -->
             <div v-else class="flex items-center space-x-1">
               <span 
-                class="px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-medium capitalize"
                 :class="{
-                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': member.currentStatus === 'present',
-                  'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': member.currentStatus === 'absent',
-                  'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': member.currentStatus === 'excused',
+                  'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300': member.currentStatus === 'present',
+                  'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300': member.currentStatus === 'absent',
+                  'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300': member.currentStatus === 'excused',
                   'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400': !['present', 'absent', 'excused'].includes(member.currentStatus)
                 }"
               >
@@ -957,93 +943,91 @@ onUnmounted(() => {
           <button 
             @click="showAttendanceModal = false" 
             type="button" 
-            class="w-full py-3 bg-slate-900 hover:bg-black dark:bg-neutral-800 dark:hover:bg-neutral-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer"
           >
-            Done / Close Roster
+            Close Roster
           </button>
         </div>
       </div>
     </div>
 
     <!-- DELETE CONFIRM MODAL -->
-    <div v-if="showDeleteConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-center">
-        <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
-          <AlertCircle class="w-6 h-6" />
+    <div v-if="showDeleteConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <AlertCircle class="w-5 h-5" />
         </div>
         <div>
-          <h3 class="font-black text-lg text-slate-900 dark:text-white leading-tight">Delete Event?</h3>
+          <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">Delete Event?</h3>
           <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
             Are you sure you want to delete this scheduled event?
           </p>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl min-h-[44px] cursor-pointer">Cancel</button>
-          <button @click="executeDeleteEvent" type="button" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">Delete</button>
+          <button @click="showDeleteConfirmModal = false; targetEventIdToDelete = null" type="button" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
+          <button @click="executeDeleteEvent" type="button" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer">Delete</button>
         </div>
       </div>
     </div>
 
     <!-- SCHEDULE NEW GIG MODAL (Secretary & Admin) -->
-    <div v-if="showAddEventModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl text-left">
+    <div v-if="showAddEventModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div class="flex items-center space-x-2.5">
-            <div class="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Calendar class="w-5 h-5" />
-            </div>
+          <div class="flex items-center space-x-2">
+            <Calendar class="w-5 h-5 text-slate-700 dark:text-neutral-300" />
             <div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">Schedule New Band Gig</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">Schedule Band Gig</h3>
               <p class="text-[11px] text-slate-500 dark:text-neutral-400">Announces event and cross-references musician availability</p>
             </div>
           </div>
-          <button @click="showAddEventModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showAddEventModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <form @submit.prevent="saveNewEvent" class="space-y-3.5 text-xs font-bold">
+        <form @submit.prevent="saveNewEvent" class="space-y-3 text-xs">
           <div>
-            <label for="new-event-title" class="block text-[10px] uppercase text-slate-400 mb-1">Event / Gig Title *</label>
+            <label for="new-event-title" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Event / Gig Title *</label>
             <input 
               id="new-event-title"
               v-model="newEventForm.title" 
               type="text" 
               placeholder="e.g., Grand Fiesta Procession - Sta. Maria" 
               required
-              class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[42px]"
+              class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
             />
           </div>
 
           <div>
-            <label for="new-event-type" class="block text-[10px] uppercase text-slate-400 mb-1">Event Category *</label>
+            <label for="new-event-type" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Event Category *</label>
             <select 
               id="new-event-type"
               v-model="newEventForm.event_type" 
-              class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[42px]"
+              class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
             >
-              <option value="Practice & Rehearsal (Ensayo)">Practice & Rehearsal (Ensayo)</option>
+              <option value="Practice & Rehearsal (Ensayo)">Practice &amp; Rehearsal (Ensayo)</option>
               <option value="Civic Parade (Parada)">Civic Parade (Parada)</option>
               <option value="Feast Procession (Prusisyon)">Feast Procession (Prusisyon)</option>
               <option value="Funeral March (Libing)">Funeral March (Libing)</option>
-              <option value="Wake & Vigil (Bantay / Lamay)">Wake & Vigil (Bantay / Lamay)</option>
+              <option value="Wake & Vigil (Bantay / Lamay)">Wake &amp; Vigil (Bantay / Lamay)</option>
               <option value="Band Meeting (Pulong)">Band Meeting (Pulong)</option>
             </select>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="new-event-date" class="block text-[10px] uppercase text-slate-400 mb-1">Date & Time *</label>
+              <label for="new-event-date" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Date &amp; Time *</label>
               <input 
                 id="new-event-date"
                 v-model="newEventForm.event_date" 
                 type="datetime-local" 
                 required
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[42px]"
+                class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
               />
             </div>
             <div>
-              <label for="new-event-budget" class="block text-[10px] uppercase text-slate-400 mb-1">Budget / Compensation (₱)</label>
+              <label for="new-event-budget" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Budget / Compensation (₱)</label>
               <input 
                 id="new-event-budget"
                 v-model.number="newEventForm.budget_estimate" 
@@ -1051,20 +1035,20 @@ onUnmounted(() => {
                 min="0"
                 step="50"
                 placeholder="0.00" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[42px]"
+                class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
               />
             </div>
           </div>
 
           <div>
-            <label for="new-event-loc" class="block text-[10px] uppercase text-slate-400 mb-1">Location & Assembly Point *</label>
+            <label for="new-event-loc" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Location &amp; Assembly Point *</label>
             <input 
               id="new-event-loc"
               v-model="newEventForm.location" 
               type="text" 
               placeholder="e.g., Town Plaza Gazebo / Bandhouse" 
               required
-              class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[42px]"
+              class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
             />
           </div>
 
@@ -1072,21 +1056,20 @@ onUnmounted(() => {
             <button 
               @click="showAddEventModal = false" 
               type="button" 
-              class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 cursor-pointer min-h-[44px]"
+              class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               :disabled="isSavingEvent"
-              class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md cursor-pointer disabled:opacity-50 min-h-[44px]"
+              class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs cursor-pointer disabled:opacity-50 min-h-[40px]"
             >
-              {{ isSavingEvent ? 'Announcing...' : 'Save & Announce Gig' }}
+              {{ isSavingEvent ? 'Announcing...' : 'Save & Announce' }}
             </button>
           </div>
         </form>
       </div>
     </div>
-
   </div>
 </template>

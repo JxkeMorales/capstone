@@ -249,94 +249,104 @@ const handleResetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#edf1f5] dark:bg-[#121214] text-slate-800 dark:text-neutral-100 transition-colors duration-300">
+  <div class="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative bg-[#f8f9fa] dark:bg-[#18191a] text-slate-800 dark:text-neutral-100 transition-colors duration-300">
     
-    <!-- Theme Toggle (Sun / Moon) -->
-    <button 
-      @click="toggleTheme" 
-      type="button"
-      class="absolute top-4 right-4 p-3 rounded-2xl bg-[#f8fafc] dark:bg-[#1c1c1e] text-slate-700 dark:text-blue-400 hover:bg-slate-200/80 dark:hover:bg-[#27272a] transition-colors shadow-xs z-10 border border-slate-300/80 dark:border-neutral-800 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
-      :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
-    >
-      <Sun v-if="isDark" class="w-5 h-5 text-amber-400" />
-      <Moon v-else class="w-5 h-5 text-blue-600" />
-    </button>
+    <!-- Top Action Bar -->
+    <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+      <router-link 
+        to="/" 
+        class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-full bg-white dark:bg-[#202124] text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-neutral-800 text-xs font-medium transition-colors shadow-xs"
+      >
+        <span>← Band Heritage</span>
+      </router-link>
+
+      <!-- Theme Toggle (Sun / Moon) -->
+      <button 
+        @click="toggleTheme" 
+        type="button"
+        class="p-2.5 rounded-full bg-white dark:bg-[#202124] text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-[#282a2c] transition-colors shadow-xs border border-slate-200 dark:border-neutral-800 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
+        :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
+      >
+        <Sun v-if="isDark" class="w-4 h-4 text-amber-400" />
+        <Moon v-else class="w-4 h-4 text-slate-600" />
+      </button>
+    </div>
 
     <!-- Main Container -->
-    <div class="w-full max-w-md md:max-w-4xl lg:max-w-5xl my-auto py-8">
+    <div class="w-full max-w-md md:max-w-4xl lg:max-w-5xl my-auto py-8 pt-16">
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-14 items-center">
         
         <!-- Left Hero Section (Desktop View) -->
         <div class="space-y-6 text-left hidden md:block">
           <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shrink-0">
+            <div class="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#202124] flex items-center justify-center p-1 shrink-0">
               <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
             </div>
             <div>
-              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
+              <div class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 text-xs font-medium">
                 <span>Peñaranda Band 1870</span>
               </div>
-              <p class="text-[11px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest mt-0.5">Municipal Enterprise PWA</p>
+              <p class="text-[11px] font-medium text-slate-400 dark:text-neutral-500 uppercase tracking-wider mt-0.5">Municipal Enterprise PWA</p>
             </div>
           </div>
 
-          <h1 class="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
-            Automated Band Operations & Gig Scheduling
+          <h1 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
+            Automated Band Operations &amp; Gig Scheduling
           </h1>
 
-          <p class="text-slate-600 dark:text-neutral-300 text-base leading-relaxed font-medium">
+          <p class="text-slate-600 dark:text-neutral-400 text-sm leading-relaxed">
             Streamlining rehearsal call-times, civic parades, funeral processions, and attendance reliability scoring for municipal musicians and band leaders.
           </p>
 
-          <div class="space-y-3.5 pt-2">
-            <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center space-x-3 text-sm font-medium text-slate-700 dark:text-neutral-300">
+              <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 flex items-center justify-center flex-shrink-0">
                 <Cpu class="w-4 h-4" />
               </div>
-              <span>Automated Call-Time Siren & Section Dispatch</span>
+              <span>Automated Call-Time Siren &amp; Section Dispatch</span>
             </div>
 
-            <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
+            <div class="flex items-center space-x-3 text-sm font-medium text-slate-700 dark:text-neutral-300">
+              <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 flex items-center justify-center flex-shrink-0">
                 <Award class="w-4 h-4" />
               </div>
-              <span>Attendance Reliability Score (%) & Roll Call</span>
+              <span>Attendance Reliability Score (%) &amp; Roll Call</span>
             </div>
 
-            <div class="flex items-center space-x-3 text-sm font-bold text-slate-800 dark:text-neutral-200">
-              <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
+            <div class="flex items-center space-x-3 text-sm font-medium text-slate-700 dark:text-neutral-300">
+              <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 flex items-center justify-center flex-shrink-0">
                 <Smartphone class="w-4 h-4" />
               </div>
-              <span>Offline-First PWA Cache & Instant Launch</span>
+              <span>Offline-First PWA Cache &amp; Instant Launch</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Authentication Card (Lighter Matte Black) -->
+        <!-- Right Authentication Card (Google Material 3 Style) -->
         <div class="w-full">
           
-          <div class="bg-[#f8fafc] dark:bg-[#1c1c1e] border border-slate-300/90 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden backdrop-blur-md">
+          <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
             
             <!-- Mobile Brand Header -->
             <div class="text-center md:hidden mb-6 space-y-2">
-              <div class="w-14 h-14 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white mx-auto flex items-center justify-center p-1">
+              <div class="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 dark:border-neutral-800 bg-white mx-auto flex items-center justify-center p-1">
                 <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
               </div>
-              <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
-              <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">Peñaranda Band 1870 • Municipal Operations</p>
+              <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">SmartBand</h2>
+              <p class="text-xs text-slate-500 dark:text-neutral-400">Peñaranda Band 1870 • Municipal Operations</p>
             </div>
 
-            <!-- Sign In / Sign Up Segmented Tab Bar -->
-            <div class="flex p-1 bg-slate-100 dark:bg-[#27272a] rounded-2xl mb-6 border border-slate-200/60 dark:border-neutral-700/60" role="tablist">
+            <!-- Sign In / Sign Up Segmented Tab Bar (Google-style Pill Segment) -->
+            <div class="flex p-1 bg-slate-100 dark:bg-[#18191a] rounded-full mb-6 border border-slate-200/80 dark:border-neutral-800" role="tablist">
               <button 
                 @click="activeTab = 'signin'; errorMessage = ''; signupSuccess = false"
                 type="button" 
                 role="tab"
                 :aria-selected="activeTab === 'signin'"
-                class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
+                class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-full transition-all cursor-pointer min-h-[40px]"
                 :class="activeTab === 'signin' 
-                  ? 'bg-blue-600 text-white shadow-xs font-black' 
+                  ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
                   : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
               >
                 Sign In
@@ -346,32 +356,32 @@ const handleResetPassword = async () => {
                 type="button" 
                 role="tab"
                 :aria-selected="activeTab === 'signup'"
-                class="flex-1 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all cursor-pointer min-h-[44px]"
+                class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-full transition-all cursor-pointer min-h-[40px]"
                 :class="activeTab === 'signup' 
-                  ? 'bg-blue-600 text-white shadow-xs font-black' 
+                  ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
                   : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
               >
-                New Musician Register
+                Register
               </button>
             </div>
 
             <!-- Success Alert after Sign Up (Clear Notice of Pending Verification) -->
-            <div v-if="signupSuccess" class="mb-5 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-left space-y-2.5">
-              <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-black text-sm">
-                <Clock class="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+            <div v-if="signupSuccess" class="mb-5 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl text-left space-y-2">
+              <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-semibold text-xs">
+                <Clock class="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>Registration Submitted for Verification</span>
               </div>
-              <p class="text-xs text-slate-700 dark:text-neutral-300 leading-relaxed font-medium">
-                Your membership application has been received and queued for physical verification against the official municipal band master list by the IT Admin.
+              <p class="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed">
+                Your membership application has been queued for verification against the official municipal band master list.
               </p>
-              <div class="p-2.5 bg-amber-100/70 dark:bg-amber-900/30 rounded-xl border border-amber-300/50 dark:border-amber-800/50 text-[11px] text-amber-900 dark:text-amber-200 font-bold flex items-center space-x-2">
-                <Shield class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                <span>Please wait for administrator approval. You will be able to sign in once your account has been verified.</span>
+              <div class="p-2.5 bg-amber-100/60 dark:bg-amber-900/20 rounded-xl text-[11px] text-amber-900 dark:text-amber-200 flex items-center space-x-2">
+                <Shield class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <span>You will be able to sign in once your account has been approved.</span>
               </div>
             </div>
 
             <!-- Error Banner -->
-            <div v-if="errorMessage" class="mb-5 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl flex items-start space-x-2 text-rose-700 dark:text-rose-300 text-xs font-bold text-left" role="alert">
+            <div v-if="errorMessage" class="mb-5 p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 rounded-2xl flex items-start space-x-2 text-rose-700 dark:text-rose-300 text-xs font-medium text-left" role="alert">
               <AlertCircle class="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
               <span>{{ errorMessage }}</span>
             </div>
@@ -381,7 +391,7 @@ const handleResetPassword = async () => {
               
               <!-- Email Address -->
               <div class="space-y-1.5 text-left">
-                <label for="email-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                <label for="email-input" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                   Email Address
                 </label>
                 <div class="relative">
@@ -394,7 +404,7 @@ const handleResetPassword = async () => {
                     type="email" 
                     placeholder="you@example.com"
                     autocomplete="email"
-                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 text-xs min-h-[42px]"
                     required
                   >
                 </div>
@@ -403,14 +413,14 @@ const handleResetPassword = async () => {
               <!-- Password -->
               <div class="space-y-1.5 text-left">
                 <div class="flex items-center justify-between">
-                  <label for="password-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                  <label for="password-input" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                     Password
                   </label>
                   <button 
                     v-if="activeTab === 'signin'" 
                     @click="showForgotPasswordModal = true; resetSent = false; resetEmail = email"
                     type="button" 
-                    class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:underline cursor-pointer"
                   >
                     Forgot Password?
                   </button>
@@ -425,7 +435,7 @@ const handleResetPassword = async () => {
                     :type="showPassword ? 'text' : 'password'"
                     placeholder="••••••••"
                     autocomplete="current-password"
-                    class="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[44px]"
+                    class="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 text-xs min-h-[42px]"
                     required
                   >
                   <button 
@@ -445,8 +455,8 @@ const handleResetPassword = async () => {
                 <!-- Full Name & Mobile Number (2 columns on sm+) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                   <div class="space-y-1.5">
-                    <label for="fullname-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                      Full Name (Master List)
+                    <label for="fullname-input" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
+                      Full Name
                     </label>
                     <div class="relative">
                       <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -458,7 +468,7 @@ const handleResetPassword = async () => {
                         type="text" 
                         placeholder="Juan Dela Cruz"
                         autocomplete="name"
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[42px]"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 text-xs min-h-[42px]"
                         required
                       >
                     </div>
@@ -466,10 +476,10 @@ const handleResetPassword = async () => {
 
                   <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                      <label for="phone-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                      <label for="phone-input" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                         Mobile (11 digits)
                       </label>
-                      <span class="text-[10px] font-black" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
+                      <span class="text-[10px] font-medium" :class="contactNumber.length === 11 && contactNumber.startsWith('09') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
                         {{ contactNumber.length }}/11
                       </span>
                     </div>
@@ -485,21 +495,21 @@ const handleResetPassword = async () => {
                         placeholder="09123456789"
                         maxlength="11"
                         autocomplete="tel"
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold min-h-[42px]"
-                        :class="!isPhoneValid ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#18191a] border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none text-xs min-h-[42px]"
+                        :class="!isPhoneValid ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 dark:border-neutral-800 focus:border-slate-400 dark:focus:border-neutral-600'"
                         required
                       >
                     </div>
                   </div>
                 </div>
-                <p v-if="!isPhoneValid" class="text-[10px] font-bold text-rose-500 text-left -mt-1">
+                <p v-if="!isPhoneValid" class="text-[10px] text-rose-500 text-left -mt-1">
                   Must start with 09 and contain exactly 11 digits (e.g. 09123456789).
                 </p>
 
                 <!-- Birth Date & Sex (2 columns) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                   <div class="space-y-1.5">
-                    <label for="birthdate-input" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                    <label for="birthdate-input" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                       Birth Date
                     </label>
                     <div class="relative">
@@ -510,26 +520,26 @@ const handleResetPassword = async () => {
                         id="birthdate-input"
                         v-model="birthDate"
                         type="date" 
-                        class="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold min-h-[42px]"
+                        class="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
                         required
                       >
                     </div>
                   </div>
 
                   <div class="space-y-1.5">
-                    <span class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                    <span class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                       Sex
                     </span>
                     <div class="flex gap-2">
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Male" class="peer sr-only" required>
-                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[42px] flex items-center justify-center">
+                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-[#18191a] peer-checked:border-slate-900 dark:peer-checked:border-white peer-checked:bg-slate-100 dark:peer-checked:bg-neutral-800 peer-checked:text-slate-900 dark:peer-checked:text-white font-medium text-xs transition-all min-h-[42px] flex items-center justify-center">
                           Male
                         </div>
                       </label>
                       <label class="flex-1 cursor-pointer">
                         <input type="radio" v-model="sex" value="Female" class="peer sr-only" required>
-                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-700/80 bg-slate-50 dark:bg-[#27272a] peer-checked:border-blue-600 peer-checked:bg-blue-500/10 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 font-bold text-xs transition-all min-h-[42px] flex items-center justify-center">
+                        <div class="text-center py-2 rounded-xl border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-[#18191a] peer-checked:border-slate-900 dark:peer-checked:border-white peer-checked:bg-slate-100 dark:peer-checked:bg-neutral-800 peer-checked:text-slate-900 dark:peer-checked:text-white font-medium text-xs transition-all min-h-[42px] flex items-center justify-center">
                           Female
                         </div>
                       </label>
@@ -540,8 +550,8 @@ const handleResetPassword = async () => {
                 <!-- Primary & Secondary Instruments (2 columns on sm+) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                   <div class="space-y-1.5">
-                    <label for="primary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-                      Primary Instrument (Req.)
+                    <label for="primary-instrument-select" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
+                      Primary Instrument
                     </label>
                     <div class="relative">
                       <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -550,7 +560,7 @@ const handleResetPassword = async () => {
                       <select 
                         id="primary-instrument-select"
                         v-model="primaryInstrument"
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px]"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 min-h-[42px]"
                         required
                       >
                         <option v-for="inst in instrumentOptions" :key="inst.value" :value="inst.value">
@@ -561,7 +571,7 @@ const handleResetPassword = async () => {
                   </div>
 
                   <div class="space-y-1.5">
-                    <label for="secondary-instrument-select" class="block text-xs font-black text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+                    <label for="secondary-instrument-select" class="block text-xs font-medium text-slate-700 dark:text-neutral-300">
                       Secondary Instrument
                     </label>
                     <div class="relative">
@@ -571,7 +581,7 @@ const handleResetPassword = async () => {
                       <select 
                         id="secondary-instrument-select"
                         v-model="secondaryInstrument"
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px]"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 min-h-[42px]"
                       >
                         <option v-for="inst in secondaryInstrumentOptions" :key="inst.value" :value="inst.value">
                           {{ inst.label }}
@@ -587,17 +597,17 @@ const handleResetPassword = async () => {
                     <input 
                       type="checkbox" 
                       v-model="termsAccepted" 
-                      class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 dark:bg-[#27272a] border-slate-300 dark:border-neutral-700 rounded focus:ring-blue-500 cursor-pointer"
+                      class="mt-1 w-4 h-4 text-slate-900 dark:text-white bg-slate-100 dark:bg-[#18191a] border-slate-300 dark:border-neutral-700 rounded focus:ring-0 cursor-pointer"
                       required
                     >
-                    <span class="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed font-medium">
+                    <span class="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed">
                       I agree to the 
                       <button 
                         @click="showTermsModal = true" 
                         type="button" 
-                        class="font-black text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                        class="font-medium text-slate-900 dark:text-neutral-200 hover:underline cursor-pointer"
                       >
-                        Municipal Band Terms & Conditions
+                        Municipal Band Terms &amp; Conditions
                       </button> 
                       and physical master list verification.
                     </span>
@@ -606,16 +616,16 @@ const handleResetPassword = async () => {
 
               </template>
 
-              <!-- Submit Button -->
+              <!-- Submit Button (Google Material 3 Pill Button) -->
               <div class="pt-2">
                 <button 
                   type="submit" 
                   :disabled="isLoading"
-                  class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-black text-sm rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer disabled:opacity-50 min-h-[48px]"
+                  class="w-full py-3 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm rounded-full flex items-center justify-center space-x-2 transition-all shadow-xs cursor-pointer disabled:opacity-50 min-h-[46px]"
                 >
                   <span v-if="isLoading">Processing...</span>
                   <span v-else-if="activeTab === 'signin'" class="flex items-center">
-                    Sign In to Band Dashboard <ArrowRight class="w-4 h-4 ml-1.5" />
+                    Sign In <ArrowRight class="w-4 h-4 ml-1.5" />
                   </span>
                   <span v-else class="flex items-center">
                     Submit Registration <ArrowRight class="w-4 h-4 ml-1.5" />
@@ -634,42 +644,42 @@ const handleResetPassword = async () => {
     </div>
 
     <!-- TERMS & CONDITIONS MODAL -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[85vh] flex flex-col">
+    <div v-if="showTermsModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[85vh] flex flex-col">
         
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-            <FileText class="w-5 h-5" />
-            <h3 class="font-black text-lg text-slate-900 dark:text-white">Municipal Band Terms & Conditions</h3>
+          <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
+            <FileText class="w-4 h-4" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Municipal Band Terms &amp; Conditions</h3>
           </div>
-          <button @click="showTermsModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed">
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 1: Master List Verification Requirement</h4>
             <p>All sign-up applications are provisional until physically verified by the IT Super Admin against the official municipal band registry. Unverified accounts cannot view private contact rosters or access secretary dispatch controls.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 2: Attendance & RSVP Reliability Scoring</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 2: Attendance &amp; RSVP Reliability Scoring</h4>
             <p>Submitting an RSVP of "I Will Attend" is an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%) and future gig prioritization.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 3: Call-Time Punctuality & Alert Protocols</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 3: Call-Time Punctuality &amp; Alert Protocols</h4>
             <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and civic concerts. The automated in-app 10–15m call-time alarms serve as operational notifications.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 4: Band Property & Instrument Accountability</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 4: Band Property &amp; Instrument Accountability</h4>
             <p>Members issued municipal band instruments, uniforms, lyres, or sheet music folios are strictly responsible for their maintenance, safekeeping, and prompt return upon request.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 5: Data Privacy & Security</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 5: Data Privacy &amp; Security</h4>
             <p>Member contact numbers and personal birth dates are protected under Row Level Security (RLS) policies and will never be shared publicly.</p>
           </div>
         </div>
@@ -678,7 +688,7 @@ const handleResetPassword = async () => {
           <button 
             @click="showTermsModal = false; termsAccepted = true" 
             type="button" 
-            class="py-3 px-6 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[40px] cursor-pointer"
           >
             I Accept Terms
           </button>
@@ -688,17 +698,17 @@ const handleResetPassword = async () => {
     </div>
 
     <!-- FORGOT PASSWORD MODAL -->
-    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
+    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <h3 class="font-black text-base text-slate-900 dark:text-white">Reset Password</h3>
-          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <h3 class="font-bold text-sm text-slate-900 dark:text-white">Reset Password</h3>
+          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <div v-if="resetSent" class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-bold space-y-1">
+        <div v-if="resetSent" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-medium space-y-1">
           <p>✓ Reset instructions sent! Please check your email inbox to create a new password.</p>
         </div>
 
@@ -708,13 +718,13 @@ const handleResetPassword = async () => {
             v-model="resetEmail" 
             type="email" 
             placeholder="you@example.com" 
-            class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+            class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
           >
           <button 
             @click="handleResetPassword" 
             :disabled="resetLoading" 
             type="button" 
-            class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[42px] cursor-pointer"
           >
             {{ resetLoading ? 'Sending...' : 'Send Reset Link' }}
           </button>

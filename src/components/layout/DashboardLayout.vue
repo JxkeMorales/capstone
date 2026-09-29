@@ -687,20 +687,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#edf1f5] dark:bg-[#121214] text-slate-800 dark:text-neutral-100 flex transition-colors duration-300">
+  <div class="min-h-screen bg-[#f8f9fa] dark:bg-[#18191a] text-slate-900 dark:text-neutral-100 flex transition-colors duration-300">
     
     <!-- DESKTOP LEFT NAVIGATION SIDEBAR (Fixed Viewport, Never Scrolls With Page) -->
-    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-[#f8fafc] dark:bg-[#1c1c1e] border-r border-slate-300/80 dark:border-neutral-800/80 p-5 space-y-6 flex-shrink-0 fixed top-0 left-0 bottom-0 z-30 h-screen overflow-y-auto">
+    <aside class="hidden md:flex md:w-64 lg:w-72 flex-col bg-[#f8f9fa] dark:bg-[#1e1f20] border-r border-slate-200 dark:border-neutral-800 p-5 space-y-6 flex-shrink-0 fixed top-0 left-0 bottom-0 z-30 h-screen overflow-y-auto">
       
       <!-- Brand Logo -->
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-2xl overflow-hidden shadow-md border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-0.5">
+          <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-0.5 shadow-xs">
             <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
           </div>
           <div>
-            <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
-            <span class="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Band 1870 PWA</span>
+            <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
+            <span class="text-[10px] text-slate-500 dark:text-neutral-400 font-medium">Band 1870 PWA</span>
           </div>
         </div>
 
@@ -708,48 +708,48 @@ onUnmounted(() => {
         <button 
           @click="toggleTheme" 
           type="button"
-          class="p-2 rounded-xl bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+          class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center"
           :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
           title="Toggle Light/Dark Theme"
         >
-          <Sun v-if="isDark" class="w-4 h-4 text-amber-400" />
-          <Moon v-else class="w-4 h-4 text-blue-600" />
+          <Sun v-if="isDark" class="w-4 h-4 text-slate-700" />
+          <Moon v-else class="w-4 h-4 text-neutral-300" />
         </button>
       </div>
 
       <!-- Desktop Sidebar Menu -->
-      <nav class="space-y-1.5 flex-1" aria-label="Desktop Navigation Menu">
+      <nav class="space-y-1 flex-1" aria-label="Desktop Navigation Menu">
         
         <RouterLink 
           to="/dashboard" 
-          class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[42px]"
           :class="route.name === 'dashboard-home' 
-            ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
         >
-          <Home class="w-5 h-5 flex-shrink-0" />
+          <Home class="w-4 h-4 flex-shrink-0" />
           <span>Home Dashboard</span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/schedule" 
-          class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[42px]"
           :class="route.name === 'dashboard-schedule' 
-            ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
         >
-          <Calendar class="w-5 h-5 flex-shrink-0" />
+          <Calendar class="w-4 h-4 flex-shrink-0" />
           <span>Schedule & Events</span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/members" 
-          class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[42px]"
           :class="route.name === 'dashboard-members' 
-            ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
         >
-          <Users class="w-5 h-5 flex-shrink-0" />
+          <Users class="w-4 h-4 flex-shrink-0" />
           <span>{{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}</span>
         </RouterLink>
 
@@ -757,28 +757,28 @@ onUnmounted(() => {
         <RouterLink 
           v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
           to="/dashboard/admin" 
-          class="flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold text-xs transition-all cursor-pointer min-h-[44px]"
+          class="flex items-center justify-between px-4 py-3 rounded-full font-medium text-xs transition-colors cursor-pointer min-h-[42px]"
           :class="route.name === 'dashboard-admin' 
-            ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
         >
           <div class="flex items-center space-x-3">
-            <ShieldCheck class="w-5 h-5 flex-shrink-0 text-blue-400" />
+            <ShieldCheck class="w-4 h-4 flex-shrink-0 text-slate-700 dark:text-neutral-300" />
             <span>{{ store.isSuperAdmin ? 'Admin Operations' : store.isSecretaryAdmin ? 'Band Operations' : 'Executive Analytics' }}</span>
           </div>
-          <span v-if="pendingCount > 0 && store.isSuperAdmin" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px]">
+          <span v-if="pendingCount > 0 && store.isSuperAdmin" class="px-2 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-[10px]">
             {{ pendingCount }}
           </span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/profile" 
-          class="flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[42px]"
           :class="route.name === 'dashboard-profile' 
-            ? 'bg-blue-600 text-white shadow-md font-black' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a]'"
+            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
         >
-          <User class="w-5 h-5 flex-shrink-0" />
+          <User class="w-4 h-4 flex-shrink-0" />
           <span>My Profile</span>
         </RouterLink>
 
@@ -786,49 +786,49 @@ onUnmounted(() => {
         <button 
           @click="showRoleGuideModal = true" 
           type="button"
-          class="w-full flex items-center px-4 py-3.5 rounded-2xl font-bold text-xs transition-all space-x-3 cursor-pointer min-h-[44px] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#27272a] hover:text-amber-600 dark:hover:text-amber-400 text-left"
+          class="w-full flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[42px] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60 text-left"
         >
-          <HelpCircle class="w-5 h-5 flex-shrink-0 text-amber-500" />
+          <HelpCircle class="w-4 h-4 flex-shrink-0 text-slate-500" />
           <span>Role & User Guide</span>
         </button>
 
       </nav>
 
       <!-- Desktop PWA Install Banner -->
-      <div v-if="!isAppInstalled" class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl space-y-2">
-        <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-black text-xs">
+      <div v-if="!isAppInstalled" class="p-3.5 bg-slate-100 dark:bg-neutral-800/80 border border-slate-200 dark:border-neutral-700 rounded-2xl space-y-2">
+        <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200 font-semibold text-xs">
           <Download class="w-4 h-4" />
-          <span>Install SmartBand PWA</span>
+          <span>Install SmartBand App</span>
         </div>
-        <p class="text-[11px] text-slate-600 dark:text-neutral-400 leading-tight">Install SmartBand directly on your device for instant offline access.</p>
-        <button @click="handleInstallPWA" type="button" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]">
+        <p class="text-[11px] text-slate-500 dark:text-neutral-400 leading-tight">Install on your device for instant offline access.</p>
+        <button @click="handleInstallPWA" type="button" class="w-full py-2 bg-slate-900 hover:bg-slate-800 dark:bg-neutral-100 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-full cursor-pointer min-h-[38px] transition-colors">
           Install App
         </button>
       </div>
 
       <!-- Desktop Installed Badge -->
-      <div v-else class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-black text-xs">
-        <CheckCircle class="w-4 h-4 flex-shrink-0" />
+      <div v-else class="p-3 bg-slate-100 dark:bg-neutral-800/80 border border-slate-200 dark:border-neutral-700 rounded-2xl flex items-center space-x-2 text-slate-700 dark:text-neutral-300 font-medium text-xs">
+        <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
         <span>App Installed & Ready</span>
       </div>
 
       <!-- User Profile Summary & Sign Out -->
-      <div class="pt-4 border-t border-slate-200 dark:border-neutral-800/80 flex items-center justify-between">
+      <div class="pt-4 border-t border-slate-200 dark:border-neutral-800 flex items-center justify-between">
         <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-          <div class="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 shadow-xs">
+          <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 shadow-xs">
             <img v-if="store.profile?.profile_picture" 
                  :src="store.profile.profile_picture" 
                  alt="Avatar" 
                  class="w-full h-full object-cover" />
-            <div v-else class="w-full h-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+            <div v-else class="w-full h-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs">
               {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
             </div>
           </div>
           <div class="min-w-0">
-            <p class="font-black text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
+            <p class="font-semibold text-xs text-slate-900 dark:text-white truncate">{{ store.profile?.full_name || 'Member' }}</p>
           </div>
         </div>
-        <button @click="triggerSignOut" type="button" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" title="Sign Out">
+        <button @click="triggerSignOut" type="button" class="p-2 rounded-full text-slate-500 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center transition-colors" title="Sign Out">
           <LogOut class="w-4 h-4" />
         </button>
       </div>
@@ -840,21 +840,21 @@ onUnmounted(() => {
       <div class="flex-1 min-w-0 flex flex-col max-w-6xl mx-auto w-full">
       
       <!-- TOP HEADER (Desktop breadcrumb / Mobile Brand) -->
-      <header class="sticky top-0 z-40 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-300/80 dark:border-neutral-800/80 px-4 py-3 flex items-center justify-between shadow-xs">
+      <header class="sticky top-0 z-40 bg-[#f8f9fa] dark:bg-[#18191a] border-b border-slate-200 dark:border-neutral-800 px-4 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-2.5">
           <!-- Mobile Brand Logo (Visible only on mobile screens when sidebar is hidden) -->
           <div class="flex items-center space-x-2.5 md:hidden">
-            <div class="w-8 h-8 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5">
+            <div class="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">
               <img src="/band1870logo.jpg" alt="Logo" class="w-full h-full object-contain" />
             </div>
-            <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white">SmartBand</span>
+            <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white">SmartBand</span>
           </div>
 
           <!-- Desktop Page Breadcrumb (Visible only when sidebar is present) -->
-          <div class="hidden md:flex items-center space-x-2 text-xs font-bold text-slate-500 dark:text-neutral-400">
-            <span class="text-blue-600 dark:text-blue-400 font-black tracking-wider uppercase">Portal</span>
+          <div class="hidden md:flex items-center space-x-2 text-xs font-medium text-slate-500 dark:text-neutral-400">
+            <span class="text-slate-500 dark:text-neutral-400 uppercase tracking-wider">Portal</span>
             <span>/</span>
-            <span class="text-slate-900 dark:text-white capitalize font-black">{{ route.name ? route.name.toString().replace('dashboard-', '').replace('-', ' ') : 'Dashboard' }}</span>
+            <span class="text-slate-900 dark:text-white capitalize font-semibold">{{ route.name ? route.name.toString().replace('dashboard-', '').replace('-', ' ') : 'Dashboard' }}</span>
           </div>
         </div>
 
@@ -864,10 +864,10 @@ onUnmounted(() => {
             v-if="!isAppInstalled"
             @click="handleInstallPWA"
             type="button"
-            class="md:hidden px-2.5 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center hover:bg-blue-500 transition-colors shadow-xs cursor-pointer min-h-[40px] shrink-0"
+            class="md:hidden px-3 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-xs flex items-center hover:bg-slate-800 transition-colors shadow-xs cursor-pointer min-h-[36px] shrink-0"
             aria-label="Install SmartBand App"
           >
-            <Download class="w-4 h-4 sm:mr-1" />
+            <Download class="w-3.5 h-3.5 sm:mr-1" />
             <span class="hidden sm:inline">Install</span>
           </button>
 
@@ -875,35 +875,35 @@ onUnmounted(() => {
           <button 
             @click="showRoleGuideModal = true" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-amber-500 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer shrink-0"
+            class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer shrink-0"
             aria-label="Open Role & User Guide"
             title="Role Guide & Operational Manual"
           >
-            <HelpCircle class="w-5 h-5" />
+            <HelpCircle class="w-4 h-4" />
           </button>
 
           <!-- Quick Mobile Theme Switcher (Sun/Moon) -->
           <button 
             @click="toggleTheme" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer shrink-0"
+            class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer shrink-0"
             :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
             title="Toggle Light/Dark Theme"
           >
-            <Sun v-if="isDark" class="w-5 h-5 text-amber-400" />
-            <Moon v-else class="w-5 h-5 text-blue-600" />
+            <Sun v-if="isDark" class="w-4 h-4 text-slate-700" />
+            <Moon v-else class="w-4 h-4 text-neutral-300" />
           </button>
 
           <!-- Notification & Settings Drawer Bell Trigger -->
           <button 
             @click="showSettingsDrawer = true" 
             type="button"
-            class="p-2 rounded-full bg-slate-100 dark:bg-[#27272a] text-slate-700 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-[#323238] transition-colors border border-transparent dark:border-neutral-700/60 min-w-[40px] min-h-[40px] flex items-center justify-center relative cursor-pointer shrink-0"
+            class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center relative cursor-pointer shrink-0"
             aria-label="Open App Settings & Alerts Drawer"
             title="Open App Settings"
           >
-            <Bell class="w-5 h-5" />
-            <span v-if="pendingCount > 0" class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse"></span>
+            <Bell class="w-4 h-4" />
+            <span v-if="pendingCount > 0" class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
           </button>
         </div>
       </header>
@@ -912,27 +912,27 @@ onUnmounted(() => {
       <Transition name="toast">
         <div 
           v-if="showFirstTimeNotifPrompt"
-          class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-3 shadow-lg flex items-center justify-between border-b border-blue-500/40 text-xs font-bold"
+          class="bg-slate-100 dark:bg-neutral-800/90 text-slate-800 dark:text-neutral-200 px-4 py-2.5 shadow-xs flex items-center justify-between border-b border-slate-200 dark:border-neutral-700 text-xs"
         >
           <div class="flex items-center space-x-2.5 pr-2 min-w-0">
-            <Bell class="w-5 h-5 flex-shrink-0 animate-bounce text-yellow-300" />
+            <Bell class="w-4 h-4 flex-shrink-0 text-slate-600 dark:text-neutral-400" />
             <div class="min-w-0">
-              <span class="font-black block text-white">Enable 10–15m Call-Time Alarm?</span>
-              <span class="text-[11px] font-semibold opacity-90 block truncate">Audible siren & notifications for upcoming rehearsals and gigs.</span>
+              <span class="font-semibold block text-slate-900 dark:text-white">Enable 10–15m Call-Time Alarm?</span>
+              <span class="text-[11px] text-slate-500 dark:text-neutral-400 block truncate">Audible siren & notifications for upcoming rehearsals and gigs.</span>
             </div>
           </div>
           <div class="flex items-center space-x-1.5 flex-shrink-0">
             <button 
               @click="requestNotificationPermission" 
               type="button" 
-              class="px-3 py-1.5 bg-white text-blue-700 font-black rounded-xl shadow-xs text-[11px] hover:bg-slate-100 min-h-[36px] cursor-pointer"
+              class="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium rounded-full shadow-xs text-xs hover:bg-slate-800 cursor-pointer min-h-[32px]"
             >
               Allow
             </button>
             <button 
               @click="dismissFirstTimeNotifPrompt" 
               type="button" 
-              class="p-1.5 text-white/80 hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+              class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer"
               aria-label="Dismiss Notification Prompt"
             >
               <X class="w-4 h-4" />
@@ -945,9 +945,9 @@ onUnmounted(() => {
       <Transition name="toast">
         <div 
           v-if="networkToastMsg"
-          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-[#1c1c1e] text-white px-4 py-3 rounded-2xl shadow-2xl border border-neutral-700/80 flex items-center justify-between font-extrabold text-xs"
+          class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm w-11/12 bg-slate-900 dark:bg-neutral-800 text-white px-4 py-2.5 rounded-full shadow-lg border border-slate-700/80 flex items-center justify-between text-xs font-medium"
         >
-          <div class="flex items-center space-x-1">
+          <div class="flex items-center space-x-1.5">
             <CheckCircle class="w-4 h-4 text-emerald-400 flex-shrink-0" />
             <span>{{ networkToastMsg }}</span>
           </div>
@@ -959,9 +959,9 @@ onUnmounted(() => {
         <RouterView />
       </main>
 
-      <!-- MOBILE BOTTOM NAVIGATION BAR (Neutral Matte Charcoal, z-30 below modals) -->
+      <!-- MOBILE BOTTOM NAVIGATION BAR (Google Material 3 clean flat style) -->
       <nav 
-        class="md:hidden fixed bottom-0 left-0 w-full bg-[#f8fafc] dark:bg-[#1c1c1e] border-t border-slate-300/80 dark:border-neutral-800/80 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.6)] pb-safe z-30"
+        class="md:hidden fixed bottom-0 left-0 w-full bg-[#f8f9fa] dark:bg-[#1e1f20] border-t border-slate-200 dark:border-neutral-800 shadow-sm pb-safe z-30"
         aria-label="Bottom Navigation Bar"
       >
         <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
@@ -970,33 +970,39 @@ onUnmounted(() => {
             to="/dashboard" 
             role="menuitem"
             aria-label="Home Dashboard Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-home' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
+            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[44px]"
+            :class="route.name === 'dashboard-home' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            <Home class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-home' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">Home</span>
+            <div :class="route.name === 'dashboard-home' ? 'px-3.5 py-1 rounded-full bg-slate-200/80 dark:bg-neutral-800' : 'px-3.5 py-1'">
+              <Home class="w-5 h-5" :stroke-width="route.name === 'dashboard-home' ? 2.5 : 2" />
+            </div>
+            <span class="text-[10px] mt-0.5">Home</span>
           </RouterLink>
 
           <RouterLink 
             to="/dashboard/schedule" 
             role="menuitem"
             aria-label="Events Schedule Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-schedule' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
+            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[44px]"
+            :class="route.name === 'dashboard-schedule' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            <Calendar class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-schedule' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">Events</span>
+            <div :class="route.name === 'dashboard-schedule' ? 'px-3.5 py-1 rounded-full bg-slate-200/80 dark:bg-neutral-800' : 'px-3.5 py-1'">
+              <Calendar class="w-5 h-5" :stroke-width="route.name === 'dashboard-schedule' ? 2.5 : 2" />
+            </div>
+            <span class="text-[10px] mt-0.5">Events</span>
           </RouterLink>
 
           <RouterLink 
             to="/dashboard/members" 
             role="menuitem"
             aria-label="Band Member Directory Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-members' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
+            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[44px]"
+            :class="route.name === 'dashboard-members' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            <Users class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-members' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">Roster</span>
+            <div :class="route.name === 'dashboard-members' ? 'px-3.5 py-1 rounded-full bg-slate-200/80 dark:bg-neutral-800' : 'px-3.5 py-1'">
+              <Users class="w-5 h-5" :stroke-width="route.name === 'dashboard-members' ? 2.5 : 2" />
+            </div>
+            <span class="text-[10px] mt-0.5">Roster</span>
           </RouterLink>
 
           <RouterLink 
@@ -1004,23 +1010,27 @@ onUnmounted(() => {
             to="/dashboard/admin" 
             role="menuitem"
             aria-label="Admin Operations Hub Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors group relative min-h-[44px]"
-            :class="route.name === 'dashboard-admin' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
+            class="flex flex-col items-center justify-center flex-1 h-full transition-colors relative min-h-[44px]"
+            :class="route.name === 'dashboard-admin' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            <ShieldCheck class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform text-blue-500" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">{{ store.isSuperAdmin ? 'Admin' : store.isSecretaryAdmin ? 'Operations' : 'Analytics' }}</span>
-            <span v-if="pendingCount > 0 && store.isSuperAdmin" class="absolute top-2 right-3 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+            <div :class="route.name === 'dashboard-admin' ? 'px-3.5 py-1 rounded-full bg-slate-200/80 dark:bg-neutral-800' : 'px-3.5 py-1'">
+              <ShieldCheck class="w-5 h-5" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
+            </div>
+            <span class="text-[10px] mt-0.5">{{ store.isSuperAdmin ? 'Admin' : store.isSecretaryAdmin ? 'Operations' : 'Analytics' }}</span>
+            <span v-if="pendingCount > 0 && store.isSuperAdmin" class="absolute top-2 right-4 w-2 h-2 bg-rose-500 rounded-full"></span>
           </RouterLink>
 
           <RouterLink 
             to="/dashboard/profile" 
             role="menuitem"
             aria-label="User Profile Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors group min-h-[44px]"
-            :class="route.name === 'dashboard-profile' ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300'"
+            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[44px]"
+            :class="route.name === 'dashboard-profile' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            <User class="w-5 h-5 mb-0.5 group-active:scale-95 transition-transform" :stroke-width="route.name === 'dashboard-profile' ? 2.5 : 2" />
-            <span class="text-[9px] sm:text-[10px] font-bold">Profile</span>
+            <div :class="route.name === 'dashboard-profile' ? 'px-3.5 py-1 rounded-full bg-slate-200/80 dark:bg-neutral-800' : 'px-3.5 py-1'">
+              <User class="w-5 h-5" :stroke-width="route.name === 'dashboard-profile' ? 2.5 : 2" />
+            </div>
+            <span class="text-[10px] mt-0.5">Profile</span>
           </RouterLink>
 
         </div>
@@ -1029,104 +1039,103 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- HIGH-VISIBILITY 5-SECOND CALL-TIME ALARM MODAL -->
+    <!-- HIGH-VISIBILITY CALL-TIME ALARM DIALOG (Clean Material 3 Dialog) -->
     <Transition name="toast">
-      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-amber-400 via-yellow-400 to-amber-500 text-slate-900 border-4 border-slate-900 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-bounce">
+      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
           
-          <div class="w-16 h-16 rounded-full bg-slate-900 text-yellow-400 flex items-center justify-center mx-auto shadow-lg">
-            <Volume2 class="w-8 h-8 animate-pulse" />
+          <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-white flex items-center justify-center mx-auto">
+            <Volume2 class="w-7 h-7" />
           </div>
 
           <div>
-            <span class="inline-block px-3 py-1 bg-slate-900 text-white text-[11px] font-black uppercase rounded-full tracking-wider mb-2">
-              🚨 CALL-TIME ALARM ACTIVE
+            <span class="inline-block px-3 py-1 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 text-[11px] font-semibold uppercase rounded-full tracking-wider mb-2">
+              Call-Time Alarm
             </span>
-            <h2 class="text-2xl font-black text-slate-900 leading-tight">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white leading-snug">
               {{ activeAlarmModal.title }}
             </h2>
-            <p class="text-sm font-black text-rose-950 mt-1 uppercase tracking-wide">
+            <p class="text-sm font-semibold text-rose-600 dark:text-rose-400 mt-1 uppercase tracking-wide">
               {{ activeAlarmModal.countdownText }}
             </p>
           </div>
 
-          <div class="bg-white/90 p-3 rounded-2xl space-y-1.5 text-xs font-bold text-slate-900 text-left">
-            <div class="flex items-center"><Clock class="w-4 h-4 mr-2 text-slate-700" /> Scheduled Time: {{ activeAlarmModal.timeText }}</div>
-            <div class="flex items-center"><MapPin class="w-4 h-4 mr-2 text-slate-700" /> Location: {{ activeAlarmModal.location }}</div>
+          <div class="bg-slate-50 dark:bg-neutral-900/60 p-3.5 rounded-2xl space-y-1.5 text-xs text-slate-700 dark:text-neutral-300 text-left border border-slate-200/60 dark:border-neutral-800">
+            <div class="flex items-center"><Clock class="w-4 h-4 mr-2 text-slate-500" /> Scheduled: {{ activeAlarmModal.timeText }}</div>
+            <div class="flex items-center"><MapPin class="w-4 h-4 mr-2 text-slate-500" /> Location: {{ activeAlarmModal.location }}</div>
           </div>
 
           <button 
             @click="dismissActiveAlarm"
             type="button"
-            class="w-full py-4 bg-slate-900 hover:bg-black text-white font-black text-sm rounded-2xl shadow-xl active:scale-95 cursor-pointer min-h-[52px]"
+            class="w-full py-3 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-sm rounded-full shadow-xs cursor-pointer min-h-[46px] transition-colors"
           >
-            ✓ I Am Ready / Stop Alarm
+            I Am Ready / Dismiss
           </button>
-
         </div>
       </div>
     </Transition>
 
-    <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (Neutral Matte Black) -->
-    <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left">
+    <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (Clean Google Material 3 Surface) -->
+    <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-            <Bell class="w-5 h-5" />
-            <h3 class="font-black text-lg text-slate-900 dark:text-white">App Settings & Alerts</h3>
+          <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
+            <Bell class="w-4 h-4" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Settings & Notifications</h3>
           </div>
-          <button @click="showSettingsDrawer = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
+          <button @click="showSettingsDrawer = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"><X class="w-4 h-4" /></button>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-2.5">
           <!-- Network Sync Badge -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
-            <div class="flex items-center space-x-1">
-              <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-500" />
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800">
+            <div class="flex items-center space-x-2">
+              <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <WifiOff v-else class="w-4 h-4 text-rose-500" />
-              <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">{{ isOnline ? 'PWA Online Sync' : 'Offline Countdown Mode' }}</span>
+              <span class="text-xs font-medium text-slate-800 dark:text-neutral-200">{{ isOnline ? 'Online Sync Active' : 'Offline Mode' }}</span>
             </div>
-            <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+            <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
           </div>
 
           <!-- Audible Alarms Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">Call-Time Siren</p>
-              <p class="text-[10px] text-slate-400 dark:text-neutral-500">5-second brass alarm tone</p>
+              <p class="font-semibold text-xs text-slate-900 dark:text-white">Call-Time Alarm</p>
+              <p class="text-[10px] text-slate-500 dark:text-neutral-400">Audible call-time alert</p>
             </div>
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1.5">
               <button 
                 @click="testAlarmTone"
                 type="button"
-                class="p-2 bg-slate-200 dark:bg-[#323238] hover:bg-slate-300 dark:hover:bg-[#404044] text-slate-900 dark:text-white rounded-xl cursor-pointer transition-colors"
+                class="p-2 bg-slate-200/80 dark:bg-neutral-800 hover:bg-slate-300 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 rounded-full cursor-pointer transition-colors"
                 title="Test Alarm"
               >
-                <Volume2 class="w-4 h-4" />
+                <Volume2 class="w-3.5 h-3.5" />
               </button>
               <button 
                 @click="toggleAlarms"
                 type="button"
-                class="px-3 py-2 font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px] transition-colors"
-                :class="enableAlarms ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white'"
+                class="px-3 py-1.5 font-medium text-xs rounded-full cursor-pointer min-h-[34px] transition-colors"
+                :class="enableAlarms ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300'"
               >
-                {{ enableAlarms ? 'Enabled ✓' : 'Disabled' }}
+                {{ enableAlarms ? 'Enabled' : 'Disabled' }}
               </button>
             </div>
           </div>
 
           <!-- PWA Install Status in Drawer -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">App Installation</p>
-              <p class="text-[10px] text-slate-400 dark:text-neutral-500">
-                {{ isAppInstalled ? 'Installed as standalone app' : 'Install for offline home screen launch' }}
+              <p class="font-semibold text-xs text-slate-900 dark:text-white">App Installation</p>
+              <p class="text-[10px] text-slate-500 dark:text-neutral-400">
+                {{ isAppInstalled ? 'Installed on device' : 'Install for offline launch' }}
               </p>
             </div>
             
-            <div v-if="isAppInstalled" class="flex items-center space-x-1 px-3 py-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-extrabold text-xs">
-              <Check class="w-4 h-4" />
+            <div v-if="isAppInstalled" class="flex items-center space-x-1 px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-medium text-xs">
+              <Check class="w-3.5 h-3.5" />
               <span>Installed</span>
             </div>
             
@@ -1134,41 +1143,41 @@ onUnmounted(() => {
               v-else
               @click="handleInstallPWA"
               type="button"
-              class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer min-h-[44px]"
+              class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full cursor-pointer min-h-[34px]"
             >
-              Install App
+              Install
             </button>
           </div>
 
           <!-- In-App Banners Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800">
             <div>
-              <p class="font-bold text-xs text-slate-900 dark:text-white">In-App Notifications</p>
-              <p class="text-[10px] text-slate-400 dark:text-neutral-500">Visual banners & chimes</p>
+              <p class="font-semibold text-xs text-slate-900 dark:text-white">In-App Banners</p>
+              <p class="text-[10px] text-slate-500 dark:text-neutral-400">Visual reminders & chimes</p>
             </div>
             <button 
               @click="toggleBanners"
               type="button"
-              class="px-3 py-2 font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px] transition-colors"
-              :class="enableBanners ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white'"
+              class="px-3 py-1.5 font-medium text-xs rounded-full cursor-pointer min-h-[34px] transition-colors"
+              :class="enableBanners ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300'"
             >
-              {{ enableBanners ? 'Enabled ✓' : 'Disabled' }}
+              {{ enableBanners ? 'Enabled' : 'Disabled' }}
             </button>
           </div>
 
           <!-- Theme Mode Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80">
-            <div class="flex items-center space-x-1">
-              <Sun v-if="isDark" class="w-4 h-4 text-amber-400" />
-              <Moon v-else class="w-4 h-4 text-blue-600" />
-              <span class="text-xs font-bold text-slate-900 dark:text-neutral-200">Theme Mode</span>
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800">
+            <div class="flex items-center space-x-1.5">
+              <Sun v-if="isDark" class="w-4 h-4 text-slate-400" />
+              <Moon v-else class="w-4 h-4 text-slate-700" />
+              <span class="text-xs font-medium text-slate-800 dark:text-neutral-200">Theme</span>
             </div>
             <button 
-              @click="toggleTheme"
+              @click="toggleTheme" 
               type="button"
-              class="px-3 py-2 bg-slate-200 dark:bg-[#323238] text-slate-900 dark:text-white font-extrabold text-xs rounded-xl cursor-pointer min-h-[44px]"
+              class="px-3 py-1.5 bg-slate-200 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 font-medium text-xs rounded-full cursor-pointer min-h-[34px]"
             >
-              {{ isDark ? 'Dark Mode' : 'Light Mode' }}
+              {{ isDark ? 'Dark' : 'Light' }}
             </button>
           </div>
 
@@ -1176,119 +1185,119 @@ onUnmounted(() => {
           <button 
             @click="showTermsModal = true"
             type="button"
-            class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 text-xs font-bold text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
+            class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800 text-xs font-medium text-slate-700 dark:text-neutral-300 min-h-[42px] cursor-pointer"
           >
-            <span class="flex items-center"><FileText class="w-4 h-4 mr-2 text-blue-500" /> View Terms & Conditions</span>
+            <span class="flex items-center"><FileText class="w-4 h-4 mr-2 text-slate-500" /> View Terms & Conditions</span>
             <span class="text-slate-400">→</span>
           </button>
         </div>
 
         <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 pb-1 flex justify-end">
-          <button @click="showSettingsDrawer = false" type="button" class="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl min-h-[44px] cursor-pointer">
-            Close Settings
+          <button @click="showSettingsDrawer = false" type="button" class="py-2 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full min-h-[38px] cursor-pointer">
+            Close
           </button>
         </div>
 
       </div>
     </div>
 
-    <!-- TERMS & CONDITIONS MODAL (Neutral Matte Black) -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-left max-h-[80vh] flex flex-col">
+    <!-- TERMS & CONDITIONS MODAL (Clean Google Material 3 Dialog) -->
+    <div v-if="showTermsModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left max-h-[80vh] flex flex-col">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
-          <div class="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-            <FileText class="w-5 h-5" />
-            <h3 class="font-black text-lg text-slate-900 dark:text-white">Terms & Conditions</h3>
+          <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
+            <FileText class="w-4 h-4" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Terms & Conditions</h3>
           </div>
-          <button @click="showTermsModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"><X class="w-5 h-5" /></button>
+          <button @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"><X class="w-4 h-4" /></button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-medium">
+        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-normal">
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 1: Master List Verification Requirement</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 1: Master List Verification Requirement</h4>
             <p>All sign-ups are provisional until physically verified by the IT Super Admin against the official municipal band registry.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 2: Attendance & RSVP Reliability Scoring</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 2: Attendance & RSVP Reliability Scoring</h4>
             <p>RSVPing "I Will Attend" creates an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%).</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 3: Call-Time Punctuality & Alert Protocols</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 3: Call-Time Punctuality & Alert Protocols</h4>
             <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and concerts. The in-app 10–15m call-time alarms serve as operational notifications.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 4: Band Property & Instrument Care</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 4: Band Property & Instrument Care</h4>
             <p>Members issued municipal band instruments, uniforms, or sheet music folios are strictly responsible for their maintenance, safekeeping, and prompt return upon request.</p>
           </div>
 
           <div>
-            <h4 class="font-black text-slate-900 dark:text-white text-sm">Article 5: Data Privacy & Security</h4>
+            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 5: Data Privacy & Security</h4>
             <p>Member contact numbers and personal birth dates are protected under Row Level Security (RLS) and will never be exposed to public directory views.</p>
           </div>
         </div>
 
         <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
-          <button @click="showTermsModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
+          <button @click="showTermsModal = false" type="button" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors">
             Close
           </button>
         </div>
       </div>
     </div>
 
-    <!-- COMPREHENSIVE ROLE & OPERATIONAL USER GUIDE MODAL -->
-    <div v-if="showRoleGuideModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-2xl text-left max-h-[90vh] flex flex-col">
+    <!-- COMPREHENSIVE ROLE & OPERATIONAL USER GUIDE MODAL (Clean Google Material 3 Dialog) -->
+    <div v-if="showRoleGuideModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2.5">
-            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-500">
-              <BookOpen class="w-5 h-5" />
+            <div class="p-2 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
+              <BookOpen class="w-4 h-4" />
             </div>
             <div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">SmartBand User & Role Guide</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">SmartBand User & Role Guide</h3>
               <p class="text-[11px] text-slate-500 dark:text-neutral-400">Operational responsibilities, turnout rules, and quick manuals</p>
             </div>
           </div>
-          <button @click="showRoleGuideModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showRoleGuideModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Navigation Tabs -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#27272a] rounded-2xl text-xs font-bold shrink-0">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-neutral-800 rounded-full text-xs font-medium shrink-0">
           <button 
             @click="activeGuideTab = 'roles'"
             type="button"
-            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'roles' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[32px]"
+            :class="activeGuideTab === 'roles' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
           >
             Role Powers
           </button>
           <button 
             @click="activeGuideTab = 'attendance'"
             type="button"
-            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'attendance' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[32px]"
+            :class="activeGuideTab === 'attendance' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
           >
             Turnout Math
           </button>
           <button 
             @click="activeGuideTab = 'availability'"
             type="button"
-            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'availability' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[32px]"
+            :class="activeGuideTab === 'availability' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
           >
             Availability
           </button>
           <button 
             @click="activeGuideTab = 'pwa'"
             type="button"
-            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'pwa' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs font-black' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[32px]"
+            :class="activeGuideTab === 'pwa' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
           >
             PWA & Offline
           </button>
@@ -1444,36 +1453,36 @@ onUnmounted(() => {
 
         <!-- Footer -->
         <div class="pt-3 border-t border-slate-100 dark:border-neutral-800">
-          <button @click="showRoleGuideModal = false" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer">
-            Got It, Close Guide
+          <button @click="showRoleGuideModal = false" type="button" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors">
+            Close Guide
           </button>
         </div>
 
       </div>
     </div>
 
-    <!-- SIGN OUT CONFIRMATION MODAL -->
-    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
-        <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center mx-auto text-rose-500">
-          <LogOut class="w-6 h-6" />
+    <!-- SIGN OUT CONFIRMATION MODAL (Clean Google Material 3 Dialog) -->
+    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center mx-auto text-slate-700 dark:text-neutral-300">
+          <LogOut class="w-5 h-5" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-black text-lg text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+          <h3 class="font-bold text-base text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-slate-500 dark:text-neutral-400 font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
-        <div class="grid grid-cols-2 gap-3 pt-2">
+        <div class="grid grid-cols-2 gap-2.5 pt-2">
           <button 
             @click="showSignOutModal = false" 
             type="button" 
-            class="py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-black text-xs rounded-xl min-h-[44px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[40px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
           <button 
             @click="handleSignOut" 
             type="button" 
-            class="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-md min-h-[44px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors"
           >
             Sign Out
           </button>

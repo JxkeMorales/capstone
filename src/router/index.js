@@ -69,7 +69,7 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const store = useMainStore()
 
@@ -78,13 +78,13 @@ router.beforeEach(async (to, from, next) => {
 
     if (requiresAuth) {
       if (!session) {
-        return next('/')
+        return '/'
       } else {
         if (!store.user) {
           store.user = session.user
           await store.fetchProfile(true)
         }
-        return next()
+        return true
       }
     } else {
       // If user is already authenticated and visits public landing '/' or '/login', forward to '/dashboard'
@@ -93,16 +93,16 @@ router.beforeEach(async (to, from, next) => {
           store.user = session.user
           await store.fetchProfile(true)
         }
-        return next('/dashboard')
+        return '/dashboard'
       }
-      return next()
+      return true
     }
   } catch (err) {
     console.error('Navigation guard error:', err)
     if (requiresAuth) {
-      return next('/')
+      return '/'
     }
-    return next()
+    return true
   }
 })
 

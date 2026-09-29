@@ -364,31 +364,34 @@ const handleFileUpload = async (event) => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-5 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
     
-    <header class="pt-1 flex items-center justify-between">
-      <h1 class="text-2xl font-black text-slate-900 dark:text-white">My Profile</h1>
-      <div class="flex items-center space-x-2">
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+      <div>
+        <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">Account Management</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-neutral-100">My Profile</h1>
+      </div>
+      <div class="flex items-center space-x-2 self-start sm:self-auto">
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/40 px-3.5 py-2 rounded-xl flex items-center hover:bg-blue-100 transition-colors min-h-[44px] cursor-pointer"
+          class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-700 px-4 py-2 rounded-full flex items-center hover:bg-slate-50 dark:hover:bg-[#2d2f31] transition-colors min-h-[40px] cursor-pointer shadow-xs"
         >
-          <Settings class="w-3.5 h-3.5 mr-1" /> Profile Settings
+          <Settings class="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-neutral-400" /> Profile Settings
         </button>
         <button 
           @click="triggerSignOut"
           type="button"
-          class="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 px-3.5 py-2 rounded-xl flex items-center hover:bg-rose-100 transition-colors min-h-[44px] cursor-pointer"
+          class="text-xs font-medium text-rose-600 dark:text-rose-400 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-700 px-4 py-2 rounded-full flex items-center hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors min-h-[40px] cursor-pointer shadow-xs"
           aria-label="Sign Out of Account"
         >
-          <LogOut class="w-3.5 h-3.5 mr-1" /> Sign Out
+          <LogOut class="w-3.5 h-3.5 mr-1.5" /> Sign Out
         </button>
       </div>
     </header>
 
     <!-- Profile Info Card with Edit Trigger -->
-    <section class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800">
+    <section class="bg-white dark:bg-[#202124] rounded-2xl p-6 shadow-xs border border-slate-200/80 dark:border-neutral-800">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
           
@@ -396,31 +399,31 @@ const handleFileUpload = async (event) => {
             <input type="file" accept="image/jpeg, image/png, image/webp" @change="handleFileUpload" class="hidden" ref="fileInput" />
             
             <template v-if="store.profile?.profile_picture && !imgLoadError">
-              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-2xl shadow-md border border-slate-200 dark:border-neutral-800" />
-              <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-2 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Pending</div>
-              <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-2 -right-1 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border-2 border-white dark:border-[#1c1c1e] shadow-sm uppercase">Declined</div>
-              <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1.5 -right-1 bg-emerald-500 text-white p-0.5 rounded-full border-2 border-white dark:border-[#1c1c1e] shadow-xs" title="Approved">
-                <Check class="w-3 h-3 stroke-[3]" />
+              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-full border border-slate-200 dark:border-neutral-700 shadow-xs" />
+              <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full border-2 border-white dark:border-[#202124] uppercase">Pending</div>
+              <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full border-2 border-white dark:border-[#202124] uppercase">Declined</div>
+              <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-0.5 rounded-full border-2 border-white dark:border-[#202124]" title="Approved">
+                <Check class="w-3 h-3 stroke-[2.5]" />
               </div>
             </template>
             <template v-else>
-              <div class="w-full h-full rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md">
+              <div class="w-full h-full rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-lg font-bold">
                 {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
               </div>
             </template>
             
             <!-- Hover Overlay -->
-            <div class="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-               <Camera v-if="!isUploading" class="w-6 h-6 text-white" />
-               <Loader2 v-else class="w-6 h-6 text-white animate-spin" />
+            <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+               <Camera v-if="!isUploading" class="w-5 h-5 text-white" />
+               <Loader2 v-else class="w-5 h-5 text-white animate-spin" />
             </div>
           </div>
 
           <div class="min-w-0">
-            <h2 class="text-lg font-black text-slate-900 dark:text-white truncate">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-neutral-100 truncate">
               {{ store.profile?.full_name || 'Member' }}
             </h2>
-            <p class="text-xs font-bold text-slate-500 dark:text-neutral-400 mt-0.5 capitalize">
+            <p class="text-xs font-medium text-slate-500 dark:text-neutral-400 mt-0.5 capitalize">
               {{ store.profile?.instrument || 'Musician' }} • {{ store.profile?.rank || 'Junior' }} Rank
             </p>
           </div>
@@ -429,59 +432,59 @@ const handleFileUpload = async (event) => {
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+          class="p-2.5 bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-[#383a3d] rounded-full transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer border border-slate-200 dark:border-neutral-700"
           aria-label="Edit Profile Details"
           title="Edit Profile Settings"
         >
-          <Edit3 class="w-5 h-5" />
+          <Edit3 class="w-4 h-4" />
         </button>
       </div>
 
-      <div class="space-y-2.5">
-        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300">
-          <Phone class="w-4 h-4 mr-3 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
+      <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
+        <div class="flex items-center text-xs text-slate-600 dark:text-neutral-400 font-medium">
+          <Phone class="w-3.5 h-3.5 mr-2.5 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
           <span>{{ store.profile?.contact_number || store.profile?.email || 'No contact specified' }}</span>
         </div>
-        <div class="flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300">
-          <Activity class="w-4 h-4 mr-3 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
-          <span>Verification Status: {{ store.profile?.is_verified ? 'Verified Master List' : 'Pending Verification' }}</span>
+        <div class="flex items-center text-xs text-slate-600 dark:text-neutral-400 font-medium">
+          <Activity class="w-3.5 h-3.5 mr-2.5 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
+          <span>Verification Status: {{ store.profile?.is_verified ? 'Verified Member' : 'Pending Verification' }}</span>
         </div>
       </div>
     </section>
 
     <!-- Dynamic Weekly Availability Grid with Exact Dates -->
     <section class="space-y-3">
-      <div class="flex justify-between items-end px-1">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 px-1">
         <div>
-          <h2 class="text-xs font-extrabold text-slate-500 dark:text-neutral-400 uppercase tracking-wider flex items-center">
-            <Calendar class="w-3.5 h-3.5 mr-1 text-blue-500" /> Weekly Availability Grid
+          <h2 class="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wider flex items-center">
+            <Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-neutral-400" /> Weekly Availability Grid
           </h2>
-          <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Tap slots when FREE. Saved directly to database.</p>
+          <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Toggle slots when you are available. Saved directly to the roster.</p>
         </div>
         <button 
           @click="saveAvailability" 
           :disabled="isSaving"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-xs active:scale-95 transition-all flex items-center min-h-[44px] cursor-pointer"
+          class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs active:scale-95 transition-all flex items-center min-h-[38px] cursor-pointer"
         >
-          <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1 text-white" />
-          {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Availability' }}
+          <CheckCircle2 v-if="saveSuccess" class="w-3.5 h-3.5 mr-1" />
+          {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved' : 'Save Availability' }}
         </button>
       </div>
 
-      <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto">
+      <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>
-              <th class="p-2 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">Time Slot</th>
-              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-black text-slate-700 dark:text-neutral-200">
+              <th class="p-2 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Slot</th>
+              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-semibold text-slate-700 dark:text-neutral-200">
                 <div class="uppercase">{{ d.name }}</div>
-                <div class="text-[9px] font-bold text-slate-400 lowercase">{{ d.dateLabel }}</div>
+                <div class="text-[9px] font-normal text-slate-400 lowercase">{{ d.dateLabel }}</div>
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
             <tr v-for="slot in timeSlots" :key="slot">
-              <td class="p-2 text-left text-xs font-bold text-slate-600 dark:text-neutral-400 whitespace-nowrap">
+              <td class="p-2 text-left text-xs font-medium text-slate-600 dark:text-neutral-400 whitespace-nowrap">
                 <Clock class="w-3 h-3 inline mr-1 text-slate-400" />
                 {{ slot.split(' ')[0] }}
               </td>
@@ -490,10 +493,10 @@ const handleFileUpload = async (event) => {
                   @click="toggleSlot(d.key, slot)"
                   type="button"
                   :aria-label="`Toggle ${d.name} ${slot}`"
-                  class="w-full py-2.5 rounded-xl font-black text-xs transition-all cursor-pointer min-h-[44px] flex items-center justify-center"
+                  class="w-full py-2 rounded-full font-medium text-xs transition-colors cursor-pointer min-h-[36px] flex items-center justify-center"
                   :class="isSlotFree(d.key, slot) 
-                    ? 'bg-blue-600 text-white shadow-xs scale-95' 
-                    : 'bg-slate-100 dark:bg-[#27272a] text-slate-400 hover:bg-slate-200 dark:hover:bg-[#323238]'"
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+                    : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 dark:text-neutral-500 hover:bg-slate-200 dark:hover:bg-[#383a3d]'"
                 >
                   {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
                 </button>
@@ -505,43 +508,43 @@ const handleFileUpload = async (event) => {
     </section>
 
     <!-- COMPLETE POP-UP SETTINGS MODAL (Profile, Phone, Instruments, Password, Availability Grid) -->
-    <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[88vh] flex flex-col">
+    <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[88vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div class="flex items-center space-x-2">
-            <Settings class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h3 class="font-black text-base text-slate-900 dark:text-white">Profile & Account Settings</h3>
+            <Settings class="w-4 h-4 text-slate-600 dark:text-neutral-400" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Profile & Settings</h3>
           </div>
-          <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
-            <X class="w-5 h-5" />
+          <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d2f31]">
+            <X class="w-4 h-4" />
           </button>
         </div>
 
-        <!-- Setting Navigation Tabs -->
-        <div class="flex rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1 gap-1">
+        <!-- Setting Navigation Tabs (Segmented Pill Switcher) -->
+        <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 gap-1">
           <button 
             type="button" 
             @click="activeSettingsTab = 'profile'"
-            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            Profile & Instruments
+            Profile
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'availability'"
-            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
-            Availability Grid
+            Availability
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'security'"
-            class="flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
+            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
             Password
           </button>
@@ -553,32 +556,32 @@ const handleFileUpload = async (event) => {
           <!-- TAB 1: PROFILE, PHONE & INSTRUMENTS -->
           <div v-if="activeSettingsTab === 'profile'" class="space-y-4">
             <!-- Full Name -->
-            <div class="space-y-1 text-left">
-              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Full Name</label>
+            <div class="space-y-1.5 text-left">
+              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Full Name</label>
               <input 
                 v-model="editFullName" 
                 type="text" 
-                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
               >
             </div>
 
             <!-- Primary Instrument -->
-            <div class="space-y-1 text-left">
-              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Primary Instrument</label>
+            <div class="space-y-1.5 text-left">
+              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Primary Instrument</label>
               <select 
                 v-model="editPrimaryInstrument" 
-                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
               </select>
             </div>
 
             <!-- Secondary Instrument -->
-            <div class="space-y-1 text-left">
-              <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Secondary Instrument (Optional)</label>
+            <div class="space-y-1.5 text-left">
+              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Secondary Instrument (Optional)</label>
               <select 
                 v-model="editSecondaryInstrument" 
-                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700/80 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option value="None / N/A">None / N/A</option>
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
@@ -586,10 +589,10 @@ const handleFileUpload = async (event) => {
             </div>
 
             <!-- Philippine Mobile Phone Number -->
-            <div class="space-y-1 text-left">
+            <div class="space-y-1.5 text-left">
               <div class="flex justify-between items-center">
-                <label class="text-xs font-black text-slate-700 dark:text-neutral-300 uppercase">Phone Number (11 digits)</label>
-                <span class="text-[10px] font-black" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-500' : 'text-slate-400'">
+                <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Phone Number (11 digits)</label>
+                <span class="text-[10px] font-medium" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
                   {{ editContactNumber.length }}/11
                 </span>
               </div>
@@ -599,42 +602,42 @@ const handleFileUpload = async (event) => {
                 type="tel" 
                 maxlength="11"
                 placeholder="09123456789"
-                class="w-full p-3 bg-slate-50 dark:bg-[#27272a] border rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
-                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700/80'"
+                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700'"
               >
             </div>
           </div>
 
           <!-- TAB 2: AVAILABILITY GRID (Settings Pop-up integration) -->
           <div v-else-if="activeSettingsTab === 'availability'" class="space-y-3">
-            <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300">
-              <p class="font-bold">Weekly Schedule Availability</p>
-              <p class="text-[11px] opacity-90 mt-0.5">Toggle slots between FREE and busy. The Band Secretary uses this grid to schedule gigs and check musician availability.</p>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-[#282a2c] border border-slate-200/80 dark:border-neutral-700/80 text-xs text-slate-600 dark:text-neutral-400">
+              <p class="font-medium text-slate-900 dark:text-neutral-200">Weekly Schedule Availability</p>
+              <p class="text-[11px] mt-0.5">Toggle slots between FREE and busy. The Band Secretary uses this grid to schedule gigs and check musician availability.</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-x-auto">
+            <div class="rounded-xl border border-slate-200 dark:border-neutral-800 overflow-x-auto">
               <table class="w-full text-center border-collapse text-xs">
-                <thead class="bg-slate-50 dark:bg-[#27272a]">
+                <thead class="bg-slate-50 dark:bg-[#2d2f31]">
                   <tr>
-                    <th class="p-2 text-left text-[10px] font-black text-slate-400 uppercase">Slot</th>
-                    <th v-for="d in weekDays" :key="d.key" class="p-2 text-[10px] font-black text-slate-700 dark:text-neutral-200">
+                    <th class="p-2 text-left text-[10px] font-semibold text-slate-400 uppercase">Slot</th>
+                    <th v-for="d in weekDays" :key="d.key" class="p-2 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
                       {{ d.name }}
                     </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
                   <tr v-for="slot in timeSlots" :key="slot">
-                    <td class="p-2 text-left font-bold text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
+                    <td class="p-2 text-left font-medium text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
                       {{ slot.split(' ')[0] }}
                     </td>
                     <td v-for="d in weekDays" :key="d.key" class="p-1">
                       <button 
                         @click="toggleSlot(d.key, slot)"
                         type="button"
-                        class="w-full py-1.5 rounded-lg font-black text-[10px] transition-all cursor-pointer min-h-[36px] flex items-center justify-center"
+                        class="w-full py-1.5 rounded-full font-medium text-[10px] transition-colors cursor-pointer min-h-[32px] flex items-center justify-center"
                         :class="isSlotFree(d.key, slot) 
-                          ? 'bg-blue-600 text-white shadow-xs' 
-                          : 'bg-slate-100 dark:bg-[#27272a] text-slate-400 hover:bg-slate-200'"
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+                          : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 hover:bg-slate-200'"
                       >
                         {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
                       </button>
@@ -648,23 +651,23 @@ const handleFileUpload = async (event) => {
               @click="saveAvailability" 
               :disabled="isSaving"
               type="button" 
-              class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center min-h-[44px] cursor-pointer"
+              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs transition-colors flex items-center justify-center min-h-[40px] cursor-pointer"
             >
-              <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1 text-white" />
-              {{ isSaving ? 'Saving Grid...' : saveSuccess ? '✓ Availability Grid Saved!' : 'Save Availability Grid' }}
+              <CheckCircle2 v-if="saveSuccess" class="w-3.5 h-3.5 mr-1" />
+              {{ isSaving ? 'Saving Grid...' : saveSuccess ? 'Saved' : 'Save Availability Grid' }}
             </button>
           </div>
 
           <!-- TAB 3: PASSWORD CHANGE -->
           <div v-else-if="activeSettingsTab === 'security'" class="space-y-4">
-            <div class="space-y-1">
-              <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">New Password</label>
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">New Password</label>
               <div class="relative">
                 <input 
                   v-model="newPassword" 
                   :type="showNewPass ? 'text' : 'password'" 
                   placeholder="Min. 8 characters"
-                  class="w-full p-3 pr-10 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                  class="w-full px-3.5 py-2.5 pr-10 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
                 >
                 <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
                   <Eye v-if="!showNewPass" class="w-4 h-4" />
@@ -673,14 +676,14 @@ const handleFileUpload = async (event) => {
               </div>
             </div>
 
-            <div class="space-y-1">
-              <label class="text-[11px] font-black text-slate-600 dark:text-neutral-400 uppercase">Confirm New Password</label>
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Confirm New Password</label>
               <div class="relative">
                 <input 
                   v-model="confirmPassword" 
                   :type="showConfirmPass ? 'text' : 'password'" 
                   placeholder="Re-type new password"
-                  class="w-full p-3 pr-10 bg-slate-50 dark:bg-[#27272a] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white min-h-[44px]"
+                  class="w-full px-3.5 py-2.5 pr-10 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
                 >
                 <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
                   <Eye v-if="!showConfirmPass" class="w-4 h-4" />
@@ -689,10 +692,10 @@ const handleFileUpload = async (event) => {
               </div>
             </div>
 
-            <p v-if="newPassword && newPassword === confirmPassword" class="text-xs font-bold text-emerald-500">
-              ✓ Passwords match!
+            <p v-if="newPassword && newPassword === confirmPassword" class="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              ✓ Passwords match
             </p>
-            <p v-if="passwordChangeError" class="text-xs font-bold text-rose-500">
+            <p v-if="passwordChangeError" class="text-xs font-medium text-rose-500">
               {{ passwordChangeError }}
             </p>
           </div>
@@ -704,7 +707,7 @@ const handleFileUpload = async (event) => {
           <button 
             @click="showEditProfileModal = false" 
             type="button" 
-            class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
+            class="flex-1 py-2.5 bg-slate-100 dark:bg-[#2d2f31] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-300 min-h-[40px] cursor-pointer hover:bg-slate-200 dark:hover:bg-[#383a3d] transition-colors"
           >
             Close
           </button>
@@ -712,7 +715,7 @@ const handleFileUpload = async (event) => {
             @click="handleUpdateProfile" 
             :disabled="isUpdatingProfile" 
             type="button" 
-            class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 font-black text-xs text-white rounded-xl shadow-md min-h-[44px] cursor-pointer"
+            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 font-medium text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors"
           >
             {{ isUpdatingProfile ? 'Saving...' : 'Save Settings' }}
           </button>
@@ -722,27 +725,27 @@ const handleFileUpload = async (event) => {
     </div>
 
     <!-- SIGN OUT CONFIRMATION MODAL -->
-    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
-        <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center mx-auto text-rose-500">
-          <LogOut class="w-6 h-6" />
+    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] flex items-center justify-center mx-auto text-slate-700 dark:text-neutral-300">
+          <LogOut class="w-5 h-5" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-black text-lg text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+          <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-slate-500 dark:text-neutral-400 font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
         <div class="grid grid-cols-2 gap-3 pt-2">
           <button 
             @click="showSignOutModal = false" 
             type="button" 
-            class="py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-black text-xs rounded-xl min-h-[44px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[40px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
           <button 
             @click="handleSignOut" 
             type="button" 
-            class="py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-md min-h-[44px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors"
           >
             Sign Out
           </button>
