@@ -114,45 +114,17 @@ const handleInstallPWA = async () => {
   window.deferredPrompt = null
 }
 
-// 5-SECOND AUDIBLE MARCHING BRASS ALARM SYNTHESIZER
+// NORMAL, PLEASANT iOS NOTIFICATION CHIME SYNTHESIZER
 const playAlarmSiren = (durationSeconds = 5) => {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext
-    if (!AudioContextClass) return
-    if (!audioCtx) audioCtx = new AudioContextClass()
-    if (audioCtx.state === 'suspended') audioCtx.resume()
-
-    const now = audioCtx.currentTime
-    const osc = audioCtx.createOscillator()
-    const gain = audioCtx.createGain()
-
-    osc.type = 'sawtooth'
-
-    for (let t = 0; t < durationSeconds; t += 0.5) {
-      osc.frequency.setValueAtTime(880, now + t)
-      osc.frequency.setValueAtTime(1320, now + t + 0.25)
-    }
-
-    gain.gain.setValueAtTime(0.35, now)
-    gain.gain.linearRampToValueAtTime(0.01, now + durationSeconds)
-
-    osc.connect(gain)
-    gain.connect(audioCtx.destination)
-
-    osc.start(now)
-    osc.stop(now + durationSeconds)
-
-    if (navigator.vibrate) {
-      navigator.vibrate([400, 200, 400, 200, 400])
-    }
-  } catch (e) {
-    console.warn('Audio alarm notice:', e)
+  uiStore.playIOSNotificationSound()
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 50, 100])
   }
 }
 
 const testAlarmTone = () => {
-  playAlarmSiren(5)
-  showNetworkToast('🔊 Playing 5-second Call-Time Alarm test...')
+  playAlarmSiren()
+  showNetworkToast('🔊 Playing iOS notification chime...')
 }
 
 const urlB64ToUint8Array = (base64String) => {
@@ -469,21 +441,23 @@ onMounted(() => {
   checkUpcomingCallTimes()
   callTimeMonitorTimer = setInterval(checkUpcomingCallTimes, 30000)
 
+  let lastRsvpAlertTimestamp = 0
+
   // 1. Realtime subscription for new announcements
   announceSub = supabase.channel('public:announcements')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
+      const isUrgent = payload.new?.category?.toLowerCase().includes('urgent') || payload.new?.title?.toLowerCase().includes('urgent')
+      // Prevent duplicate announcement toast if an RSVP alert was already triggered right now
+      if (isUrgent && Date.now() - lastRsvpAlertTimestamp < 15000) {
+        return
+      }
       if (enableBanners.value) {
-        const isUrgent = payload.new?.category?.toLowerCase().includes('urgent') || payload.new?.title?.toLowerCase().includes('urgent')
-        if (isUrgent && enableAlarms.value) {
-          playAlarmSiren(3)
-        } else {
-          uiStore.playChime()
-        }
+        uiStore.playIOSNotificationSound()
         uiStore.addToast({
           title: `📢 ${payload.new.title}`,
           message: payload.new.content || payload.new.category || 'Band Update',
           type: isUrgent ? 'warning' : 'info',
-          duration: 12000
+          duration: 4500
         })
       }
     })
@@ -616,17 +590,23 @@ onMounted(() => {
     })
     .on('broadcast', { event: 'rsvp_reminder' }, (payload) => {
       const p = payload?.payload || payload || {}
+      // If current user sent this alert, do not show reminder to themselves
+      if (p.senderId && store.user?.id && p.senderId === store.user.id) {
+        return
+      }
+      // Debounce duplicate broadcasts within 15 seconds
+      if (Date.now() - lastRsvpAlertTimestamp < 15000) {
+        return
+      }
+      lastRsvpAlertTimestamp = Date.now()
+
       if (enableBanners.value) {
-        if (enableAlarms.value) {
-          playAlarmSiren(3)
-        } else {
-          uiStore.playChime()
-        }
+        uiStore.playIOSNotificationSound()
         uiStore.addToast({
           title: p.title || '🚨 Urgent: RSVP Attendance Confirmation Required',
           message: p.message || 'The Band Secretary requests you confirm attendance for upcoming gigs.',
           type: 'warning',
-          duration: 12000
+          duration: 4500
         })
       }
 
@@ -635,7 +615,7 @@ onMounted(() => {
         const body = p.message || 'Please confirm your attendance for upcoming band events.'
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification(title, { body, icon: '/favicon.svg', vibrate: [300, 100, 300, 100, 300] })
+            reg.showNotification(title, { body, icon: '/favicon.svg', vibrate: [100, 50, 100] })
           }).catch(() => {})
         } else {
           try { new Notification(title, { body, icon: '/favicon.svg' }) } catch(e){}
@@ -654,17 +634,21 @@ onMounted(() => {
         fetchPendingCount()
       }
       if (e.data?.type === 'RSVP_REMINDER_BROADCAST') {
+        if (e.data?.senderId && store.user?.id && e.data.senderId === store.user.id) {
+          return
+        }
+        if (Date.now() - lastRsvpAlertTimestamp < 15000) {
+          return
+        }
+        lastRsvpAlertTimestamp = Date.now()
+
         if (enableBanners.value) {
-          if (enableAlarms.value) {
-            playAlarmSiren(3)
-          } else {
-            uiStore.playChime()
-          }
+          uiStore.playIOSNotificationSound()
           uiStore.addToast({
             title: e.data.title || '🚨 Urgent RSVP Call-to-Action!',
             message: e.data.message || 'The Band Secretary requests attendance confirmation for upcoming gigs.',
             type: 'warning',
-            duration: 12000
+            duration: 4500
           })
         }
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
