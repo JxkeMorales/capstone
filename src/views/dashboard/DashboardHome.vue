@@ -117,7 +117,14 @@ const fetchHomeData = async (skipCache = false) => {
       try { announcements.value = JSON.parse(cachedAnn) } catch(e){}
     }
     if (cachedEv) {
-      try { rawEvents.value = JSON.parse(cachedEv) } catch(e){}
+      try {
+        const parsed = JSON.parse(cachedEv)
+        // Overlay local RSVP cache immediately so switching tabs NEVER resets or flickers button states
+        rawEvents.value = parsed.map(ev => ({
+          ...ev,
+          rsvpStatus: localStorage.getItem(`smartband_rsvp_${ev.id}`) || ev.rsvpStatus || null
+        }))
+      } catch(e){}
     }
   }
 
@@ -136,12 +143,16 @@ const fetchHomeData = async (skipCache = false) => {
           .select('event_id, status')
           .eq('user_id', store.user.id)
         if (rsvpData) {
-          rsvpData.forEach(r => { rsvpMap[r.event_id] = r.status })
+          rsvpData.forEach(r => {
+            rsvpMap[r.event_id] = r.status
+            localStorage.setItem(`smartband_rsvp_${r.event_id}`, r.status)
+          })
         }
       }
 
       rawEvents.value = eventData.map(ev => {
         const evDate = new Date(ev.event_date)
+        const localStatus = localStorage.getItem(`smartband_rsvp_${ev.id}`)
         return {
           id: ev.id,
           rawDate: ev.event_date,
@@ -150,7 +161,7 @@ const fetchHomeData = async (skipCache = false) => {
           time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           location: ev.location,
           type: ev.event_type,
-          rsvpStatus: rsvpMap[ev.id] || null,
+          rsvpStatus: rsvpMap[ev.id] || localStatus || null,
           createdAt: ev.created_at
         }
       })
@@ -434,15 +445,6 @@ const handleCreateAnnouncement = async () => {
 
       notifyOtherTabs('ANNOUNCEMENT_CHANGED')
 
-      // Trigger Web Push Notification via Edge Function
-      try {
-        await supabase.functions.invoke('push-announcement', {
-          body: { record: data }
-        })
-      } catch (pushErr) {
-        console.warn('Failed to trigger web push:', pushErr)
-      }
-
       newAnnTitle.value = ''
       newAnnContent.value = ''
       showAnnouncementModal.value = false
@@ -618,6 +620,10 @@ const rsvp = async (eventObj, status) => {
   
   localStorage.setItem(`smartband_rsvp_${eventObj.id}`, status)
   
+  // Immediately persist updated rsvpStatus to rawEvents cache so tab-switching never resets or flickers
+  rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: status } : e)
+  localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+  
   try {
     const { error } = await supabase
       .from('event_rsvps')
@@ -634,6 +640,8 @@ const rsvp = async (eventObj, status) => {
     if (error) {
       console.error('RSVP upsert error:', error)
       eventObj.rsvpStatus = prevStatus
+      rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: prevStatus } : e)
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
       throw error
     }
 
@@ -648,6 +656,40 @@ const rsvp = async (eventObj, status) => {
     console.error('RSVP error:', e)
     showToast('Failed to update RSVP.')
   }
+}
+
+// INSTANT REALTIME EVENT LISTENER (0ms latency for newly scheduled events on members' dashboards)
+const handleLiveEventUpdate = (e) => {
+  const payload = e?.detail || {}
+  const eventType = payload.eventType || 'INSERT'
+  const record = payload.new || payload
+
+  if (record && record.id) {
+    if (eventType === 'DELETE') {
+      rawEvents.value = rawEvents.value.filter(x => x.id !== record.id)
+    } else {
+      const evDate = new Date(record.event_date)
+      const formattedEv = {
+        id: record.id,
+        rawDate: record.event_date,
+        title: record.title,
+        date: evDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        location: record.location,
+        type: record.event_type,
+        rsvpStatus: localStorage.getItem(`smartband_rsvp_${record.id}`) || null,
+        createdAt: record.created_at || new Date().toISOString()
+      }
+      const exists = rawEvents.value.some(x => x.id === record.id)
+      if (exists) {
+        rawEvents.value = rawEvents.value.map(x => x.id === record.id ? formattedEv : x)
+      } else {
+        rawEvents.value = [formattedEv, ...rawEvents.value]
+      }
+    }
+    localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+  }
+  fetchHomeData(true)
 }
 
 let cleanupSync = null
@@ -669,7 +711,10 @@ onMounted(() => {
     }
   })
 
-  // 2. Optimized Auto-Polling Fallback (Every 12s, paused if backgrounded)
+  // 2. Direct Window Realtime Event Listener for instant display of new events
+  window.addEventListener('smartband_event_changed', handleLiveEventUpdate)
+
+  // 3. Optimized Auto-Polling Fallback (Every 12s, paused if backgrounded)
   pollTimer = setInterval(() => {
     if (!document.hidden) {
       fetchHomeData(true)
@@ -683,6 +728,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
+  window.removeEventListener('smartband_event_changed', handleLiveEventUpdate)
   window.removeEventListener('focus', handleVisibilityOrFocus)
   document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
 })

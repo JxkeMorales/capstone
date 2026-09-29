@@ -474,7 +474,7 @@ onMounted(() => {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
       if (enableBanners.value) {
         const isUrgent = payload.new?.category?.toLowerCase().includes('urgent') || payload.new?.title?.toLowerCase().includes('urgent')
-        if (isUrgent && enableSiren.value) {
+        if (isUrgent && enableAlarms.value) {
           playAlarmSiren(3)
         } else {
           uiStore.playChime()
@@ -489,11 +489,52 @@ onMounted(() => {
     })
     .subscribe()
 
-  // 2. Realtime subscription for new events with Availability Grid Matching
+  // 2. Realtime subscription for events with instant local cache updating and Availability Grid Matching
   eventsSub = supabase.channel('public:events_realtime_layout')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, async (payload) => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, async (payload) => {
+      const eventType = payload.eventType || 'INSERT'
       const newEv = payload.new
-      if (!newEv) return
+      const oldEv = payload.old
+
+      // Immediate cache sync so dashboard views and offline state have the latest event data instantly
+      try {
+        const cachedStr = localStorage.getItem('smartband_raw_events_cache')
+        let cacheList = cachedStr ? JSON.parse(cachedStr) : []
+        if (eventType === 'DELETE' && oldEv?.id) {
+          cacheList = cacheList.filter(e => e.id !== oldEv.id)
+        } else if (newEv && newEv.id) {
+          const evDate = new Date(newEv.event_date)
+          const formatted = {
+            id: newEv.id,
+            rawDate: newEv.event_date,
+            title: newEv.title,
+            date: evDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            location: newEv.location,
+            type: newEv.event_type,
+            rsvpStatus: localStorage.getItem(`smartband_rsvp_${newEv.id}`) || null,
+            createdAt: newEv.created_at || new Date().toISOString()
+          }
+          const idx = cacheList.findIndex(e => e.id === newEv.id)
+          if (idx !== -1) {
+            cacheList[idx] = { ...cacheList[idx], ...formatted }
+          } else {
+            cacheList.unshift(formatted)
+          }
+        }
+        localStorage.setItem('smartband_raw_events_cache', JSON.stringify(cacheList))
+      } catch (err) {
+        console.warn('Cache update on event realtime error:', err)
+      }
+
+      // Dispatch instant custom event to update active views (DashboardHome, DashboardSchedule) without page reload
+      window.dispatchEvent(new CustomEvent('smartband_event_changed', { detail: payload }))
+      if (syncBroadcast) {
+        try { syncBroadcast.postMessage({ type: 'EVENT_CHANGED', payload: newEv || oldEv }) } catch(e){}
+      }
+
+      // If not an insert, availability checking and announcements are skipped
+      if (eventType !== 'INSERT' || !newEv) return
 
       let isMemberFree = false
       let matchDay = ''
@@ -576,7 +617,7 @@ onMounted(() => {
     .on('broadcast', { event: 'rsvp_reminder' }, (payload) => {
       const p = payload?.payload || payload || {}
       if (enableBanners.value) {
-        if (enableSiren.value) {
+        if (enableAlarms.value) {
           playAlarmSiren(3)
         } else {
           uiStore.playChime()
@@ -614,7 +655,7 @@ onMounted(() => {
       }
       if (e.data?.type === 'RSVP_REMINDER_BROADCAST') {
         if (enableBanners.value) {
-          if (enableSiren.value) {
+          if (enableAlarms.value) {
             playAlarmSiren(3)
           } else {
             uiStore.playChime()

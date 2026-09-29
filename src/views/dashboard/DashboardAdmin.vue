@@ -379,20 +379,6 @@ const triggerReNotifications = async () => {
       console.warn('Announcement creation note:', annErr)
     }
 
-    // 5. Trigger Web Push Notification via Edge Function (for mobile devices with push notifications enabled)
-    try {
-      await supabase.functions.invoke('push-announcement', {
-        body: {
-          record: {
-            title: alertTitle,
-            category: alertMsg
-          }
-        }
-      })
-    } catch (pushErr) {
-      console.warn('Web push trigger note:', pushErr)
-    }
-
     showToast('✓ RSVP reminder notifications dispatched to all devices successfully.')
   } catch (err) {
     console.error('Error dispatching RSVP alerts:', err)
