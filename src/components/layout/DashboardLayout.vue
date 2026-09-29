@@ -6,6 +6,7 @@ import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
+import { sendPushNotification } from '@/utils/push'
 
 const route = useRoute()
 const router = useRouter()
@@ -138,16 +139,47 @@ const urlB64ToUint8Array = (base64String) => {
   return outputArray
 }
 
+const isTestingPush = ref(false)
+const testBackgroundPush = async () => {
+  if (isTestingPush.value) return
+  isTestingPush.value = true
+  try {
+    uiStore.playIOSNotificationSound()
+    uiStore.addToast({
+      title: 'Testing Push Notification...',
+      message: 'Dispatching background test push to your registered device.',
+      type: 'info',
+      duration: 3500
+    })
+
+    // 1. Direct browser local service worker notification test
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification('🎷 Peñaranda Band 1870 (Local Test)', {
+          body: 'System notifications are active on this device!',
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          vibrate: [150, 80, 150]
+        })
+      }).catch(() => {})
+    }
+
+    // 2. Remote background Web Push through serverless function
+    await sendPushNotification({
+      title: '🎷 Peñaranda Band 1870 (Background Test)',
+      message: 'Background push active! You will receive alerts even when this app is closed.',
+      url: '/dashboard'
+    })
+  } catch (err) {
+    console.warn('Test push notice:', err)
+  } finally {
+    isTestingPush.value = false
+  }
+}
+
 const syncPushSubscription = async (forceRetry = false) => {
   if (!store.user) return
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
-
-  // Prevent repeated 404 network spam if push_subscriptions table has not been created in Supabase yet
-  const tableMissingTime = localStorage.getItem('smartband_push_table_missing')
-  if (!forceRetry && tableMissingTime) {
-    const elapsed = Date.now() - parseInt(tableMissingTime, 10)
-    if (elapsed < 6 * 60 * 60 * 1000) return // Re-check every 6 hours
-  }
 
   try {
     const reg = await navigator.serviceWorker.ready
@@ -160,6 +192,7 @@ const syncPushSubscription = async (forceRetry = false) => {
           applicationServerKey: urlB64ToUint8Array('BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA')
         })
       } catch (subErr) {
+        console.warn('[Push Manager Subscribe Notice]:', subErr)
         return
       }
     }
@@ -178,37 +211,66 @@ const syncPushSubscription = async (forceRetry = false) => {
       }, { onConflict: 'user_id,endpoint' })
 
       if (error) {
-        if (error.code === 'PGRST204' || error.code === '42P01' || error.status === 404 || error.message?.includes('schema cache') || error.message?.includes('not found') || error.message?.includes('relation')) {
-          localStorage.setItem('smartband_push_table_missing', Date.now().toString())
-        }
+        console.warn('[Push Subscriptions Save Notice]:', error)
       } else {
-        localStorage.removeItem('smartband_push_table_missing')
+        console.log('[Push] Device subscription synchronized with server')
       }
     }
   } catch(e) {
-    // Graceful catch for push sync
+    console.warn('[Push Sync Catch]:', e)
   }
 }
 
 const requestNotificationPermission = async () => {
   if (!('Notification' in window)) {
-    uiStore.addToast({ title: 'Unsupported', message: 'Browser push notifications are not supported. Using in-app banners instead.', type: 'warning' })
+    uiStore.addToast({ title: 'Unsupported', message: 'Browser push notifications are not supported on this device. Using in-app banners.', type: 'warning' })
     return
   }
-  const result = await Notification.requestPermission()
-  notificationPermission.value = result
-  showFirstTimeNotifPrompt.value = false
 
-  if (result === 'granted') {
-    showNetworkToast('🔔 Call-Time Alarm & Push Notifications Active!')
-    await syncPushSubscription()
-    checkUpcomingCallTimes()
+  try {
+    const result = await Notification.requestPermission()
+    notificationPermission.value = result
+    showFirstTimeNotifPrompt.value = false
+
+    if (result === 'granted') {
+      uiStore.playIOSNotificationSound()
+      uiStore.addToast({
+        title: '🔔 Push Notifications Active!',
+        message: 'You will receive alerts for gigs, call-times, and rehearsals even when the app is closed.',
+        type: 'success',
+        duration: 4500
+      })
+      await syncPushSubscription(true)
+      checkUpcomingCallTimes()
+
+      // Show immediate native system confirmation notification
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification('🎷 Peñaranda Band 1870', {
+            body: 'Background notifications enabled! You will stay informed even when the app is closed.',
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            vibrate: [150, 80, 150]
+          })
+        }).catch(() => {})
+      }
+    } else if (result === 'denied') {
+      uiStore.addToast({
+        title: 'Notifications Blocked',
+        message: 'Click the tune/padlock icon in your browser address bar to allow notifications.',
+        type: 'warning',
+        duration: 6000
+      })
+    }
+  } catch (err) {
+    console.error('Notification permission request error:', err)
   }
 }
 
 const dismissFirstTimeNotifPrompt = () => {
   showFirstTimeNotifPrompt.value = false
-  localStorage.setItem('smartband_notif_prompt_dismissed', 'true')
+  // Snooze for 24 hours instead of dismissing permanently
+  localStorage.setItem('smartband_notif_snooze_until', (Date.now() + 24 * 60 * 60 * 1000).toString())
 }
 
 // FULLY OFFLINE-CAPABLE PRE-EVENT CALL-TIME ALARM & COUNTDOWN ENGINE
@@ -431,9 +493,16 @@ onMounted(() => {
   window.addEventListener('online', updateNetworkStatus)
   window.addEventListener('offline', updateNetworkStatus)
 
-  const isPromptDismissed = localStorage.getItem('smartband_notif_prompt_dismissed') === 'true'
-  if (typeof Notification !== 'undefined' && Notification.permission === 'default' && !isPromptDismissed) {
-    showFirstTimeNotifPrompt.value = true
+  // Notification Permission & Push Sync Check
+  localStorage.removeItem('smartband_notif_prompt_dismissed') // Remove legacy key so users are properly asked
+  const snoozeUntil = parseInt(localStorage.getItem('smartband_notif_snooze_until') || '0', 10)
+  if (typeof Notification !== 'undefined') {
+    notificationPermission.value = Notification.permission
+    if (Notification.permission === 'default' && Date.now() > snoozeUntil) {
+      showFirstTimeNotifPrompt.value = true
+    } else if (Notification.permission === 'granted') {
+      syncPushSubscription()
+    }
   }
 
   fetchPendingCount()
@@ -943,43 +1012,48 @@ onUnmounted(() => {
             @click="showSettingsDrawer = true" 
             type="button"
             class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center relative cursor-pointer shrink-0"
-            aria-label="Open App Settings & Alerts Drawer"
-            title="Open App Settings"
+            :aria-label="notificationPermission !== 'granted' ? 'Enable Push Notifications & Settings' : 'Open App Settings & Alerts'"
+            :title="notificationPermission !== 'granted' ? 'Enable Push Notifications' : 'App Settings & Alerts'"
           >
             <Bell class="w-4 h-4" />
-            <span v-if="pendingCount > 0" class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+            <span v-if="notificationPermission !== 'granted'" class="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full animate-pulse" title="Push notifications disabled"></span>
+            <span v-else-if="pendingCount > 0" class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
           </button>
         </div>
       </header>
 
-      <!-- FIRST-TIME USER NOTIFICATION PROMPT BANNER -->
+      <!-- NOTIFICATION PERMISSION PROMPT BANNER -->
       <Transition name="toast">
         <div 
           v-if="showFirstTimeNotifPrompt"
-          class="bg-slate-100 dark:bg-neutral-800/90 text-slate-800 dark:text-neutral-200 px-4 py-2.5 shadow-xs flex items-center justify-between border-b border-slate-200 dark:border-neutral-700 text-xs"
+          class="bg-amber-500/10 dark:bg-amber-500/15 text-slate-800 dark:text-neutral-200 px-4 py-3 flex items-center justify-between border-b border-amber-500/20 text-xs"
         >
-          <div class="flex items-center space-x-2.5 pr-2 min-w-0">
-            <Bell class="w-4 h-4 flex-shrink-0 text-slate-600 dark:text-neutral-400" />
+          <div class="flex items-center space-x-3 pr-2 min-w-0">
+            <div class="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+              <Bell class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            </div>
             <div class="min-w-0">
-              <span class="font-semibold block text-slate-900 dark:text-white">Enable 10–15m Call-Time Alarm?</span>
-              <span class="text-[11px] text-slate-500 dark:text-neutral-400 block truncate">Audible siren & notifications for upcoming rehearsals and gigs.</span>
+              <span class="font-bold block text-slate-900 dark:text-white">Enable Device Push Notifications?</span>
+              <span class="text-[11px] text-slate-600 dark:text-neutral-400 block truncate">
+                Get alerted for call-times, gig updates, and urgent notices even when this app is closed.
+              </span>
             </div>
           </div>
-          <div class="flex items-center space-x-1.5 flex-shrink-0">
+          <div class="flex items-center space-x-2 flex-shrink-0">
             <button 
               @click="requestNotificationPermission" 
               type="button" 
-              class="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium rounded-full shadow-xs text-xs hover:bg-slate-800 cursor-pointer min-h-[32px]"
+              class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-full shadow-xs text-xs cursor-pointer min-h-[32px] transition-all"
             >
-              Allow
+              Turn On
             </button>
             <button 
               @click="dismissFirstTimeNotifPrompt" 
               type="button" 
-              class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer"
-              aria-label="Dismiss Notification Prompt"
+              class="px-2.5 py-1.5 text-slate-500 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white text-xs font-medium cursor-pointer"
+              title="Remind me later"
             >
-              <X class="w-4 h-4" />
+              Not Now
             </button>
           </div>
         </div>
@@ -1141,6 +1215,43 @@ onUnmounted(() => {
               <span class="text-xs font-medium text-slate-800 dark:text-neutral-200">{{ isOnline ? 'Online Sync Active' : 'Offline Mode' }}</span>
             </div>
             <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+          </div>
+
+          <!-- Device Push Notifications Row -->
+          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-semibold text-xs text-slate-900 dark:text-white">Device Push Notifications</p>
+                <p class="text-[10px] text-slate-500 dark:text-neutral-400">
+                  Alerts when app is closed (Phone / PC)
+                </p>
+              </div>
+              <div v-if="notificationPermission === 'granted'" class="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-medium text-[11px]">
+                <Check class="w-3 h-3" />
+                <span>Active</span>
+              </div>
+              <button 
+                v-else
+                @click="requestNotificationPermission"
+                type="button"
+                class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full cursor-pointer min-h-[32px]"
+              >
+                Turn On
+              </button>
+            </div>
+            
+            <!-- Test Push Button when permission is granted -->
+            <div v-if="notificationPermission === 'granted'" class="pt-1.5 border-t border-slate-200/60 dark:border-neutral-800/80 flex items-center justify-between">
+              <span class="text-[10px] text-slate-500 dark:text-neutral-400">Test background delivery:</span>
+              <button 
+                @click="testBackgroundPush"
+                :disabled="isTestingPush"
+                type="button"
+                class="px-2.5 py-1 text-[11px] bg-slate-200/80 hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 rounded-lg cursor-pointer font-medium disabled:opacity-50"
+              >
+                {{ isTestingPush ? 'Sending...' : 'Send Test Push' }}
+              </button>
+            </div>
           </div>
 
           <!-- Audible Alarms Toggle -->

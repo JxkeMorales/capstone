@@ -5,6 +5,7 @@ import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { generateEventAttendancePdf } from '@/utils/pdfExport'
+import { sendPushNotification } from '@/utils/push'
 
 const store = useMainStore()
 
@@ -95,6 +96,10 @@ const saveNewEvent = async () => {
 
     if (error) throw error
 
+    const savedTitle = newEventForm.value.title.trim()
+    const savedType = newEventForm.value.event_type
+    const savedDate = new Date(newEventForm.value.event_date).toLocaleDateString()
+
     showToastNotification('✓ New gig scheduled & announced to all musicians!')
     showAddEventModal.value = false
     newEventForm.value = {
@@ -106,6 +111,14 @@ const saveNewEvent = async () => {
     }
     await fetchEvents(true)
     notifyOtherTabs('NEW_EVENT_SCHEDULED')
+
+    // Dispatch background Web Push to closed devices
+    sendPushNotification({
+      title: `🎷 New Event: ${savedTitle}`,
+      message: `${savedType} on ${savedDate}. Please confirm your attendance!`,
+      url: '/dashboard/schedule',
+      senderId: store.user?.id
+    })
   } catch (err) {
     console.error('Error saving event:', err)
     showToastNotification('Failed to schedule event: ' + (err.message || 'Error'))
@@ -478,6 +491,14 @@ const alertUnconfirmedForEvent = async () => {
         category: 'Urgent Call-to-Action'
       })
     } catch (e) {}
+
+    // 3. Dispatch background Web Push to closed devices (phones/PCs)
+    sendPushNotification({
+      title: alertTitle,
+      message: alertMsg,
+      url: '/dashboard/schedule',
+      senderId: store.user?.id
+    })
 
     showToastNotification(`✓ RSVP reminder sent to ${attendanceCounts.value.unconfirmed} unconfirmed members!`)
   } catch (err) {

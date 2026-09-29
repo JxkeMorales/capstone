@@ -33,6 +33,7 @@ import {
 import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
+import { sendPushNotification } from '@/utils/push'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { getBandLogoBase64 } from '@/utils/pdfExport'
@@ -356,6 +357,14 @@ const triggerReNotifications = async () => {
     } catch (annErr) {
       console.warn('Announcement creation note:', annErr)
     }
+
+    // 3. Dispatch background Web Push to closed devices (phones/PCs)
+    sendPushNotification({
+      title: alertTitle,
+      message: alertMsg,
+      url: '/dashboard',
+      senderId: store.user?.id
+    })
 
     showToast('✓ RSVP reminder notifications dispatched to all devices successfully.')
   } catch (err) {
