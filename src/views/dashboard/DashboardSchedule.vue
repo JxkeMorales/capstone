@@ -202,9 +202,15 @@ const notifyOtherTabs = (eventType) => {
 const fetchEvents = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
-    const cachedEvents = localStorage.getItem('smartband_raw_events_cache')
+    const cachedEvents = localStorage.getItem('smartband_schedule_events_cache') || localStorage.getItem('smartband_raw_events_cache')
     if (cachedEvents) {
-      try { rawEvents.value = JSON.parse(cachedEvents) } catch (e) {}
+      try {
+        const parsed = JSON.parse(cachedEvents)
+        rawEvents.value = parsed.map(ev => ({
+          ...ev,
+          rsvpStatus: localStorage.getItem(`smartband_rsvp_${ev.id}`) || ev.rsvpStatus || null
+        }))
+      } catch (e) {}
     }
   }
 
@@ -225,10 +231,12 @@ const fetchEvents = async (skipCache = false) => {
           date: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           location: ev.location,
-          dayNum: dateObj.getDate()
+          dayNum: dateObj.getDate(),
+          createdAt: ev.created_at,
+          rsvpStatus: localStorage.getItem(`smartband_rsvp_${ev.id}`) || null
         }
       })
-      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+      localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
     }
   } catch (err) {
     console.error('Error fetching events:', err)
@@ -457,13 +465,6 @@ const alertUnconfirmedForEvent = async () => {
       })
     } catch (e) {}
 
-    // 5. Trigger Web Push Notification
-    try {
-      await supabase.functions.invoke('push-announcement', {
-        body: { record: { title: alertTitle, category: alertMsg } }
-      })
-    } catch (e) {}
-
     showToastNotification(`✓ RSVP reminder sent to ${attendanceCounts.value.unconfirmed} unconfirmed members!`)
   } catch (err) {
     showToastNotification('Failed to send reminder alerts.')
@@ -511,6 +512,10 @@ const handleVisibilityOrFocus = () => {
   }
 }
 
+const handleLiveScheduleEvent = () => {
+  fetchEvents(true)
+}
+
 onMounted(() => {
   fetchEvents()
 
@@ -521,6 +526,7 @@ onMounted(() => {
     }
   })
 
+  window.addEventListener('smartband_event_changed', handleLiveScheduleEvent)
   window.addEventListener('focus', handleVisibilityOrFocus)
   document.addEventListener('visibilitychange', handleVisibilityOrFocus)
 
@@ -534,8 +540,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (cleanupSync) cleanupSync()
   if (pollTimer) clearInterval(pollTimer)
+  window.removeEventListener('smartband_event_changed', handleLiveScheduleEvent)
   window.removeEventListener('focus', handleVisibilityOrFocus)
-  })
+  document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+})
 </script>
 
 <template>
