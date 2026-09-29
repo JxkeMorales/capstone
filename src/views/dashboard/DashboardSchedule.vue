@@ -435,27 +435,41 @@ const alertUnconfirmedForEvent = async () => {
   const senderName = store.profile?.full_name || 'Band Secretary'
 
   try {
-    // 1. BroadcastChannel local
-    if ('BroadcastChannel' in window) {
-      try {
-        const ch = new BroadcastChannel('smartband_live_sync')
-        ch.postMessage({ type: 'RSVP_REMINDER_BROADCAST', title: alertTitle, message: alertMsg, timestamp: Date.now() })
-        ch.close()
-      } catch (e) {}
-    }
-
-    // 2. Centralized broadcastSync
-    await broadcastSync('rsvp_reminder', { title: alertTitle, message: alertMsg, sender: senderName })
-
-    // 3. Direct WebSocket channel send
+    // 1. Direct real-time WebSocket broadcast to all connected members and remote devices
     try {
       const alertChan = supabase.channel('smartband-broadcast-alerts', { config: { broadcast: { ack: true } } })
-      if (alertChan.state === 'joined') {
-        await alertChan.send({ type: 'broadcast', event: 'rsvp_reminder', payload: { title: alertTitle, message: alertMsg, sender: senderName } })
+      const broadcastPayload = {
+        title: alertTitle,
+        message: alertMsg,
+        sender: senderName,
+        senderId: store.user?.id || null
       }
-    } catch (e) {}
 
-    // 4. Create an official Announcement so all devices receive it and offline users see it upon login
+      if (alertChan.state === 'joined') {
+        await alertChan.send({ type: 'broadcast', event: 'rsvp_reminder', payload: broadcastPayload })
+      } else {
+        await new Promise((resolve) => {
+          let done = false
+          alertChan.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED' && !done) {
+              done = true
+              await alertChan.send({ type: 'broadcast', event: 'rsvp_reminder', payload: broadcastPayload })
+              resolve()
+            }
+          })
+          setTimeout(() => {
+            if (!done) {
+              done = true
+              resolve()
+            }
+          }, 2000)
+        })
+      }
+    } catch (e) {
+      console.warn('Realtime broadcast notice:', e)
+    }
+
+    // 2. Create official announcement for activity feed and offline members
     try {
       await supabase.from('announcements').insert({
         author_id: store.user?.id || null,

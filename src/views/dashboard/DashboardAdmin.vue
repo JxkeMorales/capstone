@@ -298,42 +298,24 @@ const triggerReNotifications = async () => {
   const senderName = store.profile?.full_name || 'Band Secretary'
 
   try {
-    // 1. Local inter-tab broadcast (same device across tabs)
-    if ('BroadcastChannel' in window) {
-      try {
-        const ch = new BroadcastChannel('smartband_live_sync')
-        ch.postMessage({ 
-          type: 'RSVP_REMINDER_BROADCAST', 
-          title: alertTitle,
-          message: alertMsg,
-          timestamp: Date.now() 
-        })
-        ch.close()
-      } catch (e) {}
-    }
-
-    // 2. Centralized broadcastSync (sends over WebSocket to all open remote devices)
-    await broadcastSync('rsvp_reminder', {
-      title: alertTitle,
-      message: alertMsg,
-      sender: senderName
-    })
-
-    // 3. Direct channel broadcast with guaranteed subscription check (DO NOT remove channel!)
+    // 1. Direct real-time WebSocket broadcast to all connected members and remote devices
     try {
       const alertChan = supabase.channel('smartband-broadcast-alerts', {
         config: { broadcast: { ack: true } }
       })
 
+      const broadcastPayload = {
+        title: alertTitle,
+        message: alertMsg,
+        sender: senderName,
+        senderId: store.user?.id || null
+      }
+
       if (alertChan.state === 'joined') {
         await alertChan.send({
           type: 'broadcast',
           event: 'rsvp_reminder',
-          payload: {
-            title: alertTitle,
-            message: alertMsg,
-            sender: senderName
-          }
+          payload: broadcastPayload
         })
       } else {
         await new Promise((resolve) => {
@@ -344,11 +326,7 @@ const triggerReNotifications = async () => {
               await alertChan.send({
                 type: 'broadcast',
                 event: 'rsvp_reminder',
-                payload: {
-                  title: alertTitle,
-                  message: alertMsg,
-                  sender: senderName
-                }
+                payload: broadcastPayload
               })
               resolve()
             }
@@ -358,14 +336,14 @@ const triggerReNotifications = async () => {
               done = true
               resolve()
             }
-          }, 2500)
+          }, 2000)
         })
       }
     } catch (wsErr) {
-      console.warn('Direct WebSocket broadcast error:', wsErr)
+      console.warn('Realtime broadcast error:', wsErr)
     }
 
-    // 4. Create an official Announcement in the database so ALL devices receive it via postgres_changes, and offline users see it upon login!
+    // 2. Create official announcement for activity feed and offline members
     try {
       await supabase
         .from('announcements')
