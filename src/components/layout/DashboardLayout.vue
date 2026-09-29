@@ -166,19 +166,30 @@ const urlB64ToUint8Array = (base64String) => {
   return outputArray
 }
 
-const syncPushSubscription = async () => {
+const syncPushSubscription = async (forceRetry = false) => {
   if (!store.user) return
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+
+  // Prevent repeated 404 network spam if push_subscriptions table has not been created in Supabase yet
+  const tableMissingTime = localStorage.getItem('smartband_push_table_missing')
+  if (!forceRetry && tableMissingTime) {
+    const elapsed = Date.now() - parseInt(tableMissingTime, 10)
+    if (elapsed < 6 * 60 * 60 * 1000) return // Re-check every 6 hours
+  }
 
   try {
     const reg = await navigator.serviceWorker.ready
     let sub = await reg.pushManager.getSubscription()
     
     if (!sub && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array('BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA')
-      })
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlB64ToUint8Array('BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA')
+        })
+      } catch (subErr) {
+        return
+      }
     }
 
     if (sub) {
@@ -187,15 +198,23 @@ const syncPushSubscription = async () => {
       const p256dh = rawKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey))) : null
       const auth = rawAuth ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuth))) : null
 
-      await supabase.from('push_subscriptions').upsert({
+      const { error } = await supabase.from('push_subscriptions').upsert({
         user_id: store.user.id,
         endpoint: sub.endpoint,
         p256dh: p256dh,
         auth: auth
       }, { onConflict: 'user_id,endpoint' })
+
+      if (error) {
+        if (error.code === 'PGRST204' || error.code === '42P01' || error.status === 404 || error.message?.includes('schema cache') || error.message?.includes('not found') || error.message?.includes('relation')) {
+          localStorage.setItem('smartband_push_table_missing', Date.now().toString())
+        }
+      } else {
+        localStorage.removeItem('smartband_push_table_missing')
+      }
     }
   } catch(e) {
-    console.warn('Push subscription sync notice:', e)
+    // Graceful catch for push sync
   }
 }
 
