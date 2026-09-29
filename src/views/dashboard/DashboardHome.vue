@@ -5,6 +5,7 @@ import { useMainStore } from '@/stores/main'
 import { supabase } from '@/supabase'
 import { initRealtimeSync } from '@/utils/realtime'
 import { generateEventAttendancePdf } from '@/utils/pdfExport'
+import { sendPushNotification } from '@/utils/push'
 
 const store = useMainStore()
 
@@ -445,6 +446,14 @@ const handleCreateAnnouncement = async () => {
 
       notifyOtherTabs('ANNOUNCEMENT_CHANGED')
 
+      // Dispatch background Web Push to closed devices
+      sendPushNotification({
+        title: `📢 ${newAnn.title}`,
+        message: newAnn.content,
+        url: '/dashboard',
+        senderId: store.user?.id
+      })
+
       newAnnTitle.value = ''
       newAnnContent.value = ''
       showAnnouncementModal.value = false
@@ -508,6 +517,14 @@ const handleCreateEvent = async () => {
       localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
 
       notifyOtherTabs('EVENT_CHANGED')
+
+      // Dispatch background Web Push to closed devices
+      sendPushNotification({
+        title: `🎷 New Event: ${newEv.title}`,
+        message: `${newEv.type} at ${newEv.location} (${newEv.date}). Confirm your RSVP!`,
+        url: '/dashboard',
+        senderId: store.user?.id
+      })
 
       newEvTitle.value = ''
       newEvDate.value = ''
