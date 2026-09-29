@@ -1113,59 +1113,59 @@ onUnmounted(() => {
     
     <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
-      <div class="flex items-center space-x-3.5">
-        <div class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex-shrink-0">
-          <Shield class="w-6 h-6" />
+      <div class="flex items-center space-x-3">
+        <div class="p-2.5 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex-shrink-0 border border-slate-200 dark:border-neutral-700">
+          <Shield class="w-5 h-5" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider leading-tight mb-0.5">
-            {{ store.isSuperAdmin ? 'IT Super Admin Management' : 'Band Operations Hub' }}
+          <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">
+            {{ store.isSuperAdmin ? 'IT Administration' : 'Band Operations' }}
           </p>
-          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">
-            Admin Operations
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-neutral-100 leading-tight truncate">
+            Admin Management
           </h1>
         </div>
       </div>
 
-      <!-- Tab Switcher: Operations vs Reports (Responsive) -->
-      <div class="flex flex-wrap sm:flex-nowrap rounded-2xl bg-slate-100 dark:bg-[#27272a] p-1.5 text-xs font-bold border border-slate-200/80 dark:border-neutral-800 w-full sm:w-auto gap-1">
+      <!-- Tab Switcher: Operations vs Reports (Segmented Pill Switcher) -->
+      <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 text-xs font-medium border border-slate-200/80 dark:border-neutral-700 w-full sm:w-auto gap-1 self-start sm:self-auto">
         <button 
           type="button" 
           @click="activeTab = 'operations'"
-          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[38px]"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-full transition-all cursor-pointer min-h-[36px]"
           :class="activeTab === 'operations' 
-            ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-sm font-black' 
+            ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <Activity class="w-4 h-4" />
+          <Activity class="w-3.5 h-3.5" />
           <span>Operations Hub</span>
         </button>
 
         <button 
           type="button" 
           @click="activeTab = 'reports'"
-          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[38px]"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-full transition-all cursor-pointer min-h-[36px]"
           :class="activeTab === 'reports' 
-            ? 'bg-white dark:bg-[#1c1c1e] text-blue-600 dark:text-blue-400 shadow-sm font-black' 
+            ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <BarChart3 class="w-4 h-4" />
+          <BarChart3 class="w-3.5 h-3.5" />
           <span>Reports & Analytics</span>
         </button>
       </div>
     </header>
 
-    <!-- Toast Notification -->
+    <!-- Toast Notification (Google Snackbar Style) -->
     <Transition name="toast">
       <div 
         v-if="notification" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs sm:max-w-md w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-bold text-xs"
+        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm sm:max-w-md w-11/12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-full shadow-lg border border-slate-800 dark:border-neutral-200 flex items-center justify-between text-xs font-medium"
       >
         <div class="flex items-center space-x-2 min-w-0 pr-2">
-          <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
+          <CheckCircle2 class="w-4 h-4 text-emerald-400 dark:text-emerald-600 flex-shrink-0" />
           <span class="truncate">{{ notification }}</span>
         </div>
-        <button @click="notification = ''" class="ml-2 text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer">
+        <button @click="notification = ''" class="ml-2 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 min-w-[24px] min-h-[24px] flex items-center justify-center cursor-pointer rounded-full">
           <X class="w-3.5 h-3.5" />
         </button>
       </div>
@@ -1176,49 +1176,49 @@ onUnmounted(() => {
 
       <!-- 1. ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER -->
       <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
-        <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
+        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-              <Calendar class="w-5 h-5 text-blue-500" />
-              <h2 class="font-black text-base text-slate-900 dark:text-white">Check Member Availability</h2>
+            <div class="flex items-center space-x-2">
+              <Calendar class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
+              <h2 class="font-bold text-base text-slate-900 dark:text-neutral-100">Check Member Availability</h2>
             </div>
-            <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full uppercase tracking-wider">
+            <span class="text-[11px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-600 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-3 py-0.5 rounded-full">
               Operations Tool
             </span>
           </div>
 
-          <p class="text-xs text-slate-500 dark:text-neutral-400 font-medium">
-            Select target weekday & date to cross-reference available musicians for upcoming gigs and rehearsals.
+          <p class="text-xs text-slate-500 dark:text-neutral-400 font-normal">
+            Cross-reference available musicians for upcoming gigs and rehearsals by day, time slot, and section.
           </p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div>
-              <label for="day-select" class="block text-[10px] uppercase text-slate-400 mb-1.5">Target Day & Date</label>
+              <label for="day-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">Target Day & Date</label>
               <select 
                 id="day-select" 
                 v-model="selectedDayNeeded" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[44px] cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option 
                   v-for="d in weekDaysOptions" 
                   :key="d.key" 
                   :value="d.key"
                   :disabled="d.isPast"
-                  :class="d.isPast ? 'text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800/80 italic' : 'text-slate-900 dark:text-white font-bold'"
+                  :class="d.isPast ? 'text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800/80 italic' : 'text-slate-900 dark:text-white font-medium'"
                 >
                   {{ d.fullLabel }}
                 </option>
               </select>
             </div>
             <div>
-              <label for="slot-select" class="block text-[10px] uppercase text-slate-400 mb-1.5">Time Slot</label>
-              <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[44px]">
+              <label for="slot-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">Time Slot</label>
+              <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] focus:outline-none focus:border-slate-400">
                 <option v-for="s in timeSlots" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
             <div>
-              <label for="inst-select" class="block text-[10px] uppercase text-slate-400 mb-1.5">Instrument Section</label>
-              <select id="inst-select" v-model="selectedInstrumentNeeded" class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700/80 font-bold min-h-[44px]">
+              <label for="inst-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">Instrument Section</label>
+              <select id="inst-select" v-model="selectedInstrumentNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] focus:outline-none focus:border-slate-400">
                 <option value="All">All Instruments</option>
                 <option value="Clarinet">Clarinet</option>
                 <option value="Flute">Flute / Piccolo</option>
@@ -1232,7 +1232,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <p v-if="isSelectedDayPast" class="text-[11px] text-amber-500 dark:text-amber-400 font-bold flex items-center">
+          <p v-if="isSelectedDayPast" class="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center">
             <AlertTriangle class="w-3.5 h-3.5 mr-1.5 shrink-0 inline" /> Selected day has already passed and cannot be checked. Please choose today or an upcoming day.
           </p>
 
@@ -1240,49 +1240,49 @@ onUnmounted(() => {
             @click="runAvailabilityCheck"
             type="button"
             :disabled="isSelectedDayPast"
-            class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px]"
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs active:scale-95 cursor-pointer min-h-[40px]"
           >
             <Cpu class="w-4 h-4 mr-2" /> Check Available Musicians
           </button>
         </div>
 
         <!-- MATCHED AVAILABILITY DISPLAY -->
-        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 space-y-3">
+        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="font-black text-sm text-slate-900 dark:text-white">Roster for {{ selectedDayNeeded }} ({{ selectedSlotNeeded.split(' ')[0] }})</h3>
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 rounded-lg">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Roster for {{ selectedDayNeeded }} ({{ selectedSlotNeeded.split(' ')[0] }})</h3>
+            <span class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-slate-100 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 px-3 py-0.5 rounded-full">
               {{ availableUserIds.size }} Available
             </span>
           </div>
 
-          <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-            <div v-for="m in matchedDispatchRoster" :key="m.id" class="p-3 bg-slate-50 dark:bg-[#27272a] rounded-2xl flex items-center justify-between text-xs">
+          <div class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 divide-y divide-slate-100 dark:divide-neutral-800">
+            <div v-for="m in matchedDispatchRoster" :key="m.id" class="py-2.5 flex items-center justify-between text-xs">
               <div class="flex items-center space-x-2">
-                <span class="font-bold text-slate-900 dark:text-white">{{ m.full_name }} ({{ m.instrument }})</span>
-                <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded">
-                  ✓ Free
+                <span class="font-medium text-slate-900 dark:text-neutral-100">{{ m.full_name }} ({{ m.instrument }})</span>
+                <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-2 py-0.2 rounded-full">
+                  Free
                 </span>
-                <span v-else class="text-[10px] font-bold text-slate-400">Unavailable</span>
+                <span v-else class="text-[10px] font-normal text-slate-400">Unavailable</span>
               </div>
-              <span class="font-bold text-slate-500 dark:text-neutral-400">{{ m.rank }}</span>
+              <span class="text-slate-500 dark:text-neutral-400 font-medium">{{ m.rank }}</span>
             </div>
           </div>
         </div>
 
         <!-- 2. RSVP RE-NOTIFICATIONS -->
-        <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-sm text-slate-900 dark:text-white">RSVP Re-notifications</h3>
-            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Send follow-up reminder alerts to unconfirmed musicians</p>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">RSVP Reminders</h3>
+            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Send a notification reminder to musicians who have unconfirmed attendance status.</p>
           </div>
           <button 
             @click="triggerReNotifications"
             :disabled="isAlertingUnconfirmed"
             type="button"
-            class="py-3 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[44px] shrink-0 transition-all"
+            class="py-2 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[40px] shrink-0 transition-colors"
           >
-            <Loader2 v-if="isAlertingUnconfirmed" class="w-4 h-4 mr-2 animate-spin" />
-            <Send v-else class="w-4 h-4 mr-2" />
+            <Loader2 v-if="isAlertingUnconfirmed" class="w-3.5 h-3.5 mr-2 animate-spin" />
+            <Send v-else class="w-3.5 h-3.5 mr-2" />
             {{ isAlertingUnconfirmed ? 'Dispatching...' : 'Alert Unconfirmed' }}
           </button>
         </div>
@@ -1293,11 +1293,11 @@ onUnmounted(() => {
         <div class="flex items-center justify-between px-1">
           <div class="flex items-center space-x-2">
             <ShieldAlert class="w-4 h-4 text-amber-500" />
-            <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
-              Pending Master List Approvals ({{ pendingAccounts.length }})
+            <h2 class="text-xs font-semibold text-slate-600 dark:text-neutral-300 uppercase tracking-wider">
+              Pending Registrations ({{ pendingAccounts.length }})
             </h2>
           </div>
-          <span v-if="pendingAccounts.length > 3" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
+          <span v-if="pendingAccounts.length > 3" class="text-[10px] font-normal text-slate-400 dark:text-neutral-500">
             Scroll for more
           </span>
         </div>
@@ -1306,19 +1306,19 @@ onUnmounted(() => {
           <div 
             v-for="user in pendingAccounts" 
             :key="user.id"
-            class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+            class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
           >
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="font-black text-base text-slate-900 dark:text-white leading-tight">{{ user.full_name }}</h3>
+                <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100 leading-tight">{{ user.full_name }}</h3>
                 <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">{{ user.email }} • {{ user.contact_number }}</p>
               </div>
-              <span class="text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2.5 py-1 rounded-lg">
+              <span class="text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 px-2.5 py-0.5 rounded-full">
                 UNVERIFIED
               </span>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs font-semibold bg-slate-50 dark:bg-[#27272a] p-3 rounded-2xl text-slate-600 dark:text-neutral-300">
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-[#2d2f31] p-3 rounded-xl text-slate-600 dark:text-neutral-300 border border-slate-100 dark:border-neutral-700">
               <div><span class="text-slate-400">Section:</span> {{ user.instrument || 'None' }}</div>
               <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
             </div>
@@ -1327,23 +1327,23 @@ onUnmounted(() => {
               <button 
                 @click="approveUser(user)"
                 type="button"
-                class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer min-h-[44px]"
+                class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 active:scale-95 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs cursor-pointer min-h-[38px]"
               >
-                <UserCheck class="w-4 h-4 mr-1.5" /> Approve & Verify
+                <UserCheck class="w-3.5 h-3.5 mr-1.5" /> Approve & Verify
               </button>
               <button 
                 @click="promptDeleteUser(user)"
                 type="button"
-                class="py-3 px-4 bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl flex items-center justify-center transition-all active:scale-95 border border-rose-200 dark:border-rose-900/40 cursor-pointer min-h-[44px]"
+                class="py-2 px-4 bg-white dark:bg-[#202124] hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-medium text-xs rounded-full flex items-center justify-center transition-colors border border-slate-200 dark:border-neutral-700 cursor-pointer min-h-[38px]"
               >
-                <Trash2 class="w-4 h-4 mr-1" /> Decline
+                <Trash2 class="w-3.5 h-3.5 mr-1" /> Decline
               </button>
             </div>
           </div>
 
-          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200/80 dark:border-neutral-800">
-            <CheckCircle2 class="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-50" />
-            <p class="text-xs font-bold text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
+          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#202124] rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+            <CheckCircle2 class="w-6 h-6 text-slate-400 mx-auto mb-2" />
+            <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
           </div>
         </div>
       </section>
@@ -1353,11 +1353,11 @@ onUnmounted(() => {
         <div class="flex items-center justify-between px-1">
           <div class="flex items-center space-x-2">
             <AlertCircle class="w-4 h-4 text-amber-500" />
-            <h2 class="text-xs font-extrabold text-slate-700 dark:text-neutral-300 uppercase tracking-wider">
+            <h2 class="text-xs font-semibold text-slate-600 dark:text-neutral-300 uppercase tracking-wider">
               Pending Avatar Approvals ({{ pendingAvatars.length }})
             </h2>
           </div>
-          <span v-if="pendingAvatars.length > 3" class="text-[10px] font-bold text-slate-400 dark:text-neutral-500">
+          <span v-if="pendingAvatars.length > 3" class="text-[10px] font-normal text-slate-400 dark:text-neutral-500">
             Scroll for more
           </span>
         </div>
@@ -1367,13 +1367,13 @@ onUnmounted(() => {
             <div 
               v-for="user in pendingAvatars" 
               :key="user.id"
-              class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-3.5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-2.5"
+              class="bg-white dark:bg-[#202124] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-2.5"
             >
-              <img :src="user.profile_picture" alt="Avatar Review" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-200 dark:border-neutral-700" />
-              <p class="text-xs font-black text-slate-900 dark:text-white line-clamp-1 w-full">{{ user.full_name }}</p>
+              <img :src="user.profile_picture" alt="Avatar Review" class="w-14 h-14 rounded-full object-cover border border-slate-200 dark:border-neutral-700 shadow-xs" />
+              <p class="text-xs font-medium text-slate-900 dark:text-neutral-100 line-clamp-1 w-full">{{ user.full_name }}</p>
               <div class="flex space-x-1.5 w-full">
-                <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 rounded-xl cursor-pointer text-[10px] uppercase">Approve</button>
-                <button @click="declineAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 rounded-xl cursor-pointer text-[10px] uppercase">Decline</button>
+                <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium hover:bg-slate-800 rounded-full cursor-pointer text-[10px] transition-colors">Approve</button>
+                <button @click="declineAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-slate-100 text-rose-600 dark:bg-[#2d2f31] dark:text-rose-400 font-medium border border-slate-200 dark:border-neutral-700 hover:bg-rose-50 rounded-full cursor-pointer text-[10px] transition-colors">Decline</button>
               </div>
             </div>
           </div>
@@ -1383,23 +1383,23 @@ onUnmounted(() => {
     </div>
 
     <!-- TAB 2: REPORTS & ANALYTICS -->
-    <div v-else-if="activeTab === 'reports'" class="space-y-8">
+    <div v-else-if="activeTab === 'reports'" class="space-y-6">
       
       <!-- 1. EXECUTIVE ATTENDANCE & FLAKE ANALYTICS DASHBOARD -->
-      <section class="space-y-6 no-print">
+      <section class="space-y-5 no-print">
         <!-- Section Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/80 dark:border-neutral-800 pb-3">
           <div>
             <div class="flex items-center space-x-2">
-              <BarChart3 class="w-5 h-5 text-blue-500" />
-              <h2 class="text-lg font-black text-slate-900 dark:text-white">Band Attendance & Reliability Analytics</h2>
+              <BarChart3 class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
+              <h2 class="text-base font-bold text-slate-900 dark:text-neutral-100">Attendance & Reliability Analytics</h2>
             </div>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-              Live calculated follow-through metrics, section turnout rates, and unexcused no-show flake penalties.
+              Live follow-through metrics, section turnout rates, and verified attendance standings.
             </p>
           </div>
-          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider self-start sm:self-auto">
-            <Sparkles class="w-3.5 h-3.5" />
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 text-xs font-medium self-start sm:self-auto">
+            <Sparkles class="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" />
             <span>Executive Insights</span>
           </span>
         </div>
@@ -1407,77 +1407,76 @@ onUnmounted(() => {
         <!-- 4 KPI Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- KPI 1: Band Reliability Score -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Avg Reliability</span>
-              <Award class="w-4 h-4 text-emerald-500" />
+              <Award class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
             </div>
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+            <div class="flex items-baseline space-x-1.5">
+              <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-neutral-100">
                 {{ analyticsSummary.avgReliability }}%
               </span>
-              <span class="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">Roster Avg</span>
+              <span class="text-[10px] font-normal text-slate-400">Roster Avg</span>
             </div>
             <!-- Progress Bar -->
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
               <div 
-                class="h-full rounded-full transition-all duration-500" 
-                :class="analyticsSummary.avgReliability >= 85 ? 'bg-emerald-500' : analyticsSummary.avgReliability >= 70 ? 'bg-amber-500' : 'bg-rose-500'"
+                class="h-full rounded-full transition-all duration-500 bg-slate-900 dark:bg-white" 
                 :style="{ width: `${analyticsSummary.avgReliability}%` }"
               ></div>
             </div>
           </div>
 
           <!-- KPI 2: Total Unexcused No-Shows -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Unexcused No-Shows</span>
               <AlertTriangle class="w-4 h-4 text-rose-500" />
             </div>
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+            <div class="flex items-baseline space-x-1.5">
+              <span class="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400">
                 {{ analyticsSummary.totalFlakes }}
               </span>
-              <span class="text-[10px] font-bold text-slate-400">Promised vs Absent</span>
+              <span class="text-[10px] font-normal text-slate-400">Total Flagged</span>
             </div>
-            <p class="text-[11px] font-bold text-slate-500 dark:text-neutral-400">
+            <p class="text-[11px] text-slate-500 dark:text-neutral-400">
               -10% penalty per unexcused no-show
             </p>
           </div>
 
           <!-- KPI 3: Follow-Through Rate -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Commitment Rate</span>
-              <TrendingUp class="w-4 h-4 text-blue-500" />
+              <TrendingUp class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
             </div>
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">
+            <div class="flex items-baseline space-x-1.5">
+              <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-neutral-100">
                 {{ analyticsSummary.avgFollowThrough }}%
               </span>
-              <span class="text-[10px] font-extrabold text-blue-600 dark:text-blue-400">Turnout</span>
+              <span class="text-[10px] font-normal text-slate-400">Turnout</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
               <div 
-                class="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                class="bg-slate-900 dark:bg-white h-full rounded-full transition-all duration-500" 
                 :style="{ width: `${analyticsSummary.avgFollowThrough}%` }"
               ></div>
             </div>
           </div>
 
           <!-- KPI 4: High No-Show Risk Members -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-neutral-400">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Attendance Risk</span>
               <ShieldAlert class="w-4 h-4 text-amber-500" />
             </div>
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+            <div class="flex items-baseline space-x-1.5">
+              <span class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
                 {{ analyticsSummary.highRiskCount }}
               </span>
-              <span class="text-[10px] font-bold text-slate-400">Flagged Musicians</span>
+              <span class="text-[10px] font-normal text-slate-400">Flagged</span>
             </div>
-            <p class="text-[11px] font-bold text-slate-500 dark:text-neutral-400">
+            <p class="text-[11px] text-slate-500 dark:text-neutral-400">
               Members with multiple misses
             </p>
           </div>
@@ -1486,92 +1485,92 @@ onUnmounted(() => {
         <!-- Section Turnout Breakdown Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- Woodwinds -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Woodwinds Section</span>
-              <span class="text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Woodwinds</span>
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
                 {{ sectionStats.woodwinds.count }} Members
               </span>
             </div>
             <div class="flex items-baseline justify-between text-xs">
-              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.woodwinds.displayRate }}</span>
+              <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
+              <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.woodwinds.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-blue-500 h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+              <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
               <span>Attended: {{ sectionStats.woodwinds.attended }} / {{ sectionStats.woodwinds.promised }}</span>
-              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ sectionStats.woodwinds.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Brass -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Brass Section</span>
-              <span class="text-[10px] font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Brass</span>
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
                 {{ sectionStats.brass.count }} Members
               </span>
             </div>
             <div class="flex items-baseline justify-between text-xs">
-              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.brass.displayRate }}</span>
+              <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
+              <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.brass.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-amber-500 h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+              <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
               <span>Attended: {{ sectionStats.brass.attended }} / {{ sectionStats.brass.promised }}</span>
-              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ sectionStats.brass.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Percussion -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Percussion Section</span>
-              <span class="text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Percussion</span>
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
                 {{ sectionStats.percussion.count }} Members
               </span>
             </div>
             <div class="flex items-baseline justify-between text-xs">
-              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.percussion.displayRate }}</span>
+              <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
+              <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.percussion.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-emerald-500 h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+              <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
               <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>
-              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ sectionStats.percussion.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Majorette & Color Guard (Auxiliary) -->
-          <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Majorette & Guard</span>
-              <span class="text-[10px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Majorette & Guard</span>
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
                 {{ sectionStats.auxiliary.count }} Members
               </span>
             </div>
             <div class="flex items-baseline justify-between text-xs">
-              <span class="text-slate-500 dark:text-neutral-400 font-bold">Turnout Rate</span>
-              <span class="font-black text-slate-900 dark:text-white">{{ sectionStats.auxiliary.displayRate }}</span>
+              <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
+              <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.auxiliary.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-rose-500 h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
+            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+              <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
               <span>Attended: {{ sectionStats.auxiliary.attended }} / {{ sectionStats.auxiliary.promised }}</span>
-              <span :class="sectionStats.auxiliary.flakes > 0 ? 'text-rose-500 font-black' : 'text-emerald-500'">
+              <span :class="sectionStats.auxiliary.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ sectionStats.auxiliary.flakes }} No-Shows
               </span>
             </div>
@@ -1579,17 +1578,17 @@ onUnmounted(() => {
         </div>
 
         <!-- Interactive Excel-Style Attendance Matrix Table -->
-        <div class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 class="font-black text-base text-slate-900 dark:text-white">Musician Attendance & Commitment Matrix</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Musician Attendance & Commitment Matrix</h3>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-                Individual attendance track record, verified turnout, unexcused no-show counts, and reliability standings.
+                Track record, verified turnout, unexcused no-show counts, and reliability standings.
               </p>
             </div>
 
             <!-- Search and Filter Controls (Responsive Grid) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full pt-1">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full pt-1">
               <!-- Search -->
               <div class="relative w-full">
                 <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1597,14 +1596,14 @@ onUnmounted(() => {
                   v-model="analyticsSearchQuery" 
                   type="text" 
                   placeholder="Search musician..."
-                  class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl text-xs border border-slate-200 dark:border-neutral-700 font-bold focus:outline-none focus:border-blue-500 min-h-[40px]"
+                  class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full text-xs border border-slate-200 dark:border-neutral-700 font-medium focus:outline-none focus:border-slate-400 min-h-[38px]"
                 />
               </div>
 
               <!-- Section Filter -->
               <select 
                 v-model="analyticsSectionFilter" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[40px] cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-medium min-h-[38px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
               </select>
@@ -1612,7 +1611,7 @@ onUnmounted(() => {
               <!-- Sort Order -->
               <select 
                 v-model="analyticsSortBy" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-bold min-h-[40px] cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-medium min-h-[38px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option value="flakes_desc">Sort: Most No-Shows First</option>
                 <option value="reliability_asc">Sort: Lowest Reliability First</option>
@@ -1623,36 +1622,36 @@ onUnmounted(() => {
           </div>
 
           <!-- Table -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-neutral-700/80">
+          <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-neutral-800">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-[#27272a] text-slate-600 dark:text-neutral-300 font-black uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-neutral-700">
+              <thead class="bg-slate-50 dark:bg-[#2d2f31] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-neutral-800">
                 <tr>
-                  <th class="px-3 py-3 w-10 text-center">#</th>
-                  <th class="px-4 py-3">Musician</th>
-                  <th class="px-3 py-3">Role / Post</th>
-                  <th class="px-3 py-3 text-center">Promised</th>
-                  <th class="px-3 py-3 text-center">Attended</th>
-                  <th class="px-3 py-3 text-center">No-Shows</th>
-                  <th class="px-3 py-3 text-center">Follow-Through</th>
-                  <th class="px-3 py-3 text-center">Reliability Score</th>
-                  <th class="px-3 py-3 text-center">Attendance Status</th>
+                  <th class="px-3 py-2.5 w-10 text-center">#</th>
+                  <th class="px-4 py-2.5">Musician</th>
+                  <th class="px-3 py-2.5">Role</th>
+                  <th class="px-3 py-2.5 text-center">Promised</th>
+                  <th class="px-3 py-2.5 text-center">Attended</th>
+                  <th class="px-3 py-2.5 text-center">No-Shows</th>
+                  <th class="px-3 py-2.5 text-center">Follow-Through</th>
+                  <th class="px-3 py-2.5 text-center">Reliability</th>
+                  <th class="px-3 py-2.5 text-center">Status</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-neutral-800">
                 <tr 
                   v-for="(member, idx) in filteredAnalyticsMatrix" 
                   :key="member.id"
-                  class="hover:bg-slate-50/80 dark:hover:bg-neutral-800/50 transition-colors"
-                  :class="{ 'bg-rose-50/40 dark:bg-rose-950/20': member.flakeCount >= 2 }"
+                  class="hover:bg-slate-50/60 dark:hover:bg-[#282a2c]/60 transition-colors"
+                  :class="{ 'bg-rose-50/30 dark:bg-rose-950/10': member.flakeCount >= 2 }"
                 >
-                  <td class="px-3 py-3 text-center font-bold text-slate-400">{{ idx + 1 }}</td>
+                  <td class="px-3 py-2.5 text-center font-normal text-slate-400">{{ idx + 1 }}</td>
                   
                   <!-- Musician & Instrument -->
-                  <td class="px-4 py-3">
-                    <div class="font-black text-slate-900 dark:text-white leading-tight">
+                  <td class="px-4 py-2.5">
+                    <div class="font-medium text-slate-900 dark:text-neutral-100 leading-tight">
                       {{ member.name }}
                     </div>
-                    <div class="flex items-center space-x-1.5 mt-0.5 text-[11px] font-bold text-slate-500 dark:text-neutral-400 capitalize">
+                    <div class="flex items-center space-x-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-neutral-400 capitalize">
                       <span>{{ member.instrument }}</span>
                       <span>•</span>
                       <span>{{ member.rank }}</span>
@@ -1660,34 +1659,34 @@ onUnmounted(() => {
                   </td>
 
                   <!-- Role / Title -->
-                  <td class="px-3 py-3 font-bold text-slate-600 dark:text-neutral-300 whitespace-nowrap">
-                    <span v-if="member.role === 'super_admin'" class="text-blue-600 dark:text-blue-400 font-black">IT Super Admin</span>
-                    <span v-else-if="member.role === 'secretary_admin'" class="text-amber-600 dark:text-amber-400 font-black">Band Secretary</span>
-                    <span v-else-if="member.executive_title" class="text-purple-600 dark:text-purple-400 font-black capitalize">
+                  <td class="px-3 py-2.5 text-slate-600 dark:text-neutral-300 whitespace-nowrap font-medium">
+                    <span v-if="member.role === 'super_admin'" class="text-slate-900 dark:text-white font-semibold">IT Super Admin</span>
+                    <span v-else-if="member.role === 'secretary_admin'" class="text-slate-800 dark:text-neutral-200 font-semibold">Band Secretary</span>
+                    <span v-else-if="member.executive_title" class="text-slate-800 dark:text-neutral-200 capitalize">
                       {{ member.executive_title.replace('_', ' ') }}
                     </span>
                     <span v-else class="text-slate-500 dark:text-neutral-400">Musician</span>
                   </td>
 
                   <!-- Promised Gigs -->
-                  <td class="px-3 py-3 text-center font-bold text-slate-700 dark:text-neutral-300">
-                    <span class="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-extrabold">
+                  <td class="px-3 py-2.5 text-center font-medium text-slate-700 dark:text-neutral-300">
+                    <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300">
                       {{ member.promisedCount }}
                     </span>
                   </td>
 
                   <!-- Attended Gigs -->
-                  <td class="px-3 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">
-                    <span class="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-extrabold">
+                  <td class="px-3 py-2.5 text-center font-medium text-slate-700 dark:text-neutral-300">
+                    <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300">
                       {{ member.attendedCount }}
                     </span>
                   </td>
 
                   <!-- No-Shows (Promised vs Absent) -->
-                  <td class="px-3 py-3 text-center font-extrabold">
+                  <td class="px-3 py-2.5 text-center">
                     <span 
-                      class="px-2 py-0.5 rounded-full font-black text-xs inline-flex items-center space-x-1"
-                      :class="member.flakeCount > 0 ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300' : 'bg-slate-100 dark:bg-[#27272a] text-slate-500'"
+                      class="px-2 py-0.5 rounded-full text-xs inline-flex items-center space-x-1 font-medium"
+                      :class="member.flakeCount > 0 ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40' : 'text-slate-400'"
                     >
                       <AlertTriangle v-if="member.flakeCount > 0" class="w-3 h-3 text-rose-500 inline mr-0.5" />
                       <span>{{ member.flakeCount }}</span>
@@ -1695,23 +1694,21 @@ onUnmounted(() => {
                   </td>
 
                   <!-- Follow-Through % -->
-                  <td class="px-3 py-3 text-center font-black text-slate-800 dark:text-neutral-200">
+                  <td class="px-3 py-2.5 text-center font-medium text-slate-800 dark:text-neutral-200">
                     {{ member.followThroughRate }}%
                   </td>
 
                   <!-- Reliability Score -->
-                  <td class="px-3 py-3 text-center">
+                  <td class="px-3 py-2.5 text-center">
                     <div class="inline-flex flex-col items-center">
                       <span 
-                        class="font-black text-xs"
-                        :class="member.reliabilityScore >= 85 ? 'text-emerald-600 dark:text-emerald-400' : member.reliabilityScore >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'"
+                        class="font-semibold text-xs text-slate-900 dark:text-neutral-100"
                       >
                         {{ member.reliabilityScore }}%
                       </span>
-                      <div class="w-14 bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden mt-1">
+                      <div class="w-12 bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden mt-1">
                         <div 
-                          class="h-full rounded-full"
-                          :class="member.reliabilityScore >= 85 ? 'bg-emerald-500' : member.reliabilityScore >= 70 ? 'bg-amber-500' : 'bg-rose-500'"
+                          class="h-full rounded-full bg-slate-900 dark:bg-white"
                           :style="{ width: `${member.reliabilityScore}%` }"
                         ></div>
                       </div>
@@ -1719,13 +1716,13 @@ onUnmounted(() => {
                   </td>
 
                   <!-- Risk Badge -->
-                  <td class="px-3 py-3 text-center whitespace-nowrap">
+                  <td class="px-3 py-2.5 text-center whitespace-nowrap">
                     <span 
-                      class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full"
+                      class="text-[10px] font-medium px-2.5 py-0.5 rounded-full border"
                       :class="{
-                        'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400': member.riskTier === 'Reliable',
-                        'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400': member.riskTier === 'Moderate Risk',
-                        'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400': member.riskTier === 'High No-Show Risk'
+                        'bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700': member.riskTier === 'Reliable',
+                        'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40': member.riskTier === 'Moderate Risk',
+                        'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/40': member.riskTier === 'High No-Show Risk'
                       }"
                     >
                       {{ member.riskTier }}
@@ -1734,7 +1731,7 @@ onUnmounted(() => {
                 </tr>
 
                 <tr v-if="filteredAnalyticsMatrix.length === 0">
-                  <td colspan="9" class="py-8 text-center text-slate-400 font-bold">
+                  <td colspan="9" class="py-8 text-center text-slate-400 font-medium">
                     No musicians matched your search or section filters.
                   </td>
                 </tr>
@@ -1748,37 +1745,37 @@ onUnmounted(() => {
       <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-neutral-800">
         
         <!-- Controls & Header (Hidden when printing) -->
-        <div class="no-print bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+        <div class="no-print bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             <div>
               <div class="flex items-center space-x-2">
-                <FileText class="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <h3 class="font-black text-lg text-slate-900 dark:text-white">Official Band Administrative Reports</h3>
+                <FileText class="w-4 h-4 text-slate-500 dark:text-neutral-400 shrink-0" />
+                <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Official Band Reports</h3>
               </div>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-                Generate and print standardized official PDF documents with municipal letterheads, data tables, and signatories.
+                Generate and print standardized official PDF documents with letterheads, data tables, and signatories.
               </p>
             </div>
 
-            <!-- Direct PDF Download & Print Action Buttons (Responsive) -->
+            <!-- Direct PDF Download & Print Action Buttons -->
             <div class="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
               <button 
                 @click="downloadPdfReport" 
                 :disabled="isGeneratingPdf"
                 type="button" 
-                class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all active:scale-95 cursor-pointer min-h-[44px] disabled:opacity-50"
+                class="flex-1 sm:flex-none px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 transition-colors active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
               >
-                <Download class="w-4 h-4" />
+                <Download class="w-3.5 h-3.5" />
                 <span>{{ isGeneratingPdf ? 'Downloading...' : 'Download PDF' }}</span>
               </button>
 
               <button 
                 @click="printReport" 
                 type="button" 
-                class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#27272a] dark:hover:bg-[#323238] text-slate-700 dark:text-neutral-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer min-h-[44px]"
-                title="Open browser print / print-to-PDF dialog"
+                class="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-colors active:scale-95 cursor-pointer min-h-[38px]"
+                title="Open browser print dialog"
               >
-                <Printer class="w-4 h-4" />
+                <Printer class="w-3.5 h-3.5" />
                 <span>Print Dialog</span>
               </button>
             </div>
@@ -1788,13 +1785,13 @@ onUnmounted(() => {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <!-- Report Type Selection -->
             <div class="sm:col-span-2">
-              <label for="report-type-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+              <label for="report-type-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">
                 Select Report Document
               </label>
               <select 
                 id="report-type-select"
                 v-model="selectedReportType" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option v-for="opt in reportTypeOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
               </select>
@@ -1802,13 +1799,13 @@ onUnmounted(() => {
 
             <!-- Sub-Filter for Role (If report 4 selected) -->
             <div v-if="selectedReportType === 'members_by_role'">
-              <label for="role-filter-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+              <label for="role-filter-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">
                 Filter by Role
               </label>
               <select 
                 id="role-filter-select"
                 v-model="selectedRoleFilter" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option value="member">Regular Musicians</option>
                 <option value="executive">Executive Officers</option>
@@ -1819,13 +1816,13 @@ onUnmounted(() => {
 
             <!-- Sub-Filter for Event Category (If report 7 selected) -->
             <div v-if="selectedReportType === 'schedules_by_type'">
-              <label for="event-filter-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+              <label for="event-filter-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">
                 Filter by Event Category
               </label>
               <select 
                 id="event-filter-select"
                 v-model="selectedEventTypeFilter" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option v-for="t in eventTypeOptions" :key="t" :value="t">{{ t }}</option>
               </select>
@@ -1833,13 +1830,13 @@ onUnmounted(() => {
 
             <!-- Sub-Filter for Specific Event (If report 9 selected) -->
             <div v-if="selectedReportType === 'event_attendance'">
-              <label for="event-specific-select" class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+              <label for="event-specific-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">
                 Select Specific Event
               </label>
               <select 
                 id="event-specific-select"
                 v-model="selectedSpecificEventId" 
-                class="w-full bg-slate-50 dark:bg-[#27272a] text-slate-900 dark:text-white rounded-xl p-3 border border-slate-200 dark:border-neutral-700 font-bold text-xs min-h-[44px]"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
               >
                 <option value="">-- Latest / Select Event --</option>
                 <option v-for="ev in allEvents" :key="ev.id" :value="ev.id">
@@ -1853,24 +1850,24 @@ onUnmounted(() => {
         <!-- PRINTABLE OFFICIAL PDF SHEET PREVIEW -->
         <div 
           id="printable-report" 
-          class="bg-white text-slate-900 rounded-2xl p-8 sm:p-12 border border-slate-300 shadow-md space-y-5 max-w-4xl mx-auto printable-sheet"
+          class="bg-white text-slate-900 rounded-2xl p-8 sm:p-12 border border-slate-200 shadow-xs space-y-5 max-w-4xl mx-auto printable-sheet"
         >
           <!-- Standard Official Letterhead Header with Crest Logo -->
           <div class="text-center pb-3 border-b-2 border-slate-800">
             <div class="w-16 h-18 mx-auto mb-2 flex items-center justify-center">
               <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-wider uppercase">
+            <h1 class="text-2xl font-bold text-slate-900 tracking-wider uppercase">
               PEÑARANDA MARCHING BAND 1870
             </h1>
-            <p class="text-[11px] uppercase tracking-widest text-slate-600 font-bold mt-0.5">
+            <p class="text-[11px] uppercase tracking-widest text-slate-600 font-medium mt-0.5">
               Peñaranda, Nueva Ecija • Established 1870 • Municipal Music Unit
             </p>
           </div>
 
           <!-- Document Title & Subtitle -->
           <div class="text-center space-y-1 pt-1">
-            <h2 class="text-lg font-black text-slate-950 uppercase tracking-wide">
+            <h2 class="text-lg font-bold text-slate-950 uppercase tracking-wide">
               {{ generatedReportData.title }}
             </h2>
             <p class="text-xs text-slate-600 font-normal italic">
@@ -1879,7 +1876,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Standard Document Metadata Row -->
-          <div class="flex flex-wrap items-center justify-between text-xs text-slate-700 border border-slate-300 bg-slate-50/80 px-4 py-2.5 rounded-lg font-medium">
+          <div class="flex flex-wrap items-center justify-between text-xs text-slate-700 border border-slate-200 bg-slate-50/80 px-4 py-2.5 rounded-lg font-medium">
             <div>
               <span class="text-slate-500">Date Generated: </span>
               <strong>{{ new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}</strong>
@@ -1896,20 +1893,20 @@ onUnmounted(() => {
 
           <!-- Standard Data Grid Table (Pure white rows, minimal lines) -->
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse border border-slate-300">
+            <table class="w-full text-left text-xs border-collapse border border-slate-200">
               <thead>
-                <tr class="bg-slate-100 text-slate-900 text-[11px] font-bold uppercase tracking-wider">
+                <tr class="bg-slate-50 text-slate-900 text-[11px] font-semibold uppercase tracking-wider">
                   <th 
                     v-for="col in generatedReportData.columns" 
                     :key="col" 
-                    class="py-2.5 px-3 border border-slate-300"
+                    class="py-2 px-3 border border-slate-200"
                     :class="{ 'text-center w-12': col === '#' }"
                   >
                     {{ col }}
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200">
+              <tbody class="divide-y divide-slate-100">
                 <tr 
                   v-for="(row, rIdx) in generatedReportData.rows" 
                   :key="rIdx"
@@ -1918,15 +1915,15 @@ onUnmounted(() => {
                   <td 
                     v-for="(cell, cIdx) in row" 
                     :key="cIdx" 
-                    class="py-2 px-3 border border-slate-300 text-slate-800 font-medium"
-                    :class="{ 'text-center font-bold text-slate-600': cIdx === 0 }"
+                    class="py-2 px-3 border border-slate-200 text-slate-800 font-normal"
+                    :class="{ 'text-center font-medium text-slate-600': cIdx === 0 }"
                   >
                     {{ cell }}
                   </td>
                 </tr>
 
                 <tr v-if="generatedReportData.rows.length === 0">
-                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-bold border border-slate-300">
+                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-medium border border-slate-200">
                     No matching records found in database registry for this report query.
                   </td>
                 </tr>
@@ -1935,7 +1932,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Total Count Footer Line -->
-          <div class="flex items-center justify-between text-xs text-slate-600 border-t border-slate-300 pt-2 font-medium">
+          <div class="flex items-center justify-between text-xs text-slate-600 border-t border-slate-200 pt-2 font-medium">
             <span>Total Records Listed: <strong>{{ generatedReportData.rows.length }}</strong></span>
             <span class="text-[11px] text-slate-500 italic">Official Record of Peñaranda Marching Band 1870</span>
           </div>
@@ -1964,11 +1961,11 @@ onUnmounted(() => {
       </section>
 
       <!-- Non-Super-Admin Notice for Reports Section -->
-      <section v-else class="bg-white dark:bg-[#1c1c1e] rounded-3xl p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs text-center space-y-2 no-print">
-        <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+      <section v-else class="bg-white dark:bg-[#202124] rounded-2xl p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs text-center space-y-2 no-print">
+        <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-600 dark:text-neutral-400 flex items-center justify-center mx-auto">
           <Shield class="w-5 h-5" />
         </div>
-        <h4 class="font-black text-sm text-slate-900 dark:text-white">Super Admin Official Reports Generator</h4>
+        <h4 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Super Admin Official Reports Generator</h4>
         <p class="text-xs text-slate-500 dark:text-neutral-400 max-w-md mx-auto">
           Official printable master administrative reports generation is restricted to the Super Admin. Executives and Section Leaders have full interactive access to the Attendance & Flake Analytics Matrix above.
         </p>
@@ -1977,14 +1974,14 @@ onUnmounted(() => {
     </div>
 
     <!-- CUSTOM CONFIRMATION MODAL -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
-        <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
-          <AlertCircle class="w-6 h-6" />
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex items-center justify-center mx-auto">
+          <AlertCircle class="w-5 h-5" />
         </div>
         
         <div>
-          <h3 class="font-black text-lg text-slate-900 dark:text-white leading-tight">Decline Registration?</h3>
+          <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100 leading-tight">Decline Registration?</h3>
           <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
             Are you sure you want to permanently decline and remove <strong>{{ confirmUserTarget?.full_name }}</strong>?
           </p>
@@ -1994,14 +1991,14 @@ onUnmounted(() => {
           <button 
             @click="showConfirmModal = false; confirmUserTarget = null" 
             type="button" 
-            class="flex-1 py-3 bg-slate-100 dark:bg-[#27272a] font-bold text-xs rounded-xl text-slate-700 dark:text-neutral-300 active:scale-95 min-h-[44px] cursor-pointer"
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 active:scale-95 min-h-[40px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
           <button 
             @click="executeRejectAndDeleteUser" 
             type="button" 
-            class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 font-black text-xs text-white rounded-xl shadow-md active:scale-95 min-h-[44px] cursor-pointer"
+            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 font-medium text-xs text-white rounded-full shadow-xs active:scale-95 min-h-[40px] cursor-pointer transition-colors"
           >
             Decline
           </button>
