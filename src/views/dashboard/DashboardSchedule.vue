@@ -586,24 +586,6 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6 relative">
-    
-    <!-- Floating Toast Notification -->
-    <Transition name="toast">
-      <div 
-        v-if="toastMessage" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#202124] text-slate-900 dark:text-white px-4 py-3 rounded-full shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-medium text-xs"
-        role="status"
-        aria-live="polite"
-      >
-        <div class="flex items-center space-x-2">
-          <CheckCircle2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <span>{{ toastMessage }}</span>
-        </div>
-        <button @click="toastMessage = ''" class="ml-2 text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer rounded-full" aria-label="Close Toast">
-          <X class="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </Transition>
 
     <header class="pt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
       <div>

@@ -91,6 +91,14 @@ ON public.push_subscriptions FOR SELECT
 TO authenticated
 USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin', 'executive'));
 
+DROP POLICY IF EXISTS "Admins can delete expired push subscriptions" ON public.push_subscriptions;
+CREATE POLICY "Admins can delete expired push subscriptions"
+ON public.push_subscriptions FOR DELETE
+TO authenticated
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
+
+GRANT ALL ON public.push_subscriptions TO authenticated, service_role;
+
 -- 8. CREATE AVATARS STORAGE BUCKET & SECURITY POLICIES
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (

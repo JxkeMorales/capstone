@@ -50,7 +50,6 @@ const activeTab = ref('operations')
 const pendingAccounts = ref([])
 const pendingAvatars = ref([])
 const memberRoster = ref([])
-const notification = ref('')
 const isDispatchGenerated = ref(false)
 
 // Day and Week Accurate Availability State
