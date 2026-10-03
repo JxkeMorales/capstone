@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useMainStore } from './stores/main'
+import { supabase } from './supabase'
 import ToastContainer from './components/ui/ToastContainer.vue'
 
 const store = useMainStore()
@@ -34,9 +35,7 @@ onMounted(() => {
         window.location.reload()
       } else {
         // Just sync memory with localStorage to prevent cross-tab out-of-sync tokens
-        import('@/supabase').then(({ supabase }) => {
-          supabase.auth.getSession()
-        })
+        supabase.auth.getSession()
       }
     }
   })

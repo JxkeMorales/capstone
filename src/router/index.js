@@ -38,7 +38,9 @@ const router = createRouter({
         },
         {
           path: 'leaderboard',
-          redirect: '/dashboard/members'
+          name: 'dashboard-leaderboard',
+          component: () => import('../views/dashboard/DashboardLeaderboard.vue'),
+          meta: { requiresAuth: true }
         },
         {
           path: 'members',

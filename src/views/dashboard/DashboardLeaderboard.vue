@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Trophy, Activity, CheckCircle2, AlertTriangle, BarChart3, ChevronUp, UserX, AlertCircle } from 'lucide-vue-next'
+import { Trophy, Activity, CheckCircle2, AlertTriangle, BarChart3, ChevronUp, UserX, AlertCircle, Users } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -14,28 +14,52 @@ const isLoading = ref(true)
 let cleanupSync = null
 
 const fetchLeaderboard = async (skipLoading = false) => {
-  if (!skipLoading) isLoading.value = true
+  // Offline cache-first load
+  if (!skipLoading && leaderboard.value.length === 0) {
+    try {
+      const cached = localStorage.getItem('smartband_leaderboard_cache')
+      if (cached) {
+        leaderboard.value = JSON.parse(cached)
+        paImportanteList.value = leaderboard.value.filter(m => m.score < 85)
+      }
+    } catch (e) {}
+  }
+
+  if (!skipLoading && leaderboard.value.length === 0) isLoading.value = true
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('public_roster')
       .select('*')
       .order('reliability_score', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      // Fallback: query profiles directly if view does not exist
+      const res = await supabase
+        .from('profiles')
+        .select('id, full_name, instrument, rank, reliability_score, profile_picture')
+        .eq('is_verified', true)
+        .order('reliability_score', { ascending: false })
+      if (res.error) throw res.error
+      data = res.data
+    }
 
     if (data) {
       leaderboard.value = data.map(m => ({
         id: m.id,
         name: m.full_name,
         section: m.instrument || 'Musician',
-        score: m.reliability_score || 100,
+        score: m.reliability_score ?? 100,
         rank: m.rank || 'Junior',
         avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'MB',
         profile_picture: m.profile_picture || null
       }))
 
-      // Flag "Pa-Importante" behavior: Members with reliability score < 85% or low attendance
+      // Flag "Pa-Importante" behavior: Members with reliability score < 85%
       paImportanteList.value = leaderboard.value.filter(m => m.score < 85)
+
+      try {
+        localStorage.setItem('smartband_leaderboard_cache', JSON.stringify(leaderboard.value))
+      } catch (e) {}
     }
   } catch (err) {
     console.error('Error fetching leaderboard:', err)
@@ -57,7 +81,7 @@ const toggleMemberRank = async (member) => {
     member.rank = newRank
     uiStore.addToast({
       title: 'Rank Updated',
-      message: `✓ ${member.name} promoted to ${newRank}.`,
+      message: `✓ ${member.name} ${newRank === 'Senior' ? 'promoted to Senior' : 'demoted to Junior'}.`,
       type: 'success'
     })
     await broadcastSync('account_status_changed', { userId: member.id })
@@ -66,6 +90,41 @@ const toggleMemberRank = async (member) => {
     console.error('Error toggling member rank:', err)
     uiStore.addToast({
       title: 'Rank Update Notice',
+      message: err.message || 'Database permissions restricted rank update.',
+      type: 'error'
+    })
+  }
+}
+
+const demoteMemberToJunior = async (member) => {
+  if (member.rank === 'Junior') {
+    uiStore.addToast({
+      title: 'Already Junior',
+      message: `${member.name} is already at Junior rank.`,
+      type: 'info'
+    })
+    return
+  }
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ rank: 'Junior' })
+      .eq('id', member.id)
+
+    if (error) throw error
+
+    member.rank = 'Junior'
+    uiStore.addToast({
+      title: 'Member Demoted',
+      message: `✓ ${member.name} has been demoted to Junior rank due to attendance flag.`,
+      type: 'warning'
+    })
+    await broadcastSync('account_status_changed', { userId: member.id })
+    fetchLeaderboard(true)
+  } catch (err) {
+    console.error('Error demoting member:', err)
+    uiStore.addToast({
+      title: 'Demotion Failed',
       message: err.message || 'Database permissions restricted rank update.',
       type: 'error'
     })
@@ -93,14 +152,23 @@ onUnmounted(() => {
 <template>
   <div class="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
     
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
       <div>
         <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">Attendance Analytics</p>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-neutral-100">Reliability & Ranks</h1>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-neutral-100">Reliability &amp; Ranks</h1>
       </div>
-      <span v-if="store.canViewExecutiveAnalytics" class="text-xs font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-3 py-1 rounded-full flex items-center self-start sm:self-auto">
-        <BarChart3 class="w-3.5 h-3.5 mr-1 text-slate-500 dark:text-neutral-400" /> Analytics Active
-      </span>
+      <div class="flex items-center space-x-2">
+        <RouterLink 
+          to="/dashboard/members"
+          class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] hover:bg-slate-50 dark:hover:bg-[#282a2c] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-neutral-800 shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer min-h-[36px]"
+        >
+          <Users class="w-3.5 h-3.5 text-indigo-500" />
+          <span>Musician Directory</span>
+        </RouterLink>
+        <span v-if="store.canViewExecutiveAnalytics" class="text-xs font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-3 py-1 rounded-full flex items-center self-start sm:self-auto">
+          <BarChart3 class="w-3.5 h-3.5 mr-1 text-slate-500 dark:text-neutral-400" /> Analytics Active
+        </span>
+      </div>
     </header>
 
     <!-- Personal Reliability Dashboard -->
@@ -154,12 +222,18 @@ onUnmounted(() => {
             </div>
           </div>
           <button 
-            v-if="store.canPromoteMembers"
-            @click="toggleMemberRank(item)" 
-            class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-neutral-100 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-full cursor-pointer transition-colors min-h-[36px]"
+            v-if="store.canPromoteMembers && item.rank === 'Senior'"
+            @click="demoteMemberToJunior(item)" 
+            class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs rounded-full cursor-pointer transition-colors min-h-[36px]"
           >
-            Demote
+            Demote to Junior
           </button>
+          <span 
+            v-else-if="item.rank === 'Junior'"
+            class="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 bg-slate-200/60 dark:bg-neutral-800/80 px-2.5 py-1 rounded-full"
+          >
+            Junior Rank
+          </span>
         </div>
       </div>
     </section>

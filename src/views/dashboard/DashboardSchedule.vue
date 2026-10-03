@@ -47,21 +47,16 @@ const activeScheduleTab = ref('upcoming')
 const rawEvents = ref([])
 const isLoading = ref(true)
 
-// Realtime Channel & Sync References
-let scheduleChannel = null
-let syncBroadcast = null
+// Realtime Sync References
 let pollTimer = null
 
-// Toast Notification State (Using Global Toast Store)
-const toastMessage = ref('')
+// Global Toast Notification Helper
 const showToastNotification = (msg, type = 'info') => {
-  toastMessage.value = msg
   uiStore.addToast({
     title: 'Schedule Alert',
     message: msg,
     type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
   })
-  setTimeout(() => { toastMessage.value = '' }, 3500)
 }
 
 // Attendance Tracker & Roll-Call Roster State (Secretary / Admin)
@@ -256,6 +251,7 @@ const fetchEvents = async (skipCache = false) => {
         }
       })
       localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
+      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
     }
   } catch (err) {
     console.error('Error fetching events:', err)
@@ -821,7 +817,7 @@ onUnmounted(() => {
             </button>
 
             <button 
-              v-if="(store.isAdmin || store.isSuperAdmin) && attendanceCounts.unconfirmed > 0"
+              v-if="(store.isSecretaryAdmin || store.isSuperAdmin) && attendanceCounts.unconfirmed > 0"
               @click="alertUnconfirmedForEvent"
               :disabled="isAlertingEventUnconfirmed"
               type="button" 

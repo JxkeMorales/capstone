@@ -5,6 +5,7 @@ import { User, Phone, Music, Activity, Clock, CheckCircle2, Check, LogOut, Edit3
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
+import { broadcastSync } from '@/utils/realtime'
 
 const router = useRouter()
 const route = useRoute()
@@ -150,40 +151,20 @@ const saveAvailability = async () => {
       }
     }
 
-    const { data: existing } = await supabase
+    const { error: upsertErr } = await supabase
       .from('member_availability')
-      .select('id, day_of_week, time_slot')
-      .eq('user_id', store.user.id)
+      .upsert(rows, { onConflict: 'user_id,day_of_week,time_slot' })
 
-    const existingMap = {}
-    if (existing) {
-      existing.forEach(e => { existingMap[`${e.day_of_week}_${e.time_slot}`] = e.id })
-    }
-
-    const toUpdate = []
-    const toInsert = []
-
-    for (const row of rows) {
-      const id = existingMap[`${row.day_of_week}_${row.time_slot}`]
-      if (id) {
-        toUpdate.push({ id, ...row })
-      } else {
-        toInsert.push(row)
-      }
-    }
-
-    if (toInsert.length > 0) {
-      const { error: insertErr } = await supabase.from('member_availability').insert(toInsert)
+    if (upsertErr) {
+      // Fallback: delete existing for user and insert fresh
+      await supabase.from('member_availability').delete().eq('user_id', store.user.id)
+      const { error: insertErr } = await supabase.from('member_availability').insert(rows)
       if (insertErr) throw insertErr
-    }
-
-    for (const item of toUpdate) {
-      const { id, ...updateData } = item
-      await supabase.from('member_availability').update(updateData).eq('id', id)
     }
 
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
+    broadcastSync('availability_changed', { userId: store.user.id })
     uiStore.addToast({ title: 'Availability Saved', message: 'Your weekly availability has been updated.', type: 'success' })
   } catch (err) {
     console.error('Save availability error:', err)
@@ -232,6 +213,7 @@ const handleUpdateProfile = async () => {
     }
 
     await store.fetchProfile(true)
+    broadcastSync('account_status_changed', { userId: store.user.id, type: 'profile_updated' })
     showEditProfileModal.value = false
     uiStore.addToast({ title: 'Profile Updated', message: 'Your profile has been updated successfully!', type: 'success' })
   } catch (err) {
@@ -293,6 +275,8 @@ onMounted(async () => {
   await store.fetchProfile(true)
   if (route.query.settings === 'true' || route.query.modal === 'true') {
     openEditProfile()
+  } else if (window.location.hash.includes('type=recovery') || route.query.type === 'recovery') {
+    openEditProfile('security')
   }
 })
 
@@ -352,6 +336,7 @@ const handleFileUpload = async (event) => {
       } catch (e) {}
     }
     
+    broadcastSync('account_status_changed', { userId: store.user.id, type: 'avatar_uploaded' })
     uiStore.addToast({ title: 'Photo Uploaded', message: 'Your picture was sent for Admin approval.', type: 'info' })
   } catch (error) {
     console.error('Avatar upload error:', error)
