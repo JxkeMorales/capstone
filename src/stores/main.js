@@ -37,7 +37,6 @@ export const useMainStore = defineStore('main', {
     canUseSchedulingAlgorithm: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
     
     canViewExecutiveAnalytics: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
-    canViewBudgetInfo: (state) => ['super_admin', 'executive', 'secretary_admin'].includes(state.currentRole),
     canGenerateReports: (state) => state.currentRole === 'super_admin',
   },
   

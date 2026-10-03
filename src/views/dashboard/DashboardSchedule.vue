@@ -2,14 +2,18 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download, Send } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { generateEventAttendancePdf } from '@/utils/pdfExport'
 import { sendPushNotification } from '@/utils/push'
 
 const store = useMainStore()
+const uiStore = useUIStore()
 
-const currentMonthName = ref('August 2026')
+const currentMonthName = computed(() => {
+  return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+})
 const activeFilters = ref(['All'])
 const tempFilters = ref(['All'])
 const showFilterMenu = ref(false)
@@ -48,10 +52,15 @@ let scheduleChannel = null
 let syncBroadcast = null
 let pollTimer = null
 
-// Toast Notification State
+// Toast Notification State (Using Global Toast Store)
 const toastMessage = ref('')
-const showToastNotification = (msg) => {
+const showToastNotification = (msg, type = 'info') => {
   toastMessage.value = msg
+  uiStore.addToast({
+    title: 'Schedule Alert',
+    message: msg,
+    type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
+  })
   setTimeout(() => { toastMessage.value = '' }, 3500)
 }
 
@@ -70,13 +79,12 @@ const newEventForm = ref({
   title: '',
   event_type: 'Practice & Rehearsal (Ensayo)',
   event_date: '',
-  location: '',
-  budget_estimate: 0
+  location: ''
 })
 
 const saveNewEvent = async () => {
   if (!newEventForm.value.title.trim() || !newEventForm.value.event_date || !newEventForm.value.location.trim()) {
-    showToastNotification('Please enter event title, date/time, and location.')
+    showToastNotification('Please enter event title, date/time, and location.', 'error')
     return
   }
 
@@ -88,8 +96,7 @@ const saveNewEvent = async () => {
         title: newEventForm.value.title.trim(),
         event_type: newEventForm.value.event_type,
         event_date: new Date(newEventForm.value.event_date).toISOString(),
-        location: newEventForm.value.location.trim(),
-        budget_estimate: Number(newEventForm.value.budget_estimate) || 0
+        location: newEventForm.value.location.trim()
       })
       .select()
       .single()
@@ -106,8 +113,7 @@ const saveNewEvent = async () => {
       title: '',
       event_type: 'Practice & Rehearsal (Ensayo)',
       event_date: '',
-      location: '',
-      budget_estimate: 0
+      location: ''
     }
     await fetchEvents(true)
     notifyOtherTabs('NEW_EVENT_SCHEDULED')
@@ -121,7 +127,7 @@ const saveNewEvent = async () => {
     })
   } catch (err) {
     console.error('Error saving event:', err)
-    showToastNotification('Failed to schedule event: ' + (err.message || 'Error'))
+    showToastNotification('Failed to schedule event: ' + (err.message || 'Error'), 'error')
   } finally {
     isSavingEvent.value = false
   }
@@ -529,10 +535,11 @@ const executeDeleteEvent = async () => {
     }
     rawEvents.value = rawEvents.value.filter(e => e.id !== id)
     localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+    localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
     notifyOtherTabs('EVENT_CHANGED')
     showToastNotification('Event deleted successfully.')
   } catch (err) {
-    showToastNotification(`Error: ${err?.message || 'Failed to delete event'}`)
+    showToastNotification(`Error: ${err?.message || 'Failed to delete event'}`, 'error')
   } finally {
     showDeleteConfirmModal.value = false
     targetEventIdToDelete.value = null
@@ -1058,29 +1065,15 @@ onUnmounted(() => {
             </select>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="new-event-date" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Date &amp; Time *</label>
-              <input 
-                id="new-event-date"
-                v-model="newEventForm.event_date" 
-                type="datetime-local" 
-                required
-                class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
-              />
-            </div>
-            <div>
-              <label for="new-event-budget" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Budget / Compensation (₱)</label>
-              <input 
-                id="new-event-budget"
-                v-model.number="newEventForm.budget_estimate" 
-                type="number" 
-                min="0"
-                step="50"
-                placeholder="0.00" 
-                class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
-              />
-            </div>
+          <div>
+            <label for="new-event-date" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Date &amp; Time *</label>
+            <input 
+              id="new-event-date"
+              v-model="newEventForm.event_date" 
+              type="datetime-local" 
+              required
+              class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+            />
           </div>
 
           <div>

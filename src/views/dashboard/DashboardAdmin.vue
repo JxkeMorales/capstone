@@ -31,6 +31,8 @@ import {
   Loader2
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
+import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { sendPushNotification } from '@/utils/push'
@@ -39,6 +41,8 @@ import autoTable from 'jspdf-autotable'
 import { getBandLogoBase64 } from '@/utils/pdfExport'
 
 const store = useMainStore()
+const uiStore = useUIStore()
+const router = useRouter()
 
 // Sub-Tab Switcher State ('operations' | 'reports')
 const activeTab = ref('operations')
@@ -109,8 +113,13 @@ const isSelectedDayPast = computed(() => {
   return opt ? opt.isPast : false
 })
 
-const showToast = (msg) => {
+const showToast = (msg, type = 'info') => {
   notification.value = msg
+  uiStore.addToast({
+    title: 'Admin Operations',
+    message: msg,
+    type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
+  })
   setTimeout(() => { notification.value = '' }, 3500)
 }
 
@@ -301,45 +310,13 @@ const triggerReNotifications = async () => {
   try {
     // 1. Direct real-time WebSocket broadcast to all connected members and remote devices
     try {
-      const alertChan = supabase.channel('smartband-broadcast-alerts', {
-        config: { broadcast: { ack: true } }
-      })
-
       const broadcastPayload = {
         title: alertTitle,
         message: alertMsg,
         sender: senderName,
         senderId: store.user?.id || null
       }
-
-      if (alertChan.state === 'joined') {
-        await alertChan.send({
-          type: 'broadcast',
-          event: 'rsvp_reminder',
-          payload: broadcastPayload
-        })
-      } else {
-        await new Promise((resolve) => {
-          let done = false
-          alertChan.subscribe(async (status) => {
-            if (status === 'SUBSCRIBED' && !done) {
-              done = true
-              await alertChan.send({
-                type: 'broadcast',
-                event: 'rsvp_reminder',
-                payload: broadcastPayload
-              })
-              resolve()
-            }
-          })
-          setTimeout(() => {
-            if (!done) {
-              done = true
-              resolve()
-            }
-          }, 2000)
-        })
-      }
+      await broadcastSync('rsvp_reminder', broadcastPayload)
     } catch (wsErr) {
       console.warn('Realtime broadcast error:', wsErr)
     }
@@ -1045,7 +1022,18 @@ const refreshAllAdminData = async () => {
   ])
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await store.fetchProfile()
+  if (!['super_admin', 'secretary_admin', 'executive'].includes(store.currentRole)) {
+    uiStore.addToast({
+      title: 'Restricted Access',
+      message: 'You do not have administrative permissions to view this hub.',
+      type: 'warning'
+    })
+    router.push('/dashboard')
+    return
+  }
+
   if (store.isExecutive) {
     activeTab.value = 'reports'
   }

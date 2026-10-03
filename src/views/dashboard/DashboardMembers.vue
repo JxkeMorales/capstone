@@ -22,10 +22,12 @@ import {
   Star
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 
 const store = useMainStore()
+const uiStore = useUIStore()
 
 const searchQuery = ref('')
 const activeSectionFilter = ref('All')
@@ -58,8 +60,8 @@ let membersChannel = null
 // UNIFIED SYSTEM POSITIONS (MATCHES SUPABASE DATABASE ENUMS PERFECTLY)
 const POSITIONS = [
   { id: 'member', label: 'Regular Musician', role: 'member', title: null, color: 'slate', badge: 'Musician' },
-  { id: 'majorette', label: 'Majorette', role: 'member', title: 'majorette', color: 'rose', badge: 'Majorette' },
-  { id: 'flag_bearer', label: 'Color Guard / Flag', role: 'member', title: 'flag_bearer', color: 'pink', badge: 'Color Guard' },
+  { id: 'majorette', label: 'Majorette', role: 'member', title: null, color: 'rose', badge: 'Majorette' },
+  { id: 'flag_bearer', label: 'Color Guard / Flag', role: 'member', title: null, color: 'pink', badge: 'Color Guard' },
   { id: 'president', label: 'Band President', role: 'executive', title: 'president', color: 'amber', badge: 'Band President' },
   { id: 'vice_president', label: 'Band Vice President', role: 'executive', title: 'vice_president', color: 'amber', badge: 'Band Vice President' },
   { id: 'secretary', label: 'Band Secretary', role: 'secretary_admin', title: null, color: 'indigo', badge: 'Band Secretary' },
@@ -105,8 +107,13 @@ const instrumentList = [
   'Color Guard / Flag'
 ]
 
-const showToast = (msg) => {
+const showToast = (msg, type = 'info') => {
   toastMessage.value = msg
+  uiStore.addToast({
+    title: 'Directory Update',
+    message: msg,
+    type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
+  })
   setTimeout(() => { toastMessage.value = '' }, 3500)
 }
 
@@ -288,8 +295,16 @@ const saveMemberManagement = async () => {
 
   const member = editingMember.value
   const newPos = POSITIONS.find(p => p.id === managePositionId.value) || POSITIONS[0]
-  const newInst = manageInstrument.value
+  let newInst = manageInstrument.value
   const newRk = manageRank.value
+
+  if (newPos.id === 'majorette' && !newInst.toLowerCase().includes('majorette')) {
+    newInst = 'Majorette'
+  } else if (newPos.id === 'flag_bearer' && !newInst.toLowerCase().includes('flag')) {
+    newInst = 'Color Guard / Flag'
+  }
+
+  const execTitleToSave = newPos.role === 'executive' ? newPos.title : null
 
   try {
     // 1. Single Officer Enforcement: Clear previous holder in local memory & DB if leadership post
@@ -305,7 +320,7 @@ const saveMemberManagement = async () => {
 
     // 2. Immediate reactive update in memory for 0ms UI feedback
     member.role = newPos.role
-    member.executive_title = newPos.title
+    member.executive_title = execTitleToSave
     member.instrument = newInst
     member.rank = newRk
     members.value = [...members.value]
@@ -315,7 +330,7 @@ const saveMemberManagement = async () => {
       .from('profiles')
       .update({
         role: newPos.role,
-        executive_title: newPos.title,
+        executive_title: execTitleToSave,
         instrument: newInst,
         rank: newRk
       })
