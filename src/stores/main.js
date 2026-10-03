@@ -23,6 +23,7 @@ export const useMainStore = defineStore('main', {
     isSecretaryAdmin: (state) => state.currentRole === 'secretary_admin',
     isExecutive: (state) => state.currentRole === 'executive',
     isStandardMember: (state) => state.currentRole === 'member',
+    isAdmin: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
     isOfficerOrAdmin: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
     
     // Feature Permissions (Super Admin universal control + Secretary Operational execution)

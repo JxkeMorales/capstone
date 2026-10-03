@@ -25,7 +25,7 @@ const router = useRouter()
     </p>
 
     <button 
-      @click="router.push('/')"
+      @click="router.push('/dashboard')"
       class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-2xl font-black text-sm flex items-center transition-all shadow-xl shadow-slate-900/10 dark:shadow-white/10 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
     >
       <ArrowLeft class="w-4 h-4 mr-2" />

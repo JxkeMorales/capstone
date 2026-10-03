@@ -148,3 +148,53 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.delete_user_account(UUID) TO authenticated;
+
+-- 10. EXPAND EXECUTIVE TITLE ENUM IF NOT ALREADY EXPANDED
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'executive_title') THEN
+    ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'auditor';
+    ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'resident_conductor';
+    ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'band_manager';
+    ALTER TYPE public.executive_title ADD VALUE IF NOT EXISTS 'coordinator';
+  END IF;
+END $$;
+
+-- 11. ENSURE SUPABASE REALTIME REPLICATION IS ACTIVE FOR CRITICAL TABLES
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'profiles'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'events'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.events;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'announcements'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.announcements;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'event_rsvps'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.event_rsvps;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'member_availability'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.member_availability;
+  END IF;
+END $$;

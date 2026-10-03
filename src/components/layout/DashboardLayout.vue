@@ -54,6 +54,7 @@ const pendingCount = ref(0)
 
 // Pre-Event Call-Time Alarm Engine State
 let callTimeMonitorTimer = null
+let pendingCountTimer = null
 let audioCtx = null
 const activeAlarmModal = ref(null)
 
@@ -733,7 +734,7 @@ onMounted(() => {
   }
 
   window.addEventListener('focus', fetchPendingCount)
-  setInterval(() => {
+  pendingCountTimer = setInterval(() => {
     if (typeof document !== 'undefined' && !document.hidden) {
       fetchPendingCount()
     }
@@ -788,8 +789,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('focus', fetchPendingCount)
   window.removeEventListener('online', updateNetworkStatus)
   window.removeEventListener('offline', updateNetworkStatus)
+  if (pendingCountTimer) clearInterval(pendingCountTimer)
   if (callTimeMonitorTimer) clearInterval(callTimeMonitorTimer)
   if (announceSub) supabase.removeChannel(announceSub)
   if (eventsSub) supabase.removeChannel(eventsSub)

@@ -114,13 +114,11 @@ const isSelectedDayPast = computed(() => {
 })
 
 const showToast = (msg, type = 'info') => {
-  notification.value = msg
   uiStore.addToast({
     title: 'Admin Operations',
     message: msg,
     type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
   })
-  setTimeout(() => { notification.value = '' }, 3500)
 }
 
 // 1. FETCH PENDING ACCOUNTS
@@ -238,6 +236,12 @@ const executeRejectAndDeleteUser = async () => {
   const target = confirmUserTarget.value
 
   try {
+    try {
+      await supabase.rpc('delete_user_account', { target_user_id: target.id })
+    } catch (rpcErr) {
+      console.warn('RPC delete user fallback notice:', rpcErr)
+    }
+
     const { error } = await supabase.from('profiles').delete().eq('id', target.id)
     if (error) throw error
 
@@ -247,7 +251,7 @@ const executeRejectAndDeleteUser = async () => {
     await broadcastSync('account_status_changed', { userId: target.id, status: 'rejected', full_name: target.full_name })
   } catch (err) {
     console.error('Delete Error:', err)
-    showToast('Failed to delete registration.')
+    showToast('Failed to delete registration.', 'error')
   } finally {
     showConfirmModal.value = false
     confirmUserTarget.value = null
@@ -410,7 +414,12 @@ const fetchAnalyticsAndReportsData = async () => {
       supabase.from('profiles').select('*').order('full_name', { ascending: true })
     ])
 
-    if (eventsRes.data) allEvents.value = eventsRes.data
+    if (eventsRes.data) {
+      allEvents.value = eventsRes.data
+      if (!selectedSpecificEventId.value && eventsRes.data.length > 0) {
+        selectedSpecificEventId.value = eventsRes.data[0].id
+      }
+    }
     if (rsvpsRes.data) allRsvps.value = rsvpsRes.data
     if (profilesRes.data) allProfiles.value = profilesRes.data
   } catch (err) {
@@ -908,7 +917,9 @@ const downloadPdfReport = async () => {
     autoTable(doc, {
       startY: 142,
       head: [generatedReportData.value.columns],
-      body: generatedReportData.value.rows.length > 0 ? generatedReportData.value.rows : [['-', 'No records found in database query', '', '', '']],
+      body: generatedReportData.value.rows.length > 0 
+        ? generatedReportData.value.rows 
+        : [['-', 'No records found in database query', ...Array(Math.max(0, generatedReportData.value.columns.length - 2)).fill('')]],
       theme: 'plain',
       headStyles: {
         fillColor: [248, 250, 252],
@@ -1115,22 +1126,6 @@ onUnmounted(() => {
         </button>
       </div>
     </header>
-
-    <!-- Toast Notification (Google Snackbar Style) -->
-    <Transition name="toast">
-      <div 
-        v-if="notification" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-sm sm:max-w-md w-11/12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-full shadow-lg border border-slate-800 dark:border-neutral-200 flex items-center justify-between text-xs font-medium"
-      >
-        <div class="flex items-center space-x-2 min-w-0 pr-2">
-          <CheckCircle2 class="w-4 h-4 text-emerald-400 dark:text-emerald-600 flex-shrink-0" />
-          <span class="truncate">{{ notification }}</span>
-        </div>
-        <button @click="notification = ''" class="ml-2 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 min-w-[24px] min-h-[24px] flex items-center justify-center cursor-pointer rounded-full">
-          <X class="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </Transition>
 
     <!-- TAB 1: OPERATIONS HUB -->
     <div v-if="activeTab === 'operations'" class="space-y-6">

@@ -24,6 +24,7 @@ onMounted(() => {
   } else {
     isDark.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   }
+  document.documentElement.classList.toggle('dark', isDark.value)
 })
 // Password Visibility Toggles
 const showPassword = ref(false)
@@ -38,14 +39,6 @@ const toggleTheme = () => {
     localStorage.setItem('smartband_theme', 'light')
   }
 }
-
-onMounted(() => {
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-})
 
 // Form State
 const email = ref('')

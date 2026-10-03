@@ -108,13 +108,11 @@ const instrumentList = [
 ]
 
 const showToast = (msg, type = 'info') => {
-  toastMessage.value = msg
   uiStore.addToast({
     title: 'Directory Update',
     message: msg,
     type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
   })
-  setTimeout(() => { toastMessage.value = '' }, 3500)
 }
 
 // TITLE NORMALIZER
@@ -345,7 +343,7 @@ const saveMemberManagement = async () => {
   } catch (err) {
     console.error('Error saving member changes:', err)
     if (err?.code === '22P02') {
-      showToast('Database Notice: Please execute Section 8 in fix_admin_permissions.sql in Supabase SQL Editor to enable this post.')
+      showToast('Database Notice: Please run supabase/comprehensive_fix.sql in Supabase SQL Editor to update role enums.')
     } else {
       showToast(`Error: ${err?.message || 'Failed to save changes.'}`)
     }
@@ -366,6 +364,12 @@ const executeDeleteMember = async () => {
   const target = confirmDeleteTarget.value
 
   try {
+    try {
+      await supabase.rpc('delete_user_account', { target_user_id: target.id })
+    } catch (rpcErr) {
+      console.warn('RPC delete member fallback notice:', rpcErr)
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .delete()
@@ -491,27 +495,18 @@ onUnmounted(() => {
       </div>
 
       <div class="flex items-center space-x-2">
+        <RouterLink 
+          to="/dashboard/leaderboard"
+          class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] hover:bg-slate-50 dark:hover:bg-[#282a2c] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-neutral-800 shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer min-h-[36px]"
+        >
+          <Award class="w-3.5 h-3.5 text-amber-500" />
+          <span>Reliability &amp; Ranks</span>
+        </RouterLink>
         <span class="text-xs font-medium text-slate-600 dark:text-neutral-400 bg-white dark:bg-[#202124] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-neutral-800 shadow-xs">
           {{ members.length }} Musicians
         </span>
       </div>
     </header>
-
-    <!-- Toast Notification -->
-    <Transition name="toast">
-      <div 
-        v-if="toastMessage" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-md w-11/12 bg-white dark:bg-[#202124] text-slate-900 dark:text-white px-4 py-3 rounded-full shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-medium text-xs"
-      >
-        <div class="flex items-center space-x-2 min-w-0 pr-2">
-          <CheckCircle2 class="w-4 h-4 text-emerald-500 flex-shrink-0" />
-          <span class="truncate">{{ toastMessage }}</span>
-        </div>
-        <button @click="toastMessage = ''" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer rounded-full">
-          <X class="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </Transition>
 
     <!-- 1. PINNED ACTIVE EXECUTIVE OFFICERS (ONLY CURRENTLY APPOINTED OFFICERS) -->
     <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Band Leadership">

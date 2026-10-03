@@ -2,12 +2,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
-import { initRealtimeSync } from '@/utils/realtime'
+import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { generateEventAttendancePdf } from '@/utils/pdfExport'
 import { sendPushNotification } from '@/utils/push'
 
 const store = useMainStore()
+const uiStore = useUIStore()
 
 const pendingAccounts = ref([])
 const rawEvents = ref([])
@@ -31,11 +33,13 @@ const showConfirmModal = ref(false)
 const confirmActionType = ref('')
 const confirmTargetId = ref(null)
 
-// Toast Notification
-const toastMsg = ref('')
-const showToast = (msg) => {
-  toastMsg.value = msg
-  setTimeout(() => { toastMsg.value = '' }, 3500)
+// Global Toast Notification
+const showToast = (msg, type = 'info') => {
+  uiStore.addToast({
+    title: 'Dashboard Alert',
+    message: msg,
+    type: type === 'error' ? 'error' : msg.startsWith('✓') ? 'success' : 'info'
+  })
 }
 
 // Announcement Form
@@ -103,10 +107,8 @@ const myAcceptedEvents = computed(() => {
     .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
 })
 
-const notifyOtherTabs = (eventType) => {
-  if (syncBroadcast) {
-    try { syncBroadcast.postMessage({ type: eventType, time: Date.now() }) } catch(e){}
-  }
+const notifyOtherTabs = (eventType, payload = {}) => {
+  broadcastSync(eventType, payload)
 }
 
 const fetchHomeData = async (skipCache = false) => {
@@ -515,6 +517,7 @@ const handleCreateEvent = async () => {
 
       rawEvents.value = [...rawEvents.value.filter(e => e.id !== data.id), newEv]
       localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+      localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
 
       notifyOtherTabs('EVENT_CHANGED')
 
@@ -534,7 +537,7 @@ const handleCreateEvent = async () => {
     }
   } catch (err) {
     console.error('Error creating event:', err)
-    showToast('Failed to schedule event.')
+    showToast('Failed to schedule event.', 'error')
   } finally {
     isSubmitting.value = false
   }
@@ -565,13 +568,13 @@ const executeConfirmedAction = async () => {
   if (confirmActionType.value === 'delete_announcement') {
     const { data, error } = await supabase.from('announcements').delete().eq('id', id).select()
     if (error) {
-      showToast(`Error deleting announcement: ${error.message}`)
+      showToast(`Error deleting announcement: ${error.message}`, 'error')
       showConfirmModal.value = false
       confirmTargetId.value = null
       return
     }
     if (!data || data.length === 0) {
-      showToast('Could not delete announcement. Database permission denied.')
+      showToast('Could not delete announcement. Database permission denied.', 'error')
       showConfirmModal.value = false
       confirmTargetId.value = null
       return
@@ -583,31 +586,31 @@ const executeConfirmedAction = async () => {
   } else if (confirmActionType.value === 'delete_event') {
     const { data, error } = await supabase.from('events').delete().eq('id', id).select()
     if (error) {
-      showToast(`Error deleting event: ${error.message}`)
+      showToast(`Error deleting event: ${error.message}`, 'error')
       showConfirmModal.value = false
       confirmTargetId.value = null
       return
     }
     if (!data || data.length === 0) {
-      showToast('Could not delete event. Database permission denied.')
+      showToast('Could not delete event. Database permission denied.', 'error')
       showConfirmModal.value = false
       confirmTargetId.value = null
       return
     }
     rawEvents.value = rawEvents.value.filter(e => e.id !== id)
     localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+    localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
     notifyOtherTabs('EVENT_CHANGED')
     showToast('Event deleted.')
   } else if (confirmActionType.value === 'reject_account') {
+    try {
+      await supabase.rpc('delete_user_account', { target_user_id: id })
+    } catch (rpcErr) {
+      console.warn('RPC delete fallback notice:', rpcErr)
+    }
     const { data, error } = await supabase.from('profiles').delete().eq('id', id).select()
     if (error) {
-      showToast(`Error declining account: ${error.message}`)
-      showConfirmModal.value = false
-      confirmTargetId.value = null
-      return
-    }
-    if (!data || data.length === 0) {
-      showToast('Could not decline account. Database permission denied.')
+      showToast(`Error declining account: ${error.message}`, 'error')
       showConfirmModal.value = false
       confirmTargetId.value = null
       return
@@ -754,24 +757,6 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6 relative">
     
-    <!-- Toast Notification -->
-    <Transition name="toast">
-      <div 
-        v-if="toastMsg" 
-        class="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-xs w-11/12 bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-800 flex items-center justify-between font-extrabold text-xs"
-        role="status"
-        aria-live="polite"
-      >
-        <div class="flex items-center space-x-1">
-          <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <span>{{ toastMsg }}</span>
-        </div>
-        <button @click="toastMsg = ''" class="ml-2 text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer" aria-label="Close Toast">
-          <X class="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </Transition>
-
     <!-- Clean Header Title -->
     <div class="flex items-center justify-between pt-1">
       <div>

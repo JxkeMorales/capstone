@@ -183,6 +183,7 @@ onMounted(() => {
   } else {
     isDark.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   }
+  document.documentElement.classList.toggle('dark', isDark.value)
   window.addEventListener('keydown', handleKeyDown)
   fetchOfficers()
 })
@@ -207,9 +208,11 @@ const goToLogin = () => {
 }
 
 const selectedIndex = ref(0)
-const currentOfficer = computed(() => officers.value[selectedIndex.value])
+const currentOfficer = computed(() => officers.value[selectedIndex.value] || {})
 const prevIndex = computed(() => (selectedIndex.value - 1 + officers.value.length) % officers.value.length)
 const nextIndex = computed(() => (selectedIndex.value + 1) % officers.value.length)
+const prevOfficerObj = computed(() => officers.value[prevIndex.value] || {})
+const nextOfficerObj = computed(() => officers.value[nextIndex.value] || {})
 
 const selectOfficer = (idx) => {
   selectedIndex.value = idx
@@ -426,9 +429,9 @@ const handleTouchEnd = (e) => {
                   class="hidden sm:flex flex-col relative w-32 md:w-36 h-[320px] md:h-[350px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-200 dark:border-neutral-800 shadow-sm opacity-50 hover:opacity-80 bg-slate-900"
                 >
                   <img 
-                    v-if="officers[prevIndex].image"
-                    :src="officers[prevIndex].image" 
-                    :alt="officers[prevIndex].name"
+                    v-if="prevOfficerObj.image"
+                    :src="prevOfficerObj.image" 
+                    :alt="prevOfficerObj.name"
                     class="w-full h-full object-cover object-top"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-3 text-center">
@@ -436,8 +439,8 @@ const handleTouchEnd = (e) => {
                   </div>
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
                   <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10 text-left">
-                    <p class="text-xs font-semibold text-white truncate">{{ officers[prevIndex].name }}</p>
-                    <p class="text-[10px] text-slate-300 truncate">{{ officers[prevIndex].role }}</p>
+                    <p class="text-xs font-semibold text-white truncate">{{ prevOfficerObj.name }}</p>
+                    <p class="text-[10px] text-slate-300 truncate">{{ prevOfficerObj.role }}</p>
                   </div>
                 </div>
 
@@ -484,9 +487,9 @@ const handleTouchEnd = (e) => {
                   class="hidden sm:flex flex-col relative w-32 md:w-36 h-[320px] md:h-[350px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-200 dark:border-neutral-800 shadow-sm opacity-50 hover:opacity-80 bg-slate-900"
                 >
                   <img 
-                    v-if="officers[nextIndex].image"
-                    :src="officers[nextIndex].image" 
-                    :alt="officers[nextIndex].name"
+                    v-if="nextOfficerObj.image"
+                    :src="nextOfficerObj.image" 
+                    :alt="nextOfficerObj.name"
                     class="w-full h-full object-cover object-top"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-3 text-center">
@@ -494,8 +497,8 @@ const handleTouchEnd = (e) => {
                   </div>
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
                   <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10 text-left">
-                    <p class="text-xs font-semibold text-white truncate">{{ officers[nextIndex].name }}</p>
-                    <p class="text-[10px] text-slate-300 truncate">{{ officers[nextIndex].role }}</p>
+                    <p class="text-xs font-semibold text-white truncate">{{ nextOfficerObj.name }}</p>
+                    <p class="text-[10px] text-slate-300 truncate">{{ nextOfficerObj.role }}</p>
                   </div>
                 </div>
 
