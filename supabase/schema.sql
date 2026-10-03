@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     birth_date DATE,
     sex TEXT,
     instrument TEXT,
-    avatar_url TEXT,
+    profile_picture TEXT,
+    profile_picture_status TEXT DEFAULT 'approved',
     
     -- HARDCODED SYSTEM SECURITY FIELDS (Managed Strictly by Super Admin / System)
     role public.app_role DEFAULT 'member'::public.app_role NOT NULL,
@@ -130,10 +131,17 @@ CREATE POLICY "Super Admins can update roles and verification"
 ON public.profiles FOR UPDATE
 USING (public.get_auth_role(auth.uid()) = 'super_admin');
 
--- RLS: ONLY Secretary Admin can promote/demote member ranks (Junior <-> Senior)
-CREATE POLICY "Secretary can update member ranks"
+-- RLS: Super Admin and Secretary Admin can promote/demote member ranks (Junior <-> Senior)
+CREATE POLICY "Admins can update member ranks"
 ON public.profiles FOR UPDATE
-USING (public.get_auth_role(auth.uid()) = 'secretary_admin');
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'))
+WITH CHECK (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
+
+-- RLS: Super Admin and Secretary Admin can update member reliability scores during roll-call
+CREATE POLICY "Admins can update reliability scores"
+ON public.profiles FOR UPDATE
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'))
+WITH CHECK (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
 
 -- RLS: Super Admin can delete rejected or removed accounts
 CREATE POLICY "Super Admins can delete profiles"
@@ -158,11 +166,11 @@ SELECT
     instrument,
     rank,
     reliability_score,
-    avatar_url
+    profile_picture
 FROM public.profiles
 WHERE is_verified = true;
 
-GRANT SELECT ON public.public_roster TO authenticated;
+GRANT SELECT ON public.public_roster TO authenticated, anon;
 
 
 -- --------------------------------------------------------------------
@@ -198,8 +206,7 @@ CREATE TABLE IF NOT EXISTS public.events (
     title TEXT NOT NULL,
     event_type TEXT NOT NULL, -- Rehearsal, Fiesta Procession, Funeral Gig, Meeting
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    location TEXT NOT NULL,
-    budget_estimate NUMERIC(10,2) DEFAULT 0.00
+    location TEXT NOT NULL
 );
 
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
@@ -260,9 +267,9 @@ CREATE POLICY "Members can manage own availability"
 ON public.member_availability FOR ALL
 USING (auth.uid() = user_id);
 
-CREATE POLICY "Admins can view all member availability"
+CREATE POLICY "Admins and Execs can view member availability"
 ON public.member_availability FOR SELECT
-USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin'));
+USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin', 'executive'));
 
 
 -- --------------------------------------------------------------------

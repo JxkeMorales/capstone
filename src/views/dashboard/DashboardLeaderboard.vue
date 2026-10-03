@@ -1,21 +1,27 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Trophy, Activity, CheckCircle2, AlertTriangle, BarChart3, ChevronUp, UserX, AlertCircle } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
+import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
+import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 
 const store = useMainStore()
+const uiStore = useUIStore()
 const leaderboard = ref([])
 const paImportanteList = ref([])
 const isLoading = ref(true)
+let cleanupSync = null
 
-const fetchLeaderboard = async () => {
-  isLoading.value = true
+const fetchLeaderboard = async (skipLoading = false) => {
+  if (!skipLoading) isLoading.value = true
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('public_roster')
       .select('*')
       .order('reliability_score', { ascending: false })
+
+    if (error) throw error
 
     if (data) {
       leaderboard.value = data.map(m => ({
@@ -28,7 +34,7 @@ const fetchLeaderboard = async () => {
         profile_picture: m.profile_picture || null
       }))
 
-      // Flag "Pa-Importante" behavior: Members with reliability score < 80% or low attendance
+      // Flag "Pa-Importante" behavior: Members with reliability score < 85% or low attendance
       paImportanteList.value = leaderboard.value.filter(m => m.score < 85)
     }
   } catch (err) {
@@ -40,18 +46,47 @@ const fetchLeaderboard = async () => {
 
 const toggleMemberRank = async (member) => {
   const newRank = member.rank === 'Junior' ? 'Senior' : 'Junior'
-  const { error } = await supabase
-    .from('profiles')
-    .update({ rank: newRank })
-    .eq('id', member.id)
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ rank: newRank })
+      .eq('id', member.id)
 
-  if (!error) {
+    if (error) throw error
+
     member.rank = newRank
+    uiStore.addToast({
+      title: 'Rank Updated',
+      message: `✓ ${member.name} promoted to ${newRank}.`,
+      type: 'success'
+    })
+    await broadcastSync('account_status_changed', { userId: member.id })
+    fetchLeaderboard(true)
+  } catch (err) {
+    console.error('Error toggling member rank:', err)
+    uiStore.addToast({
+      title: 'Rank Update Notice',
+      message: err.message || 'Database permissions restricted rank update.',
+      type: 'error'
+    })
   }
+}
+
+const handleFocus = () => {
+  fetchLeaderboard(true)
 }
 
 onMounted(() => {
   fetchLeaderboard()
+  cleanupSync = initRealtimeSync(() => {
+    fetchLeaderboard(true)
+  })
+  window.addEventListener('focus', handleFocus)
+})
+
+onUnmounted(() => {
+  if (cleanupSync) cleanupSync()
+  window.removeEventListener('focus', handleFocus)
 })
 </script>
 

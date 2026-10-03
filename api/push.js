@@ -32,12 +32,14 @@ export default async function handler(req, res) {
 
     const authHeader = req.headers.authorization || ''
     const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://tztlnltutpntzrnsrdvo.supabase.co'
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_dsd7V2hfbdaYc3h18s_xGw_cCJ4wSE4'
+    const activeKey = serviceRoleKey || supabaseAnonKey
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createClient(supabaseUrl, activeKey, {
       auth: { persistSession: false },
       global: {
-        headers: authHeader ? { Authorization: authHeader } : {}
+        headers: (!serviceRoleKey && authHeader) ? { Authorization: authHeader } : {}
       }
     })
 

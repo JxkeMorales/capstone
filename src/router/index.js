@@ -79,19 +79,43 @@ router.beforeEach(async (to, from) => {
     if (requiresAuth) {
       if (!session) {
         return '/'
-      } else {
-        if (!store.user) {
-          store.user = session.user
-          await store.fetchProfile(true)
-        }
-        return true
       }
+
+      if (!store.user) {
+        store.user = session.user
+      }
+      
+      const profile = await store.fetchProfile()
+
+      // Block unverified standard members from accessing dashboard
+      if (profile && profile.is_verified === false && profile.role === 'member') {
+        await supabase.auth.signOut()
+        store.user = null
+        store.profile = null
+        return '/login'
+      }
+
+      // Authorize access to /dashboard/admin strictly to leadership
+      if (to.name === 'dashboard-admin') {
+        const canAccessAdmin = ['super_admin', 'secretary_admin', 'executive'].includes(store.currentRole)
+        if (!canAccessAdmin) {
+          return '/dashboard'
+        }
+      }
+
+      return true
     } else {
-      // If user is already authenticated and visits public landing '/' or '/login', forward to '/dashboard'
+      // If user is already authenticated and visits public landing '/' or '/login'
       if (session && (to.path === '/' || to.path === '/login')) {
         if (!store.user) {
           store.user = session.user
-          await store.fetchProfile(true)
+        }
+        const profile = await store.fetchProfile()
+        if (profile && profile.is_verified === false && profile.role === 'member') {
+          await supabase.auth.signOut()
+          store.user = null
+          store.profile = null
+          return true
         }
         return '/dashboard'
       }
