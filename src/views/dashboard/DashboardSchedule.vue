@@ -77,9 +77,18 @@ const newEventForm = ref({
   location: ''
 })
 
+// IT Expert Recommendation (P[1133] & P[1148]): Past Date Prevention Validation
+const minDateTimeNow = computed(() => new Date(Date.now() - 60000).toISOString().slice(0, 16))
+
 const saveNewEvent = async () => {
   if (!newEventForm.value.title.trim() || !newEventForm.value.event_date || !newEventForm.value.location.trim()) {
     showToastNotification('Please enter event title, date/time, and location.', 'error')
+    return
+  }
+
+  // Validate date is not in the past
+  if (new Date(newEventForm.value.event_date).getTime() < Date.now() - 120000) {
+    showToastNotification('Event date cannot be in the past. Please select today or a future date.', 'error')
     return
   }
 
@@ -301,18 +310,20 @@ const openAttendanceTracker = async (ev) => {
 
     const { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, status')
+      .select('id, user_id, status, excuse_justification')
       .eq('event_id', ev.id)
 
     if (rsvpErr) throw rsvpErr
 
     const rsvpMap = new Map()
     if (rsvps) {
-      rsvps.forEach(r => rsvpMap.set(r.user_id, r.status))
+      rsvps.forEach(r => rsvpMap.set(r.user_id, { status: r.status, excuse: r.excuse_justification }))
     }
 
     rollCallRoster.value = (members || []).map(m => {
-      const st = rsvpMap.get(m.id) || 'none'
+      const record = rsvpMap.get(m.id)
+      const st = record?.status || 'none'
+      const excuse = record?.excuse || null
       let initRsvp = 'none'
       if (st === 'attending' || st === 'present' || st === 'absent') {
         initRsvp = 'attending'
@@ -329,6 +340,7 @@ const openAttendanceTracker = async (ev) => {
         profile_picture: m.profile_picture,
         initialRsvp: initRsvp,
         currentStatus: st,
+        excuseJustification: excuse,
         isSaving: false
       }
     }).sort((a, b) => {
@@ -897,6 +909,10 @@ onUnmounted(() => {
                     {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'No Response' }}
                   </span>
                 </div>
+                <!-- Excuse Justification (Table 19) -->
+                <p v-if="member.excuseJustification" class="text-[10px] text-amber-700 dark:text-amber-400 italic truncate max-w-[220px] mt-0.5" :title="member.excuseJustification">
+                  Excuse: {{ member.excuseJustification }}
+                </p>
               </div>
             </div>
 
@@ -1049,6 +1065,7 @@ onUnmounted(() => {
               id="new-event-date"
               v-model="newEventForm.event_date" 
               type="datetime-local" 
+              :min="minDateTimeNow"
               required
               class="w-full bg-slate-50 dark:bg-[#18191a] text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-200 dark:border-neutral-800 text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
             />

@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download, AlertTriangle, Volume2, Check } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { generateEventAttendancePdf } from '@/utils/pdfExport'
-import { sendPushNotification } from '@/utils/push'
+import { requestPushPermission, sendPushNotification } from '@/utils/push'
 
 const store = useMainStore()
 const uiStore = useUIStore()
@@ -42,9 +42,32 @@ const showToast = (msg, type = 'info') => {
   })
 }
 
-// Announcement Form
+// Announcement Form (ISO/IEC 25010 Urgency Tiers & Section Dispatch)
 const newAnnTitle = ref('')
 const newAnnContent = ref('')
+const newAnnPriority = ref('HIGH') // 'HIGH' | 'MEDIUM' | 'LOW'
+const newAnnTargetSection = ref('all') // 'all' | 'woodwinds' | 'brass' | 'percussion' | 'officers'
+
+// TC-05 Two-Way Message Acknowledgment State
+const userAcknowledgments = ref({})
+
+// Excuse Justification State (Table 19 tbl_event_rsvps)
+const showExcuseModal = ref(false)
+const eventForExcuse = ref(null)
+const selectedExcusePill = ref('School / Exam Conflict')
+const customExcuseNote = ref('')
+const isSubmittingExcuse = ref(false)
+const excusePills = [
+  'School / Exam Conflict',
+  'Work Shift / Livelihood',
+  'Illness / Medical Reason',
+  'Family Emergency',
+  'Out of Town / Travel',
+  'Other Reason'
+]
+
+// Push permission state
+const pushPermission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'default')
 
 // Event Form
 const newEvTitle = ref('')
@@ -52,6 +75,15 @@ const newEvType = ref('Ensayo / Practice')
 const newEvDate = ref('')
 const newEvTime = ref('14:00')
 const newEvLocation = ref('')
+
+// IT Expert Recommendation (P[1133] & P[1148]): Past Date Prevention Validation
+const minDateToday = computed(() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
 
 const eventTypeOptions = [
   'Practice & Rehearsal (Ensayo)',
@@ -114,26 +146,13 @@ const notifyOtherTabs = (eventType, payload = {}) => {
 const fetchHomeData = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
-    const cachedAnn = localStorage.getItem('smartband_announcements_cache')
-    const cachedEv = localStorage.getItem('smartband_raw_events_cache')
-    if (cachedAnn) {
-      try { announcements.value = JSON.parse(cachedAnn) } catch(e){}
-    }
-    if (cachedEv) {
-      try {
-        const parsed = JSON.parse(cachedEv)
-        // Overlay local RSVP cache immediately so switching tabs NEVER resets or flickers button states
-        rawEvents.value = parsed.map(ev => ({
-          ...ev,
-          rsvpStatus: localStorage.getItem(`smartband_rsvp_${ev.id}`) || ev.rsvpStatus || null
-        }))
-      } catch(e){}
-    }
+    // Removed localStorage cache dependency - Supabase is the source of truth
+    // LocalStorage was causing data staleness across tabs; now we always fetch fresh data
   }
 
   try {
     // 1. Fetch all events
-    const { data: eventData } = await supabase
+    const { data: eventData, error: evErr } = await supabase
       .from('events')
       .select('*')
       .order('created_at', { ascending: false })
@@ -143,19 +162,17 @@ const fetchHomeData = async (skipCache = false) => {
       if (store.user) {
         const { data: rsvpData } = await supabase
           .from('event_rsvps')
-          .select('event_id, status')
+          .select('event_id, status, excuse_justification')
           .eq('user_id', store.user.id)
         if (rsvpData) {
           rsvpData.forEach(r => {
-            rsvpMap[r.event_id] = r.status
-            localStorage.setItem(`smartband_rsvp_${r.event_id}`, r.status)
+            rsvpMap[r.event_id] = { status: r.status, excuse: r.excuse_justification }
           })
         }
       }
 
       rawEvents.value = eventData.map(ev => {
         const evDate = new Date(ev.event_date)
-        const localStatus = localStorage.getItem(`smartband_rsvp_${ev.id}`)
         return {
           id: ev.id,
           rawDate: ev.event_date,
@@ -164,15 +181,20 @@ const fetchHomeData = async (skipCache = false) => {
           time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           location: ev.location,
           type: ev.event_type,
-          rsvpStatus: rsvpMap[ev.id] || localStatus || null,
+          rsvpStatus: rsvpMap[ev.id]?.status || localStorage.getItem(`smartband_rsvp_${ev.id}`) || null,
+          excuseJustification: rsvpMap[ev.id]?.excuse || localStorage.getItem(`smartband_rsvp_excuse_${ev.id}`) || null,
           createdAt: ev.created_at
         }
       })
-      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+      // Note: Removed localStorage.setItem('smartband_raw_events_cache') to prevent
+      // data staleness. Raw events are always fetched fresh from Supabase.
+      // Per-event RSVP status is tracked individually via localStorage below.
     }
 
-    // 2. Fetch announcements
-    const { data: annData } = await supabase
+    if (evErr) console.error('Error fetching events:', evErr)
+
+    // 2. Fetch announcements (ISO/IEC 25010 & TC-04 Priority & Target Section)
+    const { data: annData, error: annErr } = await supabase
       .from('announcements')
       .select('*, author:profiles(full_name)')
       .order('created_at', { ascending: false })
@@ -184,9 +206,40 @@ const fetchHomeData = async (skipCache = false) => {
         date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         title: a.title,
         rawDate: a.created_at,
-        content: a.content
+        content: a.content,
+        priority: a.priority || a.category || 'HIGH',
+        targetSection: a.target_section || 'all',
+        ackCount: 0
       }))
-      localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
+    }
+
+    if (annErr) console.error('Error fetching announcements:', annErr)
+
+    // 2b. Fetch Acknowledgment counts & user acknowledgments (TC-05 Two-Way Tracking)
+    try {
+      const { data: ackData } = await supabase
+        .from('announcement_acknowledgments')
+        .select('announcement_id, user_id, acknowledged_at, response_latency_seconds')
+      if (ackData) {
+        const counts = {}
+        ackData.forEach(row => {
+          counts[row.announcement_id] = (counts[row.announcement_id] || 0) + 1
+          if (store.user && row.user_id === store.user.id) {
+            const lat = row.response_latency_seconds || 0
+            const fmt = lat < 60 ? `${lat}s` : `${Math.round(lat / 60)}m`
+            userAcknowledgments.value[row.announcement_id] = {
+              ackAt: row.acknowledged_at,
+              latencySeconds: lat,
+              formattedLatency: fmt
+            }
+          }
+        })
+        announcements.value.forEach(a => {
+          if (counts[a.id]) a.ackCount = counts[a.id]
+        })
+      }
+    } catch (ackFetchErr) {
+      // Graceful offline/local fallback
     }
 
     // 3. Fetch pending accounts for Super Admin
@@ -280,18 +333,20 @@ const openAttendanceTracker = async (ev) => {
     // 2. Fetch existing RSVPs / roll-call records for this event
     const { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, status')
+      .select('id, user_id, status, excuse_justification')
       .eq('event_id', ev.id)
 
     if (rsvpErr) throw rsvpErr
 
     const rsvpMap = new Map()
     if (rsvps) {
-      rsvps.forEach(r => rsvpMap.set(r.user_id, r.status))
+      rsvps.forEach(r => rsvpMap.set(r.user_id, { status: r.status, excuse: r.excuse_justification }))
     }
 
     rollCallRoster.value = (members || []).map(m => {
-      const st = rsvpMap.get(m.id) || 'none'
+      const record = rsvpMap.get(m.id)
+      const st = record?.status || 'none'
+      const excuse = record?.excuse || null
       let initRsvp = 'none'
       if (st === 'attending' || st === 'present' || st === 'absent') {
         initRsvp = 'attending'
@@ -308,6 +363,7 @@ const openAttendanceTracker = async (ev) => {
         profile_picture: m.profile_picture,
         initialRsvp: initRsvp,
         currentStatus: st, // 'attending' | 'declined' | 'present' | 'absent' | 'excused' | 'none'
+        excuseJustification: excuse,
         isSaving: false
       }
     }).sort((a, b) => {
@@ -416,18 +472,24 @@ const handleExportAttendancePdf = async () => {
   }
 }
 
-// POST ANNOUNCEMENT WITH INSTANT LOCAL UPDATE + SYNC BROADCAST
+// POST ANNOUNCEMENT WITH INSTANT LOCAL UPDATE + SYNC BROADCAST (ISO/IEC 25010 & TC-04)
 const handleCreateAnnouncement = async () => {
   if (!newAnnTitle.value || !newAnnContent.value || !store.user) return
   isSubmitting.value = true
 
   try {
+    const priorityVal = newAnnPriority.value || 'HIGH'
+    const targetSec = newAnnTargetSection.value || 'all'
+
     const { data, error } = await supabase
       .from('announcements')
       .insert({
         title: newAnnTitle.value.trim(),
         content: newAnnContent.value.trim(),
-        author_id: store.user.id
+        author_id: store.user.id,
+        priority: priorityVal,
+        category: priorityVal,
+        target_section: targetSec
       })
       .select('*, author:profiles(full_name)')
       .single()
@@ -440,17 +502,25 @@ const handleCreateAnnouncement = async () => {
         author: data.author?.full_name || store.profile?.full_name || 'Band Officer',
         date: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         title: data.title,
-        content: data.content
+        content: data.content,
+        rawDate: data.created_at,
+        priority: data.priority || priorityVal,
+        targetSection: data.target_section || targetSec,
+        ackCount: 0
       }
 
       announcements.value = [newAnn, ...announcements.value.filter(a => a.id !== data.id)]
-      localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
+
+      // TC-04 & ISO/IEC 25010 Safety: Acoustic Brass Fanfare Siren Alert for Urgent Call-Time
+      if (priorityVal === 'HIGH') {
+        uiStore.playCallTimeFanfare()
+      }
 
       notifyOtherTabs('ANNOUNCEMENT_CHANGED')
 
       // Dispatch background Web Push to closed devices
       sendPushNotification({
-        title: `📢 ${newAnn.title}`,
+        title: priorityVal === 'HIGH' ? `🚨 CALL-TIME ALERT: ${newAnn.title}` : `📢 ${newAnn.title}`,
         message: newAnn.content,
         url: '/dashboard',
         senderId: store.user?.id
@@ -458,6 +528,8 @@ const handleCreateAnnouncement = async () => {
 
       newAnnTitle.value = ''
       newAnnContent.value = ''
+      newAnnPriority.value = 'HIGH'
+      newAnnTargetSection.value = 'all'
       showAnnouncementModal.value = false
       showToast('Announcement posted successfully!')
     }
@@ -477,6 +549,11 @@ const handleCreateEvent = async () => {
   }
   if (!newEvDate.value) {
     showToast('Please select an event date.')
+    return
+  }
+  // IT EXPERT RECOMMENDATION (P[1133] & P[1148]): Past Date Prevention Validation
+  if (newEvDate.value < minDateToday.value) {
+    showToast('Event date cannot be in the past. Please select today or a future date.', 'error')
     return
   }
   if (!newEvLocation.value) {
@@ -512,12 +589,11 @@ const handleCreateEvent = async () => {
         location: data.location,
         type: data.event_type,
         rsvpStatus: null,
+        excuseJustification: null,
         createdAt: data.created_at
       }
 
       rawEvents.value = [...rawEvents.value.filter(e => e.id !== data.id), newEv]
-      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
-      localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
 
       notifyOtherTabs('EVENT_CHANGED')
 
@@ -580,7 +656,6 @@ const executeConfirmedAction = async () => {
       return
     }
     announcements.value = announcements.value.filter(a => a.id !== id)
-    localStorage.setItem('smartband_announcements_cache', JSON.stringify(announcements.value))
     notifyOtherTabs('ANNOUNCEMENT_CHANGED')
     showToast('Announcement deleted.')
   } else if (confirmActionType.value === 'delete_event') {
@@ -598,8 +673,6 @@ const executeConfirmedAction = async () => {
       return
     }
     rawEvents.value = rawEvents.value.filter(e => e.id !== id)
-    localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
-    localStorage.setItem('smartband_schedule_events_cache', JSON.stringify(rawEvents.value))
     notifyOtherTabs('EVENT_CHANGED')
     showToast('Event deleted.')
   } else if (confirmActionType.value === 'reject_account') {
@@ -633,40 +706,66 @@ const approveAccount = async (id) => {
   }
 }
 
-const rsvp = async (eventObj, status) => {
+// EXCUSE JUSTIFICATION WORKFLOW (Table 19 tbl_event_rsvps)
+const promptDeclineWithExcuse = (ev) => {
+  eventForExcuse.value = ev
+  selectedExcusePill.value = 'School / Exam Conflict'
+  customExcuseNote.value = ''
+  showExcuseModal.value = true
+}
+
+const confirmDeclineWithExcuse = async () => {
+  if (!eventForExcuse.value) return
+  isSubmittingExcuse.value = true
+  const justification = customExcuseNote.value.trim()
+    ? `${selectedExcusePill.value} - ${customExcuseNote.value.trim()}`
+    : selectedExcusePill.value
+
+  await rsvp(eventForExcuse.value, 'declined', justification)
+  showExcuseModal.value = false
+  eventForExcuse.value = null
+  isSubmittingExcuse.value = false
+}
+
+const rsvp = async (eventObj, status, excuseJustification = null) => {
   if (!eventObj || !store.user) return
   const prevStatus = eventObj.rsvpStatus
+  const prevExcuse = eventObj.excuseJustification
   eventObj.rsvpStatus = status
+  eventObj.excuseJustification = excuseJustification
   
   localStorage.setItem(`smartband_rsvp_${eventObj.id}`, status)
+  if (excuseJustification) {
+    localStorage.setItem(`smartband_rsvp_excuse_${eventObj.id}`, excuseJustification)
+  }
   
-  // Immediately persist updated rsvpStatus to rawEvents cache so tab-switching never resets or flickers
-  rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: status } : e)
-  localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+  rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: status, excuseJustification } : e)
   
   try {
+    const payload = {
+      event_id: eventObj.id,
+      user_id: store.user.id,
+      status: status,
+      updated_at: new Date().toISOString()
+    }
+    if (excuseJustification !== null) {
+      payload.excuse_justification = excuseJustification
+    }
+
     const { error } = await supabase
       .from('event_rsvps')
-      .upsert(
-        {
-          event_id: eventObj.id,
-          user_id: store.user.id,
-          status: status,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'event_id,user_id' }
-      )
+      .upsert(payload, { onConflict: 'event_id,user_id' })
 
     if (error) {
       console.error('RSVP upsert error:', error)
       eventObj.rsvpStatus = prevStatus
-      rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: prevStatus } : e)
-      localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
+      eventObj.excuseJustification = prevExcuse
+      rawEvents.value = rawEvents.value.map(e => e.id === eventObj.id ? { ...e, rsvpStatus: prevStatus, excuseJustification: prevExcuse } : e)
       throw error
     }
 
     notifyOtherTabs('RSVP_CHANGED')
-    showToast(status === 'attending' ? 'RSVP Confirmed!' : 'RSVP Declined.')
+    showToast(status === 'attending' ? '✓ RSVP Confirmed: Attending' : '✓ Absence Excuse Recorded', 'success')
 
     // If Secretary / Admin attendance modal is open, refresh it immediately!
     if (showAttendanceModal.value && selectedEventForAttendance.value?.id === eventObj.id) {
@@ -676,6 +775,66 @@ const rsvp = async (eventObj, status) => {
     console.error('RSVP error:', e)
     showToast('Failed to update RSVP.')
   }
+}
+
+// TC-05 TWO-WAY MESSAGE ACKNOWLEDGMENT & RESPONSE LATENCY TRACKING
+const loadLocalAcknowledgments = () => {
+  if (!store.user) return
+  try {
+    const saved = localStorage.getItem(`smartband_ack_${store.user.id}`)
+    if (saved) {
+      userAcknowledgments.value = { ...userAcknowledgments.value, ...JSON.parse(saved) }
+    }
+  } catch (e) {
+    console.warn('Ack load error:', e)
+  }
+}
+
+const isAcknowledged = (annId) => {
+  return !!userAcknowledgments.value[annId]
+}
+
+const getAckLatency = (annId) => {
+  return userAcknowledgments.value[annId]?.formattedLatency || ''
+}
+
+const handleAcknowledgeAnnouncement = async (ann) => {
+  if (!ann || !store.user) return
+  if (isAcknowledged(ann.id)) return
+
+  const pubTime = new Date(ann.rawDate || Date.now()).getTime()
+  const now = Date.now()
+  const latencySeconds = Math.max(1, Math.round((now - pubTime) / 1000))
+  const formattedLatency = latencySeconds < 60 ? `${latencySeconds}s` : `${Math.round(latencySeconds / 60)}m`
+
+  const ackRecord = {
+    ackAt: new Date().toISOString(),
+    latencySeconds,
+    formattedLatency
+  }
+
+  userAcknowledgments.value[ann.id] = ackRecord
+  ann.ackCount = (ann.ackCount || 0) + 1
+
+  // Save locally
+  try {
+    localStorage.setItem(`smartband_ack_${store.user.id}`, JSON.stringify(userAcknowledgments.value))
+  } catch (e) {}
+
+  // Attempt Supabase upsert (graceful fallback if table is not yet migrated)
+  try {
+    await supabase.from('announcement_acknowledgments').upsert({
+      announcement_id: ann.id,
+      user_id: store.user.id,
+      acknowledged_at: ackRecord.ackAt,
+      response_latency_seconds: latencySeconds
+    }, { onConflict: 'announcement_id,user_id' })
+  } catch (err) {
+    console.warn('DB Ack upsert notice:', err)
+  }
+
+  notifyOtherTabs('ANNOUNCEMENT_ACKNOWLEDGED', { annId: ann.id })
+  showToast(`✓ Acknowledged "${ann.title}" (Response Latency: ${formattedLatency})`, 'success')
 }
 
 // INSTANT REALTIME EVENT LISTENER (0ms latency for newly scheduled events on members' dashboards)
@@ -707,7 +866,6 @@ const handleLiveEventUpdate = (e) => {
         rawEvents.value = [formattedEv, ...rawEvents.value]
       }
     }
-    localStorage.setItem('smartband_raw_events_cache', JSON.stringify(rawEvents.value))
   }
   fetchHomeData(true)
 }
@@ -721,7 +879,13 @@ const handleVisibilityOrFocus = () => {
 }
 
 onMounted(() => {
+  loadLocalAcknowledgments()
   fetchHomeData()
+
+  // Initialize push notification permission state
+  requestPushPermission().then(perm => {
+    pushPermission.value = perm
+  })
 
   // 1. Centralized Master Realtime Sync (WebSockets + Inter-Tab)
   cleanupSync = initRealtimeSync((event) => {
@@ -812,6 +976,9 @@ onUnmounted(() => {
             </span>
             <span v-if="store.profile?.is_verified" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">Verified</span>
             <span v-else class="text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40">Pending</span>
+            <span v-if="!store.profile?.is_verified" class="text-[10px] font-medium bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-neutral-300 px-2 py-0.5 rounded-full border border-slate-300/60 dark:border-neutral-600/40">
+              {{ pushPermission === 'granted' ? 'Push ✓' : pushPermission === 'denied' ? 'Push ×' : 'Push ⚠' }}
+            </span>
           </div>
           <p class="text-xs text-slate-500 dark:text-neutral-400 flex items-center mt-1 font-medium capitalize">
             <TrendingUp class="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -895,7 +1062,7 @@ onUnmounted(() => {
                     <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px] transition-colors">
                       <Users class="w-3.5 h-3.5 mr-1" /> Roll Call
                     </button>
-                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors" title="Delete Event">
+                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" aria-label="Delete Event" class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors" title="Delete Event">
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -919,14 +1086,16 @@ onUnmounted(() => {
                   <button 
                     @click="rsvp(ev, 'attending')"
                     type="button"
+                    aria-label="Confirm attendance for this event"
                     class="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold py-2 px-3 rounded-full flex items-center justify-center transition-all shadow-xs text-xs cursor-pointer min-h-[40px]"
                   >
                     <CheckCircle class="w-3.5 h-3.5 mr-1.5" />
                     <span>I Will Attend</span>
                   </button>
                   <button 
-                    @click="rsvp(ev, 'declined')"
+                    @click="promptDeclineWithExcuse(ev)"
                     type="button"
+                    aria-label="Cannot attend event and submit excuse justification"
                     class="bg-white hover:bg-slate-50 dark:bg-transparent dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium py-2 px-3 rounded-full flex items-center justify-center transition-all text-xs cursor-pointer min-h-[40px] border border-slate-200 dark:border-neutral-700"
                   >
                     <XCircle class="w-3.5 h-3.5 mr-1.5 text-rose-500" />
@@ -934,12 +1103,17 @@ onUnmounted(() => {
                   </button>
                 </div>
                 
-                <!-- Color-Coded Confirmed RSVP Status -->
-                <div v-else class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-neutral-800 rounded-2xl">
-                  <span class="font-medium text-xs" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
-                    {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
-                  </span>
-                  <button @click="ev.rsvpStatus = null" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer px-2 py-1">Change</button>
+                <!-- Color-Coded Confirmed RSVP Status with Excuse Details -->
+                <div v-else class="p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-neutral-800 rounded-2xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium text-xs" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
+                      {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
+                    </span>
+                    <button @click="ev.rsvpStatus = null" aria-label="Change RSVP Status" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer px-2 py-1">Change</button>
+                  </div>
+                  <p v-if="ev.rsvpStatus === 'declined' && ev.excuseJustification" class="text-[11px] text-slate-500 dark:text-neutral-400 italic">
+                    Reason: {{ ev.excuseJustification }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1049,6 +1223,7 @@ onUnmounted(() => {
                   <button 
                     v-if="store.canManageEvents" 
                     @click="promptDeleteEvent(ev.id)" 
+                    aria-label="Delete Event"
                     class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
                     title="Delete Record"
                   >
@@ -1112,30 +1287,105 @@ onUnmounted(() => {
           </button>
         </div>
         
-        <div v-if="displayedAnnouncements.length > 0" class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[320px] overflow-y-auto">
+        <div v-if="displayedAnnouncements.length > 0" class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[420px] overflow-y-auto">
           <article 
             v-for="(post, index) in displayedAnnouncements" 
             :key="post.id"
             class="py-3.5 first:pt-0 last:pb-0"
             :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== displayedAnnouncements.length - 1 }"
           >
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="font-bold text-sm text-slate-900 dark:text-white leading-snug">{{ post.title }}</h3>
-              <div class="flex items-center space-x-1">
+            <!-- Urgency & Target Section Badges (TC-04 & ISO/IEC 25010 Safety) -->
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span 
+                  v-if="post.priority === 'HIGH'" 
+                  class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/50"
+                >
+                  <AlertTriangle class="w-3 h-3 mr-1 text-rose-600 dark:text-rose-400" />
+                  HIGH URGENCY
+                </span>
+                <span 
+                  v-else-if="post.priority === 'MEDIUM'" 
+                  class="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40"
+                >
+                  MEDIUM
+                </span>
+                <span 
+                  v-else 
+                  class="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400"
+                >
+                  INFO
+                </span>
+
+                <span 
+                  v-if="post.targetSection && post.targetSection !== 'all'"
+                  class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 capitalize border border-blue-200/60 dark:border-blue-900/40"
+                >
+                  {{ post.targetSection }}
+                </span>
+              </div>
+
+              <div class="flex items-center space-x-1.5">
+                <!-- Acoustic Brass Fanfare Siren Trigger (TC-04) -->
+                <button 
+                  v-if="post.priority === 'HIGH'" 
+                  @click="uiStore.playCallTimeFanfare()" 
+                  type="button" 
+                  aria-label="Play 5-second acoustic brass fanfare siren" 
+                  title="Play 5s Acoustic Brass Fanfare (Bb Major Triad)" 
+                  class="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 cursor-pointer min-w-[28px] min-h-[28px] flex items-center justify-center transition-colors"
+                >
+                  <Volume2 class="w-3.5 h-3.5" />
+                </button>
                 <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
-                <button v-if="store.canManageAnnouncements" @click="promptDeleteAnnouncement(post.id)" class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer p-1 rounded-full" title="Delete Announcement">
+                <button 
+                  v-if="store.canManageAnnouncements" 
+                  @click="promptDeleteAnnouncement(post.id)" 
+                  aria-label="Delete Announcement"
+                  class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer p-1 rounded-full min-w-[28px] min-h-[28px] flex items-center justify-center" 
+                  title="Delete Announcement"
+                >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <p class="text-slate-600 dark:text-neutral-300 text-xs mb-2 leading-relaxed whitespace-pre-wrap">
+
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white leading-snug mb-1">{{ post.title }}</h3>
+            <p class="text-slate-600 dark:text-neutral-300 text-xs mb-2.5 leading-relaxed whitespace-pre-wrap">
               {{ post.content }}
             </p>
-            <div class="flex items-center justify-between mt-1">
+
+            <!-- Bottom Row: Author & Two-Way Acknowledgment (TC-05 & SOP 2.4) -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100/80 dark:border-neutral-800/60">
               <span class="text-[11px] font-medium text-slate-500 dark:text-neutral-400 flex items-center">
                 <User class="w-3 h-3 mr-1 text-slate-400" />
                 {{ post.author }}
+                <span v-if="post.ackCount > 0" class="text-[10px] text-slate-400 dark:text-neutral-500 font-normal ml-2">
+                  ({{ post.ackCount }} ack'd)
+                </span>
               </span>
+
+              <!-- Two-Way Acknowledgment (TC-05) Status -->
+              <div>
+                <span 
+                  v-if="isAcknowledged(post.id)" 
+                  class="inline-flex items-center text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/40"
+                >
+                  <Check class="w-3 h-3 mr-1 text-emerald-600 dark:text-emerald-400" />
+                  Acknowledged
+                  <span v-if="getAckLatency(post.id)" class="ml-1 opacity-80 font-normal">({{ getAckLatency(post.id) }})</span>
+                </span>
+                <button 
+                  v-else 
+                  @click="handleAcknowledgeAnnouncement(post)" 
+                  type="button" 
+                  aria-label="Acknowledge Call-Time Notice" 
+                  class="inline-flex items-center text-[10px] font-semibold text-slate-700 dark:text-neutral-200 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2.5 py-1 rounded-full cursor-pointer transition-colors shadow-2xs"
+                >
+                  <Check class="w-3 h-3 mr-1 text-slate-500 dark:text-neutral-400" />
+                  Acknowledge
+                </button>
+              </div>
             </div>
           </article>
         </div>
@@ -1284,6 +1534,10 @@ onUnmounted(() => {
                     {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'No Response' }}
                   </span>
                 </div>
+                <!-- Excuse Justification (Table 19) -->
+                <p v-if="member.excuseJustification" class="text-[10px] text-amber-700 dark:text-amber-400 italic truncate max-w-[220px] mt-0.5" :title="member.excuseJustification">
+                  Excuse: {{ member.excuseJustification }}
+                </p>
               </div>
             </div>
 
@@ -1366,36 +1620,59 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- CREATE ANNOUNCEMENT MODAL (Google Material Dialog) -->
+    <!-- CREATE ANNOUNCEMENT MODAL (Google Material Dialog - ISO/IEC 25010 & TC-04) -->
     <div v-if="showAnnouncementModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
-          <h3 class="font-bold text-base text-slate-900 dark:text-white">Post Announcement</h3>
-          <button @click="showAnnouncementModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Post Announcement</h3>
+            <p class="text-[11px] text-slate-500 dark:text-neutral-400">Broadcasts to musician dashboards & closed devices</p>
+          </div>
+          <button @click="showAnnouncementModal = false" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
         </div>
         <div class="space-y-3">
+          <div>
+            <label for="ann-priority-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Urgency Level *</label>
+            <select id="ann-priority-in" v-model="newAnnPriority" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+              <option value="HIGH">🚨 High Urgency (Triggers 5s Brass Fanfare Siren)</option>
+              <option value="MEDIUM">⚠️ Medium (Standard Notice / Rehearsal Update)</option>
+              <option value="LOW">ℹ️ Low (General Band Announcement)</option>
+            </select>
+          </div>
+          <div>
+            <label for="ann-target-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Target Section *</label>
+            <select id="ann-target-in" v-model="newAnnTargetSection" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+              <option value="all">All Sections (Entire Marching Band)</option>
+              <option value="woodwinds">Woodwinds (Clarinet, Flute, Saxophone)</option>
+              <option value="brass">Brass (Trumpet, Trombone, Euphonium, Tuba)</option>
+              <option value="percussion">Percussion (Snare, Bass Drum, Cymbals)</option>
+              <option value="officers">Officers & Section Leaders</option>
+            </select>
+          </div>
           <div>
             <label for="ann-title-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Title</label>
             <input id="ann-title-in" v-model="newAnnTitle" type="text" placeholder="e.g. Call Time for Town Procession" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
           </div>
           <div>
             <label for="ann-content-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Content</label>
-            <textarea id="ann-content-in" v-model="newAnnContent" rows="4" placeholder="Write full details..." class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"></textarea>
+            <textarea id="ann-content-in" v-model="newAnnContent" rows="3" placeholder="Write full call-time details..." class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"></textarea>
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
           <button @click="showAnnouncementModal = false" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="handleCreateAnnouncement" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">Post</button>
+          <button @click="handleCreateAnnouncement" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">
+            {{ isSubmitting ? 'Posting...' : 'Post Notice' }}
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- CREATE EVENT MODAL (Google Material Dialog) -->
+    <!-- CREATE EVENT MODAL (Google Material Dialog - IT Expert Past Date Validation) -->
     <div v-if="showEventModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <h3 class="font-bold text-base text-slate-900 dark:text-white">Schedule Event</h3>
-          <button @click="showEventModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+          <button @click="showEventModal = false" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
         </div>
         <div class="space-y-3">
           <div>
@@ -1411,7 +1688,8 @@ onUnmounted(() => {
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label for="ev-date-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Date</label>
-              <input id="ev-date-in" v-model="newEvDate" type="date" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+              <!-- IT Expert Recommendation (P[1133] & P[1148]): Past Date Prevention min bound -->
+              <input id="ev-date-in" v-model="newEvDate" type="date" :min="minDateToday" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
             </div>
             <div>
               <label for="ev-time-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Time</label>
@@ -1425,7 +1703,64 @@ onUnmounted(() => {
         </div>
         <div class="flex space-x-2 pt-2">
           <button @click="showEventModal = false" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="handleCreateEvent" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">Schedule</button>
+          <button @click="handleCreateEvent" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">
+            {{ isSubmitting ? 'Scheduling...' : 'Schedule' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXCUSE JUSTIFICATION MODAL (Table 19 tbl_event_rsvps) -->
+    <div v-if="showExcuseModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Submit Absence Excuse</h3>
+            <p class="text-[11px] text-slate-500 dark:text-neutral-400">Required for official band attendance log</p>
+          </div>
+          <button @click="showExcuseModal = false" aria-label="Close excuse modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+        </div>
+        
+        <div class="space-y-3">
+          <p class="text-xs text-slate-600 dark:text-neutral-300">
+            Declining call-time for: <strong class="text-slate-900 dark:text-white">{{ eventForExcuse?.title }}</strong>
+          </p>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1.5">Primary Reason</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button 
+                v-for="pill in excusePills" 
+                :key="pill"
+                type="button"
+                @click="selectedExcusePill = pill"
+                class="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer"
+                :class="selectedExcusePill === pill 
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold' 
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700'"
+              >
+                {{ pill }}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="excuse-note" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Additional Explanation (Optional)</label>
+            <textarea 
+              id="excuse-note" 
+              v-model="customExcuseNote" 
+              rows="3" 
+              placeholder="e.g. Scheduled college midterm exam until 6:00 PM..." 
+              class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex space-x-2 pt-2">
+          <button @click="showExcuseModal = false" type="button" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
+          <button @click="confirmDeclineWithExcuse" :disabled="isSubmittingExcuse" type="button" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer">
+            {{ isSubmittingExcuse ? 'Submitting...' : 'Confirm Excuse' }}
+          </button>
         </div>
       </div>
     </div>

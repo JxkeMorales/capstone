@@ -22,5 +22,7 @@ dev-dist
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+# Temporary and lock files
+~$*
+*.tmp
 scratch/

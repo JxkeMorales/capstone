@@ -38,4 +38,15 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-400 dark:bg-neutral-600;
   }
+
+  /* WCAG 2.1 Level AA: High-Visibility Keyboard Focus Indicators */
+  :focus-visible {
+    outline: 2px solid #2563eb !important;
+    outline-offset: 2px !important;
+  }
+
+  .dark :focus-visible {
+    outline: 2px solid #60a5fa !important;
+    outline-offset: 2px !important;
+  }
 }

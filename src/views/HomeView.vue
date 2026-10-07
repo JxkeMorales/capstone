@@ -76,6 +76,8 @@ const isPhoneValid = computed(() => {
   return /^09\d{9}$/.test(contactNumber.value)
 })
 
+const maxBirthDate = computed(() => new Date().toISOString().split('T')[0])
+
 // Complete 18-Instrument / Section Municipal Band List
 const instrumentOptions = [
   { value: '', label: 'Select Primary Section / Instrument...' },
@@ -513,6 +515,7 @@ const handleResetPassword = async () => {
                         id="birthdate-input"
                         v-model="birthDate"
                         type="date" 
+                        :max="maxBirthDate"
                         class="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-900 dark:text-white text-xs min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
                         required
                       >

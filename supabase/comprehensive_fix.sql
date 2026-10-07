@@ -206,3 +206,46 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.member_availability;
   END IF;
 END $$;
+
+-- =========================================================================
+-- STANDARDS ALIGNMENT (ISO/IEC 25010 & Capstone Paper Data Dictionaries)
+-- =========================================================================
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'HIGH';
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS target_section TEXT DEFAULT 'all';
+ALTER TABLE public.event_rsvps ADD COLUMN IF NOT EXISTS excuse_justification TEXT;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS dress_code VARCHAR(100) DEFAULT 'Type A Formal Uniform';
+
+-- TC-05 Two-Way Message Acknowledgment & Response Latency Tracking Table
+CREATE TABLE IF NOT EXISTS public.announcement_acknowledgments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    announcement_id UUID REFERENCES public.announcements(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    acknowledged_at TIMESTAMPTZ DEFAULT now(),
+    response_latency_seconds INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(announcement_id, user_id)
+);
+
+ALTER TABLE public.announcement_acknowledgments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone authenticated can view acknowledgments" ON public.announcement_acknowledgments;
+CREATE POLICY "Anyone authenticated can view acknowledgments"
+    ON public.announcement_acknowledgments FOR SELECT
+    TO authenticated
+    USING (true);
+
+DROP POLICY IF EXISTS "Members can record their own acknowledgments" ON public.announcement_acknowledgments;
+CREATE POLICY "Members can record their own acknowledgments"
+    ON public.announcement_acknowledgments FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'announcement_acknowledgments'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.announcement_acknowledgments;
+  END IF;
+END $$;
