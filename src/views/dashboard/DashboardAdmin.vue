@@ -330,10 +330,9 @@ const triggerReNotifications = async () => {
         .from('announcements')
         .insert({
           author_id: store.user?.id || null,
-          title: '🚨 Urgent: RSVP Attendance Confirmation Required',
-          content: 'The Band Secretary requests all unconfirmed musicians and auxiliary members to check upcoming event schedules and confirm their RSVP attendance immediately.',
-          category: 'Urgent Call-to-Action',
-          priority: 'HIGH'
+          title: '🚨 Urgent: Attendance Confirmation Required',
+          content: 'The Band Secretary requests all unconfirmed musicians and auxiliary members to check upcoming event schedules and confirm if they are attending or not attending immediately.',
+          category: 'Urgent Call-to-Action'
         })
     } catch (annErr) {
       console.warn('Announcement creation note:', annErr)
@@ -347,9 +346,9 @@ const triggerReNotifications = async () => {
       senderId: store.user?.id
     })
 
-    showToast('✓ RSVP reminder notifications dispatched to all devices successfully.')
+    showToast('✓ Attendance reminder notifications dispatched to all devices successfully.')
   } catch (err) {
-    console.error('Error dispatching RSVP alerts:', err)
+    console.error('Error dispatching reminder alerts:', err)
     showToast('Failed to dispatch some reminder notifications.')
   } finally {
     isAlertingUnconfirmed.value = false

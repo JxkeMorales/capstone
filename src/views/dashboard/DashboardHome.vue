@@ -476,9 +476,7 @@ const handleCreateAnnouncement = async () => {
         title: newAnnTitle.value.trim(),
         content: newAnnContent.value.trim(),
         author_id: store.user.id,
-        priority: priorityVal,
-        category: priorityVal,
-        target_section: targetSec
+        category: priorityVal
       })
       .select('*, author:profiles(full_name)')
       .single()
