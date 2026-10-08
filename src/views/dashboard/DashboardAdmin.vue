@@ -28,7 +28,8 @@ import {
   MapPin,
   Filter,
   Download,
-  Loader2
+  Loader2,
+  RotateCcw
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
@@ -306,7 +307,7 @@ const triggerReNotifications = async () => {
   if (isAlertingUnconfirmed.value) return
   isAlertingUnconfirmed.value = true
 
-  const alertTitle = '🚨 Urgent RSVP Call-to-Action!'
+  const alertTitle = '🚨 Urgent: Confirm Your Attendance'
   const alertMsg = 'The Band Secretary requests all musicians confirm attendance for upcoming gigs immediately.'
   const senderName = store.profile?.full_name || 'Band Secretary'
 
@@ -425,6 +426,105 @@ const fetchAnalyticsAndReportsData = async () => {
     console.error('Error loading analytics dataset:', err)
   } finally {
     isLoadingAnalytics.value = false
+  }
+}
+
+// Reset Analytics & Reports State
+const isResettingAnalytics = ref(false)
+const showResetAnalyticsModal = ref(false)
+
+const resetAnalyticsFilters = () => {
+  analyticsSearchQuery.value = ''
+  analyticsSectionFilter.value = 'All'
+  analyticsSortBy.value = 'flakes_desc'
+  selectedReportType.value = 'all_members'
+  selectedRoleFilter.value = 'member'
+  selectedEventTypeFilter.value = 'Practice & Rehearsal (Ensayo)'
+  if (allEvents.value.length > 0) {
+    selectedSpecificEventId.value = allEvents.value[0].id
+  } else {
+    selectedSpecificEventId.value = ''
+  }
+  showToast('✓ Reports and analytics filters reset to default.')
+}
+
+const executeResetReportsAndAnalytics = async () => {
+  if (isResettingAnalytics.value) return
+  isResettingAnalytics.value = true
+
+  try {
+    let rpcSuccess = false
+    // 1. Try atomic PostgreSQL RPC first
+    try {
+      const { data, error } = await supabase.rpc('reset_analytics_and_attendance')
+      if (!error && data?.success) {
+        rpcSuccess = true
+      } else if (error) {
+        console.warn('RPC reset notice, proceeding with direct queries:', error)
+      }
+    } catch (rpcErr) {
+      console.warn('RPC invocation notice:', rpcErr)
+    }
+
+    // 2. Direct fallback for table operations if RPC is not installed
+    if (!rpcSuccess) {
+      const { error: rsvpErr } = await supabase
+        .from('event_rsvps')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+      if (rsvpErr) console.warn('RSVP direct delete notice:', rsvpErr)
+
+      const { error: profErr } = await supabase
+        .from('profiles')
+        .update({ reliability_score: 100 })
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+      if (profErr) console.warn('Profiles reliability score update notice:', profErr)
+    }
+
+    // 3. Clear local storage caches
+    try {
+      localStorage.removeItem('smartband_leaderboard_cache')
+      const keysToRemove = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k && (k.startsWith('smartband_rsvp_') || k.startsWith('smartband_rsvp_excuse_'))) {
+          keysToRemove.push(k)
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k))
+    } catch (lsErr) {
+      console.warn('Local storage cache clean notice:', lsErr)
+    }
+
+    // 4. Reset in-memory filter states
+    resetAnalyticsFilters()
+
+    // 5. Invalidate and re-fetch fresh data
+    allRsvps.value = []
+    await Promise.all([
+      fetchAnalyticsAndReportsData(),
+      fetchRoster()
+    ])
+
+    // Update current store profile if affected
+    if (store.profile) {
+      store.profile.reliability_score = 100
+      try {
+        localStorage.setItem('smartband_user_profile_cache', JSON.stringify(store.profile))
+      } catch (e) {}
+    }
+
+    // 6. Broadcast Realtime Sync to all other devices & tabs
+    await broadcastSync('analytics_reset', { timestamp: Date.now() })
+    await broadcastSync('account_status_changed', { type: 'bulk_reliability_reset' })
+
+    showToast('✓ Reports and attendance analytics successfully reset. All reliability scores restored to 100%.')
+  } catch (err) {
+    console.error('Error resetting reports and analytics:', err)
+    showToast('Failed to reset some analytics records.', 'error')
+  } finally {
+    isResettingAnalytics.value = false
+    showResetAnalyticsModal.value = false
   }
 }
 
@@ -725,7 +825,7 @@ const generatedReportData = computed(() => {
       return {
         title: 'SPECIFIC EVENT ROLL-CALL & ATTENDANCE REPORT',
         subtitle: 'No events found in schedule database',
-        columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'RSVP Record'],
+        columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'Attendance Response'],
         rows: []
       }
     }
@@ -781,7 +881,7 @@ const generatedReportData = computed(() => {
     return {
       title: `EVENT ROLL-CALL & ATTENDANCE: ${targetEvent.title.toUpperCase()}`,
       subtitle: `${targetEvent.event_type} • ${new Date(targetEvent.event_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} • ${targetEvent.location || 'Municipal'} [Present: ${presentCount} | Absent: ${absentCount} | Excused: ${excusedCount}]`,
-      columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'RSVP Record'],
+      columns: ['#', 'Musician Name', 'Section / Instrument', 'Rank', 'Attendance Status', 'Attendance Response'],
       rows: memberRows.map((item, idx) => [
         idx + 1,
         item.member.full_name,
@@ -1224,10 +1324,10 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- 2. RSVP RE-NOTIFICATIONS -->
-        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200 dark:border-[#2d3035] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- 2. ATTENDANCE REMINDERS -->
+        <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3442] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">RSVP Reminders</h3>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Attendance Reminders</h3>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Send a notification reminder to musicians who have unconfirmed attendance status.</p>
           </div>
           <button 
@@ -1343,26 +1443,38 @@ onUnmounted(() => {
       <!-- 1. EXECUTIVE ATTENDANCE & FLAKE ANALYTICS DASHBOARD -->
       <section class="space-y-5 no-print">
         <!-- Section Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/80 dark:border-neutral-800 pb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/80 dark:border-[#2d3442] pb-3">
           <div>
             <div class="flex items-center space-x-2">
-              <BarChart3 class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
-              <h2 class="text-base font-bold text-slate-900 dark:text-neutral-100">Attendance & Reliability Analytics</h2>
+              <BarChart3 class="w-4 h-4 text-amber-500" />
+              <h2 class="text-base font-bold text-slate-900 dark:text-neutral-100">Attendance &amp; Reliability Analytics</h2>
             </div>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
               Live follow-through metrics, section turnout rates, and verified attendance standings.
             </p>
           </div>
-          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 text-xs font-medium self-start sm:self-auto">
-            <Sparkles class="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" />
-            <span>Executive Insights</span>
-          </span>
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              v-if="store.isSuperAdmin || store.isSecretaryAdmin"
+              @click="showResetAnalyticsModal = true"
+              type="button"
+              class="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 rounded-full text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer min-h-[44px]"
+              title="Reset all attendance logs, roll-call records, and restore reliability scores to 100%"
+            >
+              <RotateCcw class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              <span>Reset Analytics Data</span>
+            </button>
+            <span class="inline-flex items-center space-x-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] text-xs font-medium min-h-[44px]">
+              <Sparkles class="w-3.5 h-3.5 text-amber-500" />
+              <span>Executive Insights</span>
+            </span>
+          </div>
         </div>
 
         <!-- 4 KPI Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- KPI 1: Band Reliability Score -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Avg Reliability</span>
               <Award class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1374,7 +1486,7 @@ onUnmounted(() => {
               <span class="text-[10px] font-normal text-slate-400">Roster Avg</span>
             </div>
             <!-- Progress Bar -->
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div 
                 class="h-full rounded-full transition-all duration-500 bg-slate-900 dark:bg-white" 
                 :style="{ width: `${analyticsSummary.avgReliability}%` }"
@@ -1383,7 +1495,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 2: Total Unexcused No-Shows -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Unexcused No-Shows</span>
               <AlertTriangle class="w-4 h-4 text-rose-500" />
@@ -1400,7 +1512,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 3: Follow-Through Rate -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Commitment Rate</span>
               <TrendingUp class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1411,7 +1523,7 @@ onUnmounted(() => {
               </span>
               <span class="text-[10px] font-normal text-slate-400">Turnout</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div 
                 class="bg-slate-900 dark:bg-white h-full rounded-full transition-all duration-500" 
                 :style="{ width: `${analyticsSummary.avgFollowThrough}%` }"
@@ -1420,7 +1532,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 4: High No-Show Risk Members -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Attendance Risk</span>
               <ShieldAlert class="w-4 h-4 text-amber-500" />
@@ -1440,10 +1552,10 @@ onUnmounted(() => {
         <!-- Section Turnout Breakdown Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- Woodwinds -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Woodwinds</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
                 {{ sectionStats.woodwinds.count }} Members
               </span>
             </div>
@@ -1451,7 +1563,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.woodwinds.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1463,10 +1575,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Brass -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Brass</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
                 {{ sectionStats.brass.count }} Members
               </span>
             </div>
@@ -1474,7 +1586,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.brass.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1486,10 +1598,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Percussion -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Percussion</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
                 {{ sectionStats.percussion.count }} Members
               </span>
             </div>
@@ -1497,7 +1609,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.percussion.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1509,10 +1621,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Majorette & Color Guard (Auxiliary) -->
-          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Majorette & Guard</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
                 {{ sectionStats.auxiliary.count }} Members
               </span>
             </div>
@@ -1520,7 +1632,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.auxiliary.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1532,18 +1644,18 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Interactive Excel-Style Attendance Matrix Table -->
-        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-4">
+        <!-- Interactive Attendance & Commitment Matrix Table -->
+        <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Musician Attendance & Commitment Matrix</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Musician Attendance &amp; Commitment Matrix</h3>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
                 Track record, verified turnout, unexcused no-show counts, and reliability standings.
               </p>
             </div>
 
-            <!-- Search and Filter Controls (Responsive Grid) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full pt-1">
+            <!-- Search and Filter Controls (Responsive Grid with Reset Filters) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 w-full pt-1">
               <!-- Search -->
               <div class="relative w-full">
                 <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1551,14 +1663,14 @@ onUnmounted(() => {
                   v-model="analyticsSearchQuery" 
                   type="text" 
                   placeholder="Search musician..."
-                  class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full text-xs border border-slate-200 dark:border-[#2d3035] font-medium focus:outline-none focus:border-slate-400 min-h-[44px]"
+                  class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full text-xs border border-slate-200 dark:border-[#2d3442] font-medium focus:outline-none focus:border-slate-400 min-h-[44px]"
                 />
               </div>
 
               <!-- Section Filter -->
               <select 
                 v-model="analyticsSectionFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3035] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
               </select>
@@ -1566,20 +1678,31 @@ onUnmounted(() => {
               <!-- Sort Order -->
               <select 
                 v-model="analyticsSortBy" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3035] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option value="flakes_desc">Sort: Most No-Shows First</option>
                 <option value="reliability_asc">Sort: Lowest Reliability First</option>
                 <option value="reliability_desc">Sort: Highest Reliability First</option>
                 <option value="name">Sort: Musician Name (A-Z)</option>
               </select>
+
+              <!-- Reset Filters Action Button -->
+              <button 
+                @click="resetAnalyticsFilters"
+                type="button"
+                class="w-full flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#242933] dark:hover:bg-[#2e3440] text-slate-700 dark:text-neutral-300 rounded-full text-xs font-semibold border border-slate-200 dark:border-[#2d3442] min-h-[44px] transition-colors cursor-pointer"
+                title="Reset search and filters to default"
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" />
+                <span>Reset Filters</span>
+              </button>
             </div>
           </div>
 
           <!-- Table -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3035]">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3442]">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-[#2d2f31] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-[#2d3035] h-12">
+              <thead class="bg-slate-50 dark:bg-[#242933] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-[#2d3442] h-12">
                 <tr>
                   <th class="px-3 py-2.5 w-10 text-center">#</th>
                   <th class="px-4 py-2.5">Musician</th>
@@ -1592,11 +1715,11 @@ onUnmounted(() => {
                   <th class="px-3 py-2.5 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
+              <tbody class="divide-y divide-slate-100 dark:divide-[#2d3442]">
                 <tr 
                   v-for="(member, idx) in filteredAnalyticsMatrix" 
                   :key="member.id"
-                  class="hover:bg-slate-50/60 dark:hover:bg-[#282a2c]/60 transition-colors"
+                  class="hover:bg-slate-50/60 dark:hover:bg-[#242933]/60 transition-colors"
                   :class="{ 'bg-rose-50/30 dark:bg-rose-950/10': member.flakeCount >= 2 }"
                 >
                   <td class="px-3 py-2.5 text-center font-normal text-slate-400">{{ idx + 1 }}</td>
@@ -1697,14 +1820,14 @@ onUnmounted(() => {
       </section>
 
       <!-- 2. OFFICIAL PDF REPORTS GENERATOR (DEDICATED TO SUPER ADMIN) -->
-      <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-[#2d3035]">
+      <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-[#2d3442]">
         
         <!-- Controls & Header (Hidden when printing) -->
-        <div class="no-print bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-4">
+        <div class="no-print bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             <div>
               <div class="flex items-center space-x-2">
-                <FileText class="w-4 h-4 text-slate-500 dark:text-neutral-400 shrink-0" />
+                <FileText class="w-4 h-4 text-amber-500 shrink-0" />
                 <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Official Band Reports</h3>
               </div>
               <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
@@ -1727,11 +1850,21 @@ onUnmounted(() => {
               <button 
                 @click="printReport" 
                 type="button" 
-                class="flex-1 sm:flex-none px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full border border-slate-200 dark:border-[#2d3035] flex items-center justify-center space-x-2 transition-colors active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[48px]"
+                class="flex-1 sm:flex-none px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#242933] dark:hover:bg-[#2e3440] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full border border-slate-200 dark:border-[#2d3442] flex items-center justify-center space-x-2 transition-colors active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[48px]"
                 title="Open browser print dialog"
               >
                 <Printer class="w-4 h-4" />
                 <span>Print Dialog</span>
+              </button>
+
+              <button 
+                @click="showResetAnalyticsModal = true"
+                type="button" 
+                class="flex-1 sm:flex-none px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-700 dark:text-rose-400 font-medium text-xs rounded-full border border-rose-200 dark:border-rose-900/40 flex items-center justify-center space-x-1.5 transition-colors active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[48px]"
+                title="Reset all reports and attendance data"
+              >
+                <RotateCcw class="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <span>Reset Data</span>
               </button>
             </div>
           </div>
@@ -1746,7 +1879,7 @@ onUnmounted(() => {
               <select 
                 id="report-type-select"
                 v-model="selectedReportType" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3442] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option v-for="opt in reportTypeOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
               </select>
@@ -1760,7 +1893,7 @@ onUnmounted(() => {
               <select 
                 id="role-filter-select"
                 v-model="selectedRoleFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3442] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="member">Regular Musicians</option>
                 <option value="executive">Executive Officers</option>
@@ -1777,7 +1910,7 @@ onUnmounted(() => {
               <select 
                 id="event-filter-select"
                 v-model="selectedEventTypeFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3442] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option v-for="t in eventTypeOptions" :key="t" :value="t">{{ t }}</option>
               </select>
@@ -1791,7 +1924,7 @@ onUnmounted(() => {
               <select 
                 id="event-specific-select"
                 v-model="selectedSpecificEventId" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3442] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="">-- Latest / Select Event --</option>
                 <option v-for="ev in allEvents" :key="ev.id" :value="ev.id">
@@ -1929,9 +2062,9 @@ onUnmounted(() => {
     </div>
 
     <!-- CUSTOM CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex items-center justify-center mx-auto">
+    <div v-if="showConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         
@@ -1946,7 +2079,7 @@ onUnmounted(() => {
           <button 
             @click="showConfirmModal = false; confirmUserTarget = null" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 min-h-[48px] cursor-pointer transition-colors"
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#242933] dark:hover:bg-[#2e3440] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 min-h-[48px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
@@ -1956,6 +2089,49 @@ onUnmounted(() => {
             class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 font-medium text-xs text-white rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
           >
             Decline
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESET REPORTS & ANALYTICS CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showResetAnalyticsModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-200 dark:border-rose-900/40">
+          <RotateCcw class="w-6 h-6" />
+        </div>
+        
+        <div class="space-y-1.5">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-neutral-100 leading-tight">Reset Reports &amp; Analytics?</h3>
+          <p class="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
+            This will wipe all recorded event attendance responses, clear roll-call records, and restore <strong>all musician reliability scores back to 100%</strong>.
+          </p>
+          <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-left text-amber-800 dark:text-amber-300 text-[11px] space-y-1 mt-2">
+            <p class="font-semibold flex items-center"><AlertTriangle class="w-3.5 h-3.5 mr-1 text-amber-600 shrink-0" /> Important Warning:</p>
+            <p>• All event attendance history will be deleted.</p>
+            <p>• Member attendance matrix and flake detections will reset to 0.</p>
+            <p>• This action cannot be reversed.</p>
+          </div>
+        </div>
+
+        <div class="flex space-x-2 pt-2">
+          <button 
+            @click="showResetAnalyticsModal = false" 
+            :disabled="isResettingAnalytics"
+            type="button" 
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#242933] dark:hover:bg-[#2e3440] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 min-h-[48px] cursor-pointer transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="executeResetReportsAndAnalytics" 
+            :disabled="isResettingAnalytics"
+            type="button" 
+            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs rounded-full flex items-center justify-center shadow-xs cursor-pointer min-h-[48px] transition-colors disabled:opacity-50"
+          >
+            <Loader2 v-if="isResettingAnalytics" class="w-4 h-4 mr-1.5 animate-spin" />
+            <RotateCcw v-else class="w-4 h-4 mr-1.5" />
+            <span>{{ isResettingAnalytics ? 'Resetting...' : 'Yes, Reset Data' }}</span>
           </button>
         </div>
       </div>
