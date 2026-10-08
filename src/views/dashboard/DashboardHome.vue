@@ -1014,54 +1014,57 @@ onUnmounted(() => {
       
       <!-- AUTOMATIC EVENTS & GIGS SECTION -->
       <section id="events-section" class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-          <!-- Upcoming vs My Accepted vs Past Gigs Tab Toggle (Official M3 Surface Container) -->
-          <div class="flex items-center space-x-1 p-1 bg-[var(--md-surface-container-high)] rounded-full text-xs font-medium shrink-0">
-            <button 
-              @click="activeEventsTab = 'upcoming'"
-              type="button"
-              class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
-              :class="activeEventsTab === 'upcoming' 
-                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
-                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
-            >
-              <Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-primary)]" />
-              <span>Upcoming ({{ upcomingEvents.length }})</span>
-            </button>
-
-            <!-- Dedicated View for User's Accepted Gigs -->
-            <button 
-              @click="activeEventsTab = 'accepted'"
-              type="button"
-              class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
-              :class="activeEventsTab === 'accepted' 
-                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
-                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
-            >
-              <CheckCircle class="w-3.5 h-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Attending ({{ myAcceptedEvents.length }})</span>
-            </button>
-
-            <button 
-              @click="activeEventsTab = 'past'"
-              type="button"
-              class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
-              :class="activeEventsTab === 'past' 
-                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
-                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
-            >
-              <History class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
-              <span>Past ({{ pastEvents.length }})</span>
-            </button>
+        <div class="flex items-center justify-between gap-2 px-1">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-[var(--md-on-surface)] tracking-tight">Events &amp; Call-Times</h2>
           </div>
-
           <button 
             v-if="store.canManageEvents" 
             @click="showEventModal = true" 
             type="button" 
-            class="m3-btn-outlined min-h-[36px] h-9 text-xs px-3.5"
+            class="m3-btn-outlined min-h-[34px] h-8.5 text-xs px-3 font-semibold shrink-0"
           >
             <Plus class="w-3.5 h-3.5 mr-1" /> Schedule Event
+          </button>
+        </div>
+
+        <!-- Upcoming vs Attending vs Past Segmented Control (Zero wrap full width) -->
+        <div class="grid grid-cols-3 p-1 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 text-xs font-medium w-full">
+          <button 
+            @click="activeEventsTab = 'upcoming'"
+            type="button"
+            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            :class="activeEventsTab === 'upcoming' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+          >
+            <Calendar class="w-3.5 h-3.5 mr-1 text-[var(--md-primary)] shrink-0" />
+            <span class="truncate">Upcoming ({{ upcomingEvents.length }})</span>
+          </button>
+
+          <!-- Dedicated View for User's Accepted Gigs -->
+          <button 
+            @click="activeEventsTab = 'accepted'"
+            type="button"
+            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            :class="activeEventsTab === 'accepted' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+          >
+            <CheckCircle class="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span class="truncate">Attending ({{ myAcceptedEvents.length }})</span>
+          </button>
+
+          <button 
+            @click="activeEventsTab = 'past'"
+            type="button"
+            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            :class="activeEventsTab === 'past' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+          >
+            <History class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)] shrink-0" />
+            <span class="truncate">Past ({{ pastEvents.length }})</span>
           </button>
         </div>
 
@@ -1272,41 +1275,44 @@ onUnmounted(() => {
 
       <!-- Announcements Section -->
       <section class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-          <!-- Announcements Tab Pill Toggle (M3 Surface Container) -->
-          <div class="flex items-center space-x-1 p-1 bg-[var(--md-surface-container-high)] rounded-full text-xs font-medium shrink-0">
-            <button 
-              @click="activeAnnouncementTab = 'recent'"
-              type="button"
-              class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
-              :class="activeAnnouncementTab === 'recent' 
-                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
-                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
-            >
-              <Bell class="w-3.5 h-3.5 mr-1.5 text-[var(--md-primary)]" />
-              <span>Recent ({{ recentAnnouncements.length }})</span>
-            </button>
-
-            <button 
-              @click="activeAnnouncementTab = 'archived'"
-              type="button"
-              class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
-              :class="activeAnnouncementTab === 'archived' 
-                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
-                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
-            >
-              <History class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
-              <span>Archived ({{ archivedAnnouncements.length }})</span>
-            </button>
+        <div class="flex items-center justify-between gap-2 px-1">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-[var(--md-on-surface)] tracking-tight">Notice Board</h2>
           </div>
-
           <button 
             v-if="store.canManageAnnouncements" 
             @click="showAnnouncementModal = true" 
             type="button" 
-            class="m3-btn-outlined min-h-[36px] h-9 text-xs px-3.5"
+            class="m3-btn-outlined min-h-[34px] h-8.5 text-xs px-3 font-semibold shrink-0"
           >
-            <Plus class="w-3.5 h-3.5 mr-1" /> Post
+            <Plus class="w-3.5 h-3.5 mr-1" /> Post Notice
+          </button>
+        </div>
+
+        <!-- Announcements Tab Pill Toggle (Full Width Grid 2-cols) -->
+        <div class="grid grid-cols-2 p-1 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 text-xs font-medium w-full">
+          <button 
+            @click="activeAnnouncementTab = 'recent'"
+            type="button"
+            class="py-2 px-2 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            :class="activeAnnouncementTab === 'recent' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+          >
+            <Bell class="w-3.5 h-3.5 mr-1.5 text-[var(--md-primary)] shrink-0" />
+            <span class="truncate">Recent ({{ recentAnnouncements.length }})</span>
+          </button>
+
+          <button 
+            @click="activeAnnouncementTab = 'archived'"
+            type="button"
+            class="py-2 px-2 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            :class="activeAnnouncementTab === 'archived' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+          >
+            <History class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)] shrink-0" />
+            <span class="truncate">Archived ({{ archivedAnnouncements.length }})</span>
           </button>
         </div>
         

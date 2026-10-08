@@ -602,10 +602,10 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6 relative">
 
-    <header class="pt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+    <header class="pt-1 flex items-center justify-between gap-3 mb-2">
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">Calendar &amp; Logs</p>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Schedule &amp; Events</h1>
+        <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">Calendar &amp; Logs</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-[var(--md-on-surface)] tracking-tight">Schedule &amp; Events</h1>
       </div>
 
       <!-- Schedule New Gig Button for Secretary & Admin -->
@@ -613,7 +613,7 @@ onUnmounted(() => {
         v-if="store.canManageEvents" 
         @click="showAddEventModal = true"
         type="button"
-        class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center space-x-2 transition-all cursor-pointer self-start sm:self-auto min-h-[44px] sm:min-h-[48px] shrink-0"
+        class="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs rounded-full shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer min-h-[38px] sm:min-h-[44px] shrink-0"
       >
         <Plus class="w-4 h-4" />
         <span>Schedule Gig</span>
@@ -621,81 +621,82 @@ onUnmounted(() => {
     </header>
 
     <!-- Schedule Tab Switcher & Filter Row -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium border border-slate-200/60 dark:border-[#2d3035]">
+    <div class="flex items-center gap-2">
+      <!-- 3-Segment Switcher (Grid cols 3, flex-1) -->
+      <div class="grid grid-cols-3 flex-1 p-1 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 text-xs font-medium">
         <button 
           @click="activeScheduleTab = 'upcoming'"
           type="button"
-          class="px-4 py-2 rounded-full transition-all cursor-pointer min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
+          class="py-2 px-1 rounded-xl transition-all cursor-pointer min-h-[38px] flex items-center justify-center text-center"
           :class="activeScheduleTab === 'upcoming' 
-            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+            : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
         >
-          <Calendar class="w-4 h-4 mr-1.5" />
-          <span>Upcoming ({{ upcomingEvents.length }})</span>
+          <Calendar class="w-3.5 h-3.5 mr-1 text-[var(--md-primary)] shrink-0" />
+          <span class="truncate">Upcoming ({{ upcomingEvents.length }})</span>
         </button>
 
         <button 
           @click="activeScheduleTab = 'accepted'"
           type="button"
-          class="px-4 py-2 rounded-full transition-all cursor-pointer min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
+          class="py-2 px-1 rounded-xl transition-all cursor-pointer min-h-[38px] flex items-center justify-center text-center"
           :class="activeScheduleTab === 'accepted' 
-            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+            : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
         >
-          <CheckCircle2 class="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Attending ({{ myAcceptedEvents.length }})</span>
+          <CheckCircle2 class="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span class="truncate">Attending ({{ myAcceptedEvents.length }})</span>
         </button>
 
         <button 
           @click="activeScheduleTab = 'past'"
           type="button"
-          class="px-4 py-2 rounded-full transition-all cursor-pointer min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
+          class="py-2 px-1 rounded-xl transition-all cursor-pointer min-h-[38px] flex items-center justify-center text-center"
           :class="activeScheduleTab === 'past' 
-            ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-            : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+            : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
         >
-          <History class="w-4 h-4 mr-1.5 text-slate-400" />
-          <span>Past ({{ pastEvents.length }})</span>
+          <History class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)] shrink-0" />
+          <span class="truncate">Past ({{ pastEvents.length }})</span>
         </button>
       </div>
 
       <!-- Filter Button -->
-      <div class="relative inline-block">
+      <div class="relative inline-block shrink-0">
         <button 
           @click="openFilter"
           type="button"
-          class="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-full text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-[#282a2c] transition-all text-xs font-medium min-h-[40px] sm:min-h-[44px] cursor-pointer shadow-xs"
+          class="flex items-center space-x-1.5 px-3 sm:px-4 py-2 bg-[var(--md-surface-container)] hover:bg-[var(--md-surface-container-high)] border border-[var(--md-outline-variant)]/40 rounded-2xl text-[var(--md-on-surface)] transition-all text-xs font-medium min-h-[38px] cursor-pointer shadow-xs"
           aria-label="Filter Events"
         >
-          <Filter class="w-4 h-4" :class="{ 'text-slate-900 dark:text-white': !activeFilters.includes('All') }" />
-          <span>Filter</span>
-          <span v-if="!activeFilters.includes('All')" class="w-2 h-2 bg-slate-900 dark:bg-white rounded-full"></span>
+          <Filter class="w-4 h-4" :class="{ 'text-[var(--md-primary)]': !activeFilters.includes('All') }" />
+          <span class="hidden sm:inline">Filter</span>
+          <span v-if="!activeFilters.includes('All')" class="w-2 h-2 bg-[var(--md-primary)] rounded-full"></span>
         </button>
 
         <!-- Filter Dropdown Menu -->
-        <div v-if="showFilterMenu" class="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1e1f20] rounded-3xl shadow-xl border border-slate-200 dark:border-[#2d3035] overflow-hidden z-50 p-2">
-          <div class="px-3 py-2 border-b border-slate-100 dark:border-[#2d3035]">
-            <h3 class="text-xs font-semibold text-slate-700 dark:text-neutral-300">Filter by Category</h3>
+        <div v-if="showFilterMenu" class="absolute right-0 mt-2 w-64 bg-[var(--md-surface-container-high)] rounded-2xl shadow-xl border border-[var(--md-outline-variant)]/60 overflow-hidden z-50 p-2">
+          <div class="px-3 py-2 border-b border-[var(--md-outline-variant)]/30">
+            <h3 class="text-xs font-semibold text-[var(--md-on-surface)]">Filter by Category</h3>
           </div>
           <div class="max-h-60 overflow-y-auto p-1 space-y-1">
             <label 
               v-for="filter in filterCategories" 
               :key="filter"
-              class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-[#2d2f31] cursor-pointer transition-colors"
+              class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl hover:bg-[var(--md-surface-container)] cursor-pointer transition-colors"
             >
               <input 
                 type="checkbox" 
                 :checked="tempFilters.includes(filter)"
                 @change="toggleTempFilter(filter)"
-                class="w-4 h-4 rounded border-slate-300 dark:border-neutral-700 text-slate-900 focus:ring-0 cursor-pointer"
+                class="w-4 h-4 rounded border-[var(--md-outline)] text-[var(--md-primary)] focus:ring-0 cursor-pointer"
               >
-              <span class="text-xs font-medium text-slate-700 dark:text-neutral-300">{{ filter === 'All' ? 'Select All' : filter }}</span>
+              <span class="text-xs font-medium text-[var(--md-on-surface)]">{{ filter === 'All' ? 'Select All' : filter }}</span>
             </label>
           </div>
-          <div class="p-2 border-t border-slate-100 dark:border-[#2d3035] flex items-center justify-end space-x-2">
-            <button @click="showFilterMenu = false" class="px-3.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer min-h-[38px]">Cancel</button>
-            <button @click="applyFilters" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white rounded-full text-xs font-medium shadow-xs cursor-pointer min-h-[38px]">Apply</button>
+          <div class="p-2 border-t border-[var(--md-outline-variant)]/30 flex items-center justify-end space-x-2">
+            <button @click="showFilterMenu = false" class="px-3.5 py-2 text-xs font-medium text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)] cursor-pointer min-h-[36px]">Cancel</button>
+            <button @click="applyFilters" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white rounded-full text-xs font-medium shadow-xs cursor-pointer min-h-[36px]">Apply</button>
           </div>
         </div>
       </div>
@@ -707,19 +708,19 @@ onUnmounted(() => {
         <div 
           v-for="ev in displayedEvents" 
           :key="ev.id"
-          class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
+          class="bg-[var(--md-surface)] dark:bg-[var(--md-surface-container)] rounded-3xl p-5 shadow-xs border border-[var(--md-outline-variant)]/50 space-y-3"
         >
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
             <div class="min-w-0 flex-1">
               <div class="flex items-center space-x-1.5">
-                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300">
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--md-surface-container-high)] text-[var(--md-on-surface-variant)]">
                   {{ ev.type }}
                 </span>
-                <span v-if="activeScheduleTab === 'past'" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-600 dark:text-neutral-400">
+                <span v-if="activeScheduleTab === 'past'" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--md-surface-container-high)] text-[var(--md-on-surface-variant)]">
                   Completed
                 </span>
               </div>
-              <h3 class="font-bold text-base text-slate-900 dark:text-white mt-1 leading-snug">{{ ev.title }}</h3>
+              <h3 class="font-bold text-base text-[var(--md-on-surface)] mt-1 leading-snug">{{ ev.title }}</h3>
             </div>
             
             <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
@@ -728,7 +729,7 @@ onUnmounted(() => {
                 v-if="store.canConductRollCall || store.canManageEvents" 
                 @click="openAttendanceTracker(ev)" 
                 type="button" 
-                class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d3035] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[36px] transition-colors"
+                class="px-3.5 py-1.5 bg-[var(--md-surface-container-high)] hover:bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface)] font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[36px] transition-colors"
                 aria-label="Attendance & Roll Call Log"
               >
                 <Users class="w-4 h-4 mr-1.5" /> Roll Call
@@ -739,7 +740,7 @@ onUnmounted(() => {
                 v-if="store.canManageEvents" 
                 @click="promptDeleteEvent(ev.id)" 
                 type="button" 
-                class="p-2 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-[#2d3035] min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+                class="p-2 rounded-full text-[var(--md-on-surface-variant)] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[var(--md-surface-container-high)] min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
                 title="Delete Event"
               >
                 <Trash2 class="w-4 h-4" />
@@ -747,17 +748,17 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-neutral-400 bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl border border-slate-100 dark:border-[#2d3035]">
-            <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
-            <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
-            <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
+          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-[var(--md-on-surface-variant)] bg-[var(--md-surface-container-low)] p-3 rounded-2xl border border-[var(--md-outline-variant)]/30">
+            <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.date }}</div>
+            <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.time }}</div>
+            <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.location }}</div>
           </div>
         </div>
       </div>
 
-      <div v-else class="bg-white dark:bg-[#1e1f20] rounded-3xl p-8 text-center border border-slate-200 dark:border-[#2d3035]">
-        <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
-        <p class="text-sm font-semibold text-slate-700 dark:text-neutral-300">
+      <div v-else class="bg-[var(--md-surface)] dark:bg-[var(--md-surface-container)] rounded-3xl p-8 text-center border border-[var(--md-outline-variant)]/50">
+        <Calendar class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2" />
+        <p class="text-sm font-semibold text-[var(--md-on-surface)]">
           {{ activeScheduleTab === 'upcoming' ? 'No upcoming events scheduled in this category.' : 'No past events found in this category.' }}
         </p>
       </div>
