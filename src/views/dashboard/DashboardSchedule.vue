@@ -310,14 +310,17 @@ const openAttendanceTracker = async (ev) => {
 
     const { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, status, excuse_justification')
+      .select('id, user_id, status')
       .eq('event_id', ev.id)
 
     if (rsvpErr) throw rsvpErr
 
     const rsvpMap = new Map()
     if (rsvps) {
-      rsvps.forEach(r => rsvpMap.set(r.user_id, { status: r.status, excuse: r.excuse_justification }))
+      rsvps.forEach(r => rsvpMap.set(r.user_id, { 
+        status: r.status, 
+        excuse: localStorage.getItem(`smartband_rsvp_excuse_${r.event_id || ev.id}`) || null 
+      }))
     }
 
     rollCallRoster.value = (members || []).map(m => {

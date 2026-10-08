@@ -304,7 +304,7 @@ const handleTouchEnd = (e) => {
   <div class="min-h-screen bg-[#f8f9fa] dark:bg-[#18191a] text-slate-900 dark:text-neutral-100 selection:bg-slate-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-slate-900 font-sans overflow-x-hidden transition-colors duration-300">
     
     <!-- Navigation Bar (Clean M3 Top App Bar, Flat Surface) -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-200 dark:border-[#2d3035] transition-colors">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-200/50 dark:border-white/[0.04] transition-colors">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">

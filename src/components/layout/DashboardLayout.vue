@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { Home, Calendar, User, Sun, Moon, Music, Users, ShieldCheck, Download, Wifi, WifiOff, LogOut, Bell, BellOff, FileText, X, CheckCircle, AlertCircle, Check, Volume2, AlertTriangle, Clock, MapPin, HelpCircle, BookOpen, ChevronRight, Sparkles, Award } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
@@ -51,6 +51,28 @@ const showFirstTimeNotifPrompt = ref(false)
 const showSettingsDrawer = ref(false)
 const showTermsModal = ref(false)
 const pendingCount = ref(0)
+
+// M3 Dynamic View Title & Role Badges
+const currentViewTitle = computed(() => {
+  switch (route.name) {
+    case 'dashboard-home': return 'Dashboard'
+    case 'dashboard-schedule': return 'Schedule & Gigs'
+    case 'dashboard-members': return store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory'
+    case 'dashboard-leaderboard': return 'Reliability & Ranks'
+    case 'dashboard-profile': return 'My Profile'
+    case 'dashboard-admin': return store.isSuperAdmin ? 'Admin Operations' : store.isSecretaryAdmin ? 'Band Operations' : 'Executive Analytics'
+    default: return 'Portal'
+  }
+})
+
+const currentRoleBadge = computed(() => {
+  if (!store.currentRole) return 'Musician'
+  if (store.currentRole === 'super_admin') return 'IT Super Admin'
+  if (store.currentRole === 'secretary_admin') return 'Band Secretary'
+  if (store.currentRole === 'executive') return 'Executive'
+  if (store.currentRole === 'section_leader') return 'Section Leader'
+  return 'Musician'
+})
 
 // Pre-Event Call-Time Alarm Engine State
 let callTimeMonitorTimer = null
@@ -911,32 +933,18 @@ onUnmounted(() => {
 
     <!-- 2. DESKTOP LEFT NAVIGATION DRAWER (> 1024px: Fixed 260px - 280px Drawer, Table 8) -->
     <aside 
-      class="hidden lg:flex lg:w-64 xl:w-72 flex-col bg-[#f8fafc] dark:bg-[#1e1f20] border-r border-slate-200 dark:border-[#2d3035] p-5 space-y-6 flex-shrink-0 fixed top-0 left-0 bottom-0 z-30 h-screen overflow-y-auto select-none"
+      class="hidden lg:flex lg:w-64 xl:w-72 flex-col bg-[#f8fafc] dark:bg-[#1e1f20] border-r border-slate-200/60 dark:border-white/[0.05] p-5 space-y-5 flex-shrink-0 fixed top-0 left-0 bottom-0 z-30 h-screen overflow-y-auto select-none"
       aria-label="Desktop Navigation Drawer"
     >
       <!-- Brand Logo & Title -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-0.5 shadow-xs">
-            <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
-          </div>
-          <div>
-            <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
-            <span class="text-[10px] text-slate-500 dark:text-neutral-400 font-medium">Band 1870 PWA</span>
-          </div>
+      <div class="flex items-center space-x-3 pb-3 border-b border-slate-200/60 dark:border-white/[0.05]">
+        <div class="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-1 shadow-xs">
+          <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
         </div>
-
-        <!-- Desktop Theme Toggle -->
-        <button 
-          @click="toggleTheme" 
-          type="button"
-          class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center"
-          :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
-          title="Toggle Light/Dark Theme"
-        >
-          <Sun v-if="isDark" class="w-4 h-4 text-slate-700" />
-          <Moon v-else class="w-4 h-4 text-neutral-300" />
-        </button>
+        <div>
+          <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
+          <span class="text-[10px] text-slate-500 dark:text-neutral-400 font-medium mt-1 block">Band 1870 PWA</span>
+        </div>
       </div>
 
       <!-- Desktop Sidebar Menu (M3 Pill List Items) -->
@@ -1067,9 +1075,9 @@ onUnmounted(() => {
     <div class="flex-1 min-w-0 min-h-screen flex flex-col w-full sm:pl-[72px] lg:pl-64 xl:pl-72">
       <div class="flex-1 min-w-0 flex flex-col max-w-6xl mx-auto w-full">
       
-      <!-- TOP APP BAR (Material 3 Header) -->
-      <header class="sticky top-0 z-40 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-200 dark:border-[#2d3035] px-4 py-2.5 flex items-center justify-between transition-colors">
-        <div class="flex items-center space-x-2.5">
+      <!-- TOP APP BAR (Material 3 Lightweight Header) -->
+      <header class="sticky top-0 z-40 bg-[#f8fafc]/95 dark:bg-[#121214]/95 border-b border-slate-200/50 dark:border-white/[0.04] px-4 sm:px-6 h-16 flex items-center justify-between transition-colors">
+        <div class="flex items-center space-x-3">
           <!-- Mobile Brand Logo (Visible only on <600px mobile screens) -->
           <div class="flex items-center space-x-2.5 sm:hidden">
             <div class="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">
@@ -1078,62 +1086,36 @@ onUnmounted(() => {
             <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white">SmartBand</span>
           </div>
 
-          <!-- Tablet View Title (Visible on 600px-1024px screens) -->
-          <div class="hidden sm:flex lg:hidden items-center space-x-2">
-            <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-white capitalize">
-              {{ route.name ? route.name.toString().replace('dashboard-', '').replace('-', ' ') : 'SmartBand' }}
+          <!-- Tablet & Desktop View Title (M3 Title Large) -->
+          <div class="hidden sm:flex items-center space-x-2.5">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+              {{ currentViewTitle }}
+            </h1>
+            <span v-if="store.currentRole" class="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300">
+              {{ currentRoleBadge }}
             </span>
-          </div>
-
-          <!-- Desktop Page Breadcrumb (Visible only on >1024px screens) -->
-          <div class="hidden lg:flex items-center space-x-2 text-xs font-medium text-slate-500 dark:text-neutral-400">
-            <span class="text-slate-500 dark:text-neutral-400 uppercase tracking-wider">Portal</span>
-            <span>/</span>
-            <span class="text-slate-900 dark:text-white capitalize font-semibold">{{ route.name ? route.name.toString().replace('dashboard-', '').replace('-', ' ') : 'Dashboard' }}</span>
           </div>
         </div>
 
-        <div class="flex items-center space-x-1">
-          <!-- Install App Header Trigger (Visible on mobile where sidebar is hidden) -->
-          <button 
-            v-if="!isAppInstalled"
-            @click="handleInstallPWA"
-            type="button"
-            class="sm:hidden px-3 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-xs flex items-center hover:bg-slate-800 transition-colors shadow-xs cursor-pointer min-h-[40px] shrink-0"
-            aria-label="Install SmartBand App"
-          >
-            <Download class="w-3.5 h-3.5 mr-1" />
-            <span>Install</span>
-          </button>
-
-          <!-- User Guide & Roles Help Trigger (Min 48x48px hit target) -->
-          <button 
-            @click="showRoleGuideModal = true" 
-            type="button"
-            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors flex items-center justify-center cursor-pointer shrink-0"
-            aria-label="Open Role & User Guide"
-            title="Role Guide & Operational Manual"
-          >
-            <HelpCircle class="w-5 h-5" />
-          </button>
-
-          <!-- Quick Mobile Theme Switcher (Min 48x48px hit target) -->
+        <!-- Trailing Action Icons (Clean & Uncluttered: Theme + Notifications) -->
+        <div class="flex items-center space-x-1 sm:space-x-1.5">
+          <!-- Theme Switcher (Available on all form factors) -->
           <button 
             @click="toggleTheme" 
             type="button"
-            class="sm:hidden min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/60 dark:hover:bg-[#282a2c] transition-colors flex items-center justify-center cursor-pointer shrink-0"
             :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
-            title="Toggle Light/Dark Theme"
+            :title="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
           >
             <Sun v-if="isDark" class="w-5 h-5 text-slate-700" />
             <Moon v-else class="w-5 h-5 text-neutral-300" />
           </button>
 
-          <!-- Notification & Settings Drawer Bell Trigger (Min 48x48px hit target) -->
+          <!-- Notification & Settings Drawer Bell Trigger -->
           <button 
             @click="showSettingsDrawer = true" 
             type="button"
-            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors flex items-center justify-center relative cursor-pointer shrink-0"
+            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/60 dark:hover:bg-[#282a2c] transition-colors flex items-center justify-center relative cursor-pointer shrink-0"
             :aria-label="notificationPermission !== 'granted' ? 'Enable Push Notifications & Settings' : 'Open App Settings & Alerts'"
             :title="notificationPermission !== 'granted' ? 'Enable Push Notifications' : 'App Settings & Alerts'"
           >

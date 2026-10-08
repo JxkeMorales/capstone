@@ -332,7 +332,8 @@ const triggerReNotifications = async () => {
           author_id: store.user?.id || null,
           title: '🚨 Urgent: RSVP Attendance Confirmation Required',
           content: 'The Band Secretary requests all unconfirmed musicians and auxiliary members to check upcoming event schedules and confirm their RSVP attendance immediately.',
-          category: 'Urgent Call-to-Action'
+          category: 'Urgent Call-to-Action',
+          priority: 'HIGH'
         })
     } catch (annErr) {
       console.warn('Announcement creation note:', annErr)

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download, AlertTriangle, Volume2, Check } from 'lucide-vue-next'
+import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download, AlertTriangle, Volume2, Check, CalendarCheck } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -160,13 +160,17 @@ const fetchHomeData = async (skipCache = false) => {
     if (eventData) {
       let rsvpMap = {}
       if (store.user) {
+        // Safe query selecting known valid schema columns (prevents 400 Bad Request on missing excuse_justification column)
         const { data: rsvpData } = await supabase
           .from('event_rsvps')
-          .select('event_id, status, excuse_justification')
+          .select('event_id, status')
           .eq('user_id', store.user.id)
         if (rsvpData) {
           rsvpData.forEach(r => {
-            rsvpMap[r.event_id] = { status: r.status, excuse: r.excuse_justification }
+            rsvpMap[r.event_id] = { 
+              status: r.status, 
+              excuse: localStorage.getItem(`smartband_rsvp_excuse_${r.event_id}`) || null 
+            }
           })
         }
       }
@@ -186,9 +190,6 @@ const fetchHomeData = async (skipCache = false) => {
           createdAt: ev.created_at
         }
       })
-      // Note: Removed localStorage.setItem('smartband_raw_events_cache') to prevent
-      // data staleness. Raw events are always fetched fresh from Supabase.
-      // Per-event RSVP status is tracked individually via localStorage below.
     }
 
     if (evErr) console.error('Error fetching events:', evErr)
@@ -207,7 +208,8 @@ const fetchHomeData = async (skipCache = false) => {
         title: a.title,
         rawDate: a.created_at,
         content: a.content,
-        priority: a.priority || a.category || 'HIGH',
+        priority: a.priority || (a.category && a.category.toLowerCase().includes('urgent') ? 'HIGH' : a.category) || 'HIGH',
+        category: a.category || 'General',
         targetSection: a.target_section || 'all',
         ackCount: 0
       }))
@@ -216,31 +218,15 @@ const fetchHomeData = async (skipCache = false) => {
     if (annErr) console.error('Error fetching announcements:', annErr)
 
     // 2b. Fetch Acknowledgment counts & user acknowledgments (TC-05 Two-Way Tracking)
+    // Synchronize from local store first to avoid 404 network spam if remote table isn't migrated
     try {
-      const { data: ackData } = await supabase
-        .from('announcement_acknowledgments')
-        .select('announcement_id, user_id, acknowledged_at, response_latency_seconds')
-      if (ackData) {
-        const counts = {}
-        ackData.forEach(row => {
-          counts[row.announcement_id] = (counts[row.announcement_id] || 0) + 1
-          if (store.user && row.user_id === store.user.id) {
-            const lat = row.response_latency_seconds || 0
-            const fmt = lat < 60 ? `${lat}s` : `${Math.round(lat / 60)}m`
-            userAcknowledgments.value[row.announcement_id] = {
-              ackAt: row.acknowledged_at,
-              latencySeconds: lat,
-              formattedLatency: fmt
-            }
-          }
-        })
-        announcements.value.forEach(a => {
-          if (counts[a.id]) a.ackCount = counts[a.id]
-        })
+      if (store.user?.id) {
+        const cachedAcks = localStorage.getItem(`smartband_ack_${store.user.id}`)
+        if (cachedAcks) {
+          userAcknowledgments.value = JSON.parse(cachedAcks)
+        }
       }
-    } catch (ackFetchErr) {
-      // Graceful offline/local fallback
-    }
+    } catch (e) {}
 
     // 3. Fetch pending accounts for Super Admin
     if (store.canApproveAccounts) {
@@ -333,14 +319,17 @@ const openAttendanceTracker = async (ev) => {
     // 2. Fetch existing RSVPs / roll-call records for this event
     const { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, status, excuse_justification')
+      .select('id, user_id, status')
       .eq('event_id', ev.id)
 
     if (rsvpErr) throw rsvpErr
 
     const rsvpMap = new Map()
     if (rsvps) {
-      rsvps.forEach(r => rsvpMap.set(r.user_id, { status: r.status, excuse: r.excuse_justification }))
+      rsvps.forEach(r => rsvpMap.set(r.user_id, { 
+        status: r.status, 
+        excuse: localStorage.getItem(`smartband_rsvp_excuse_${r.event_id || ev.id}`) || null 
+      }))
     }
 
     rollCallRoster.value = (members || []).map(m => {
@@ -798,6 +787,37 @@ const getAckLatency = (annId) => {
   return userAcknowledgments.value[annId]?.formattedLatency || ''
 }
 
+const isUrgentAnnouncement = (post) => {
+  if (!post) return false
+  const p = (post.priority || '').toString().toUpperCase()
+  const c = (post.category || '').toString().toLowerCase()
+  const t = (post.title || '').toString().toLowerCase()
+  return p === 'HIGH' || p === 'URGENT' || c.includes('urgent') || t.includes('urgent') || t.includes('🚨') || t.includes('alert')
+}
+
+const isRsvpAnnouncement = (post) => {
+  if (!post) return false
+  const c = (post.category || '').toString().toLowerCase()
+  const t = (post.title || '').toString().toLowerCase()
+  const body = (post.content || '').toString().toLowerCase()
+  return c.includes('rsvp') || t.includes('rsvp') || t.includes('attendance') || body.includes('rsvp') || body.includes('confirm their rsvp') || body.includes('attendance')
+}
+
+const handleAnnouncementAction = (post) => {
+  if (!post) return
+  if (isRsvpAnnouncement(post)) {
+    handleAcknowledgeAnnouncement(post)
+    activeEventsTab.value = 'upcoming'
+    const evSec = document.getElementById('events-section')
+    if (evSec) {
+      evSec.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    showToast('Navigating to Upcoming Gigs for RSVP confirmation', 'info')
+  } else {
+    handleAcknowledgeAnnouncement(post)
+  }
+}
+
 const handleAcknowledgeAnnouncement = async (ann) => {
   if (!ann || !store.user) return
   if (isAcknowledged(ann.id)) return
@@ -992,7 +1012,7 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       
       <!-- AUTOMATIC EVENTS & GIGS SECTION -->
-      <section class="space-y-3">
+      <section id="events-section" class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 px-1">
           <!-- Upcoming vs My Accepted vs Past Gigs Tab Pill Toggle -->
           <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium border border-slate-200/60 dark:border-neutral-800 shrink-0">
@@ -1294,32 +1314,54 @@ onUnmounted(() => {
             class="py-3.5 first:pt-0 last:pb-0"
             :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== displayedAnnouncements.length - 1 }"
           >
-            <!-- Urgency & Target Section Badges (TC-04 & ISO/IEC 25010 Safety) -->
-            <div class="flex items-center justify-between gap-2 mb-1.5">
+            <!-- Urgency & Target Section Badges (M3 High-Contrast Non-Color-Cued Indicators) -->
+            <div class="flex items-center justify-between gap-2 mb-2">
               <div class="flex flex-wrap items-center gap-1.5">
+                <!-- Action Required & RSVP Notice Pill Badges -->
                 <span 
-                  v-if="post.priority === 'HIGH'" 
-                  class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/50"
+                  v-if="isRsvpAnnouncement(post)" 
+                  class="inline-flex items-center text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-600 text-white dark:bg-rose-500 dark:text-slate-950 shadow-xs"
                 >
-                  <AlertTriangle class="w-3 h-3 mr-1 text-rose-600 dark:text-rose-400" />
-                  HIGH URGENCY
+                  <AlertTriangle class="w-3.5 h-3.5 mr-1" />
+                  ACTION REQUIRED
                 </span>
                 <span 
-                  v-else-if="post.priority === 'MEDIUM'" 
-                  class="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40"
+                  v-if="isRsvpAnnouncement(post)" 
+                  class="inline-flex items-center text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700"
                 >
-                  MEDIUM
-                </span>
-                <span 
-                  v-else 
-                  class="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400"
-                >
-                  INFO
+                  <CalendarCheck class="w-3.5 h-3.5 mr-1" />
+                  RSVP NOTICE
                 </span>
 
+                <!-- General High Urgency (Non-RSVP) -->
+                <span 
+                  v-else-if="isUrgentAnnouncement(post)" 
+                  class="inline-flex items-center text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-600 text-white dark:bg-rose-500 dark:text-slate-950 shadow-xs"
+                >
+                  <AlertTriangle class="w-3.5 h-3.5 mr-1" />
+                  HIGH URGENCY
+                </span>
+
+                <!-- Medium Priority -->
+                <span 
+                  v-else-if="post.priority === 'MEDIUM'" 
+                  class="inline-flex items-center text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700"
+                >
+                  MEDIUM PRIORITY
+                </span>
+
+                <!-- General Informational Notice -->
+                <span 
+                  v-else 
+                  class="inline-flex items-center text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c] text-slate-800 dark:text-neutral-200 border border-slate-300 dark:border-neutral-700"
+                >
+                  GENERAL NOTICE
+                </span>
+
+                <!-- Target Section Badge -->
                 <span 
                   v-if="post.targetSection && post.targetSection !== 'all'"
-                  class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 capitalize border border-blue-200/60 dark:border-blue-900/40"
+                  class="text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 capitalize border border-blue-300 dark:border-blue-800"
                 >
                   {{ post.targetSection }}
                 </span>
@@ -1328,63 +1370,78 @@ onUnmounted(() => {
               <div class="flex items-center space-x-1.5">
                 <!-- Acoustic Brass Fanfare Siren Trigger (TC-04) -->
                 <button 
-                  v-if="post.priority === 'HIGH'" 
+                  v-if="isUrgentAnnouncement(post)" 
                   @click="uiStore.playCallTimeFanfare()" 
                   type="button" 
                   aria-label="Play 5-second acoustic brass fanfare siren" 
                   title="Play 5s Acoustic Brass Fanfare (Bb Major Triad)" 
-                  class="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 cursor-pointer min-w-[28px] min-h-[28px] flex items-center justify-center transition-colors"
+                  class="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors"
                 >
-                  <Volume2 class="w-3.5 h-3.5" />
+                  <Volume2 class="w-4 h-4" />
                 </button>
                 <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
                 <button 
                   v-if="store.canManageAnnouncements" 
                   @click="promptDeleteAnnouncement(post.id)" 
                   aria-label="Delete Announcement"
-                  class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer p-1 rounded-full min-w-[28px] min-h-[28px] flex items-center justify-center" 
+                  class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer p-1 rounded-full min-w-[32px] min-h-[32px] flex items-center justify-center" 
                   title="Delete Announcement"
                 >
-                  <Trash2 class="w-3.5 h-3.5" />
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <h3 class="font-bold text-sm text-slate-900 dark:text-white leading-snug mb-1">{{ post.title }}</h3>
-            <p class="text-slate-600 dark:text-neutral-300 text-xs mb-2.5 leading-relaxed whitespace-pre-wrap">
+            <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-snug mb-1.5">{{ post.title }}</h3>
+            <p class="text-slate-600 dark:text-neutral-300 text-xs sm:text-sm mb-3 leading-relaxed whitespace-pre-wrap">
               {{ post.content }}
             </p>
 
             <!-- Bottom Row: Author & Two-Way Acknowledgment (TC-05 & SOP 2.4) -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100/80 dark:border-neutral-800/60">
-              <span class="text-[11px] font-medium text-slate-500 dark:text-neutral-400 flex items-center">
-                <User class="w-3 h-3 mr-1 text-slate-400" />
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 dark:border-[#2d3035]">
+              <span class="text-xs font-medium text-slate-600 dark:text-neutral-400 flex items-center">
+                <User class="w-3.5 h-3.5 mr-1.5 text-slate-400" />
                 {{ post.author }}
-                <span v-if="post.ackCount > 0" class="text-[10px] text-slate-400 dark:text-neutral-500 font-normal ml-2">
+                <span v-if="post.ackCount > 0" class="text-[11px] text-slate-400 dark:text-neutral-500 font-normal ml-2">
                   ({{ post.ackCount }} ack'd)
                 </span>
               </span>
 
-              <!-- Two-Way Acknowledgment (TC-05) Status -->
-              <div>
-                <span 
-                  v-if="isAcknowledged(post.id)" 
-                  class="inline-flex items-center text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/40"
-                >
-                  <Check class="w-3 h-3 mr-1 text-emerald-600 dark:text-emerald-400" />
-                  Acknowledged
-                  <span v-if="getAckLatency(post.id)" class="ml-1 opacity-80 font-normal">({{ getAckLatency(post.id) }})</span>
-                </span>
+              <!-- High-Contrast Action Triggers (44-48px Touch Target Standard) -->
+              <div class="flex items-center space-x-2">
+                <!-- If notice demands an RSVP, show direct Review & RSVP Action Trigger -->
                 <button 
-                  v-else 
+                  v-if="isRsvpAnnouncement(post)"
+                  @click="handleAnnouncementAction(post)" 
+                  type="button" 
+                  aria-label="Review and RSVP to upcoming events" 
+                  class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <CalendarCheck class="w-4 h-4 mr-1.5" />
+                  <span>Review &amp; RSVP</span>
+                </button>
+
+                <!-- Standard Notice Acknowledgment Button -->
+                <button 
+                  v-else-if="!isAcknowledged(post.id)" 
                   @click="handleAcknowledgeAnnouncement(post)" 
                   type="button" 
-                  aria-label="Acknowledge Call-Time Notice" 
-                  class="inline-flex items-center text-[10px] font-semibold text-slate-700 dark:text-neutral-200 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2.5 py-1 rounded-full cursor-pointer transition-colors shadow-2xs"
+                  aria-label="Acknowledge Notice" 
+                  class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
                 >
-                  <Check class="w-3 h-3 mr-1 text-slate-500 dark:text-neutral-400" />
-                  Acknowledge
+                  <Check class="w-4 h-4 mr-1.5" />
+                  <span>Acknowledge Notice</span>
                 </button>
+
+                <!-- Acknowledged / Reviewed Badge State -->
+                <span 
+                  v-if="isAcknowledged(post.id)" 
+                  class="inline-flex items-center text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 rounded-full min-h-[44px]"
+                >
+                  <Check class="w-4 h-4 mr-1 text-emerald-600 dark:text-emerald-400" />
+                  {{ isRsvpAnnouncement(post) ? 'Reviewed' : 'Acknowledged' }}
+                  <span v-if="getAckLatency(post.id)" class="ml-1 text-[11px] opacity-80 font-normal">({{ getAckLatency(post.id) }})</span>
+                </span>
               </div>
             </div>
           </article>
