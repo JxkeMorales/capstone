@@ -803,15 +803,19 @@ const isRsvpAnnouncement = (post) => {
   return c.includes('rsvp') || t.includes('rsvp') || t.includes('attendance') || body.includes('rsvp') || body.includes('confirm their rsvp') || body.includes('attendance')
 }
 
+const scrollToEvents = () => {
+  activeEventsTab.value = 'upcoming'
+  const evSec = document.getElementById('events-section')
+  if (evSec) {
+    evSec.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
 const handleAnnouncementAction = (post) => {
   if (!post) return
   if (isRsvpAnnouncement(post)) {
     handleAcknowledgeAnnouncement(post)
-    activeEventsTab.value = 'upcoming'
-    const evSec = document.getElementById('events-section')
-    if (evSec) {
-      evSec.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    scrollToEvents()
     showToast('Navigating to Upcoming Gigs for RSVP confirmation', 'info')
   } else {
     handleAcknowledgeAnnouncement(post)
@@ -825,7 +829,16 @@ const handleAcknowledgeAnnouncement = async (ann) => {
   const pubTime = new Date(ann.rawDate || Date.now()).getTime()
   const now = Date.now()
   const latencySeconds = Math.max(1, Math.round((now - pubTime) / 1000))
-  const formattedLatency = latencySeconds < 60 ? `${latencySeconds}s` : `${Math.round(latencySeconds / 60)}m`
+  let formattedLatency = ''
+  if (latencySeconds < 60) {
+    formattedLatency = `${latencySeconds}s`
+  } else if (latencySeconds < 3600) {
+    formattedLatency = `${Math.round(latencySeconds / 60)}m`
+  } else if (latencySeconds < 86400) {
+    formattedLatency = `${Math.round(latencySeconds / 3600)}h`
+  } else {
+    formattedLatency = `${Math.round(latencySeconds / 86400)}d`
+  }
 
   const ackRecord = {
     ackAt: new Date().toISOString(),
@@ -836,25 +849,13 @@ const handleAcknowledgeAnnouncement = async (ann) => {
   userAcknowledgments.value[ann.id] = ackRecord
   ann.ackCount = (ann.ackCount || 0) + 1
 
-  // Save locally
+  // Save locally in persistent browser storage
   try {
     localStorage.setItem(`smartband_ack_${store.user.id}`, JSON.stringify(userAcknowledgments.value))
   } catch (e) {}
 
-  // Attempt Supabase upsert (graceful fallback if table is not yet migrated)
-  try {
-    await supabase.from('announcement_acknowledgments').upsert({
-      announcement_id: ann.id,
-      user_id: store.user.id,
-      acknowledged_at: ackRecord.ackAt,
-      response_latency_seconds: latencySeconds
-    }, { onConflict: 'announcement_id,user_id' })
-  } catch (err) {
-    console.warn('DB Ack upsert notice:', err)
-  }
-
   notifyOtherTabs('ANNOUNCEMENT_ACKNOWLEDGED', { annId: ann.id })
-  showToast(`✓ Acknowledged "${ann.title}" (Response Latency: ${formattedLatency})`, 'success')
+  showToast(`✓ Acknowledged "${ann.title}"`, 'success')
 }
 
 // INSTANT REALTIME EVENT LISTENER (0ms latency for newly scheduled events on members' dashboards)
@@ -1368,17 +1369,6 @@ onUnmounted(() => {
               </div>
 
               <div class="flex items-center space-x-1.5">
-                <!-- Acoustic Brass Fanfare Siren Trigger (TC-04) -->
-                <button 
-                  v-if="isUrgentAnnouncement(post)" 
-                  @click="uiStore.playCallTimeFanfare()" 
-                  type="button" 
-                  aria-label="Play 5-second acoustic brass fanfare siren" 
-                  title="Play 5s Acoustic Brass Fanfare (Bb Major Triad)" 
-                  class="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors"
-                >
-                  <Volume2 class="w-4 h-4" />
-                </button>
                 <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
                 <button 
                   v-if="store.canManageAnnouncements" 
@@ -1409,39 +1399,54 @@ onUnmounted(() => {
 
               <!-- High-Contrast Action Triggers (44-48px Touch Target Standard) -->
               <div class="flex items-center space-x-2">
-                <!-- If notice demands an RSVP, show direct Review & RSVP Action Trigger -->
-                <button 
-                  v-if="isRsvpAnnouncement(post)"
-                  @click="handleAnnouncementAction(post)" 
-                  type="button" 
-                  aria-label="Review and RSVP to upcoming events" 
-                  class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
-                >
-                  <CalendarCheck class="w-4 h-4 mr-1.5" />
-                  <span>Review &amp; RSVP</span>
-                </button>
+                <!-- State 1: Action Required (Not yet acknowledged / reviewed) -->
+                <template v-if="!isAcknowledged(post.id)">
+                  <!-- If notice demands an RSVP, show direct Review & RSVP Action Trigger -->
+                  <button 
+                    v-if="isRsvpAnnouncement(post)"
+                    @click="handleAnnouncementAction(post)" 
+                    type="button" 
+                    aria-label="Review and RSVP to upcoming events" 
+                    class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <CalendarCheck class="w-4 h-4 mr-1.5" />
+                    <span>Review &amp; RSVP</span>
+                  </button>
 
-                <!-- Standard Notice Acknowledgment Button -->
-                <button 
-                  v-else-if="!isAcknowledged(post.id)" 
-                  @click="handleAcknowledgeAnnouncement(post)" 
-                  type="button" 
-                  aria-label="Acknowledge Notice" 
-                  class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
-                >
-                  <Check class="w-4 h-4 mr-1.5" />
-                  <span>Acknowledge Notice</span>
-                </button>
+                  <!-- Standard Notice Acknowledgment Button -->
+                  <button 
+                    v-else 
+                    @click="handleAcknowledgeAnnouncement(post)" 
+                    type="button" 
+                    aria-label="Acknowledge Notice" 
+                    class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <Check class="w-4 h-4 mr-1.5" />
+                    <span>Acknowledge Notice</span>
+                  </button>
+                </template>
 
-                <!-- Acknowledged / Reviewed Badge State -->
-                <span 
-                  v-if="isAcknowledged(post.id)" 
-                  class="inline-flex items-center text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 rounded-full min-h-[44px]"
-                >
-                  <Check class="w-4 h-4 mr-1 text-emerald-600 dark:text-emerald-400" />
-                  {{ isRsvpAnnouncement(post) ? 'Reviewed' : 'Acknowledged' }}
-                  <span v-if="getAckLatency(post.id)" class="ml-1 text-[11px] opacity-80 font-normal">({{ getAckLatency(post.id) }})</span>
-                </span>
+                <!-- State 2: Already Confirmed / Reviewed -->
+                <template v-else>
+                  <span 
+                    class="inline-flex items-center text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 rounded-full min-h-[44px]"
+                  >
+                    <Check class="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{{ isRsvpAnnouncement(post) ? 'Reviewed' : 'Acknowledged' }}</span>
+                  </span>
+
+                  <!-- Secondary View Gigs link button for RSVP notices -->
+                  <button 
+                    v-if="isRsvpAnnouncement(post)"
+                    @click="scrollToEvents"
+                    type="button" 
+                    aria-label="View upcoming gigs and schedules" 
+                    class="inline-flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white px-3 py-2 rounded-full border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors min-h-[44px] cursor-pointer"
+                  >
+                    <Calendar class="w-3.5 h-3.5 mr-1" />
+                    <span>View Gigs</span>
+                  </button>
+                </template>
               </div>
             </div>
           </article>
