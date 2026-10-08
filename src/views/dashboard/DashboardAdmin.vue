@@ -471,13 +471,13 @@ const executeResetReportsAndAnalytics = async () => {
       const { error: rsvpErr } = await supabase
         .from('event_rsvps')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000')
+        .not('id', 'is', null)
       if (rsvpErr) console.warn('RSVP direct delete notice:', rsvpErr)
 
       const { error: profErr } = await supabase
         .from('profiles')
         .update({ reliability_score: 100 })
-        .neq('id', '00000000-0000-0000-0000-000000000000')
+        .not('id', 'is', null)
       if (profErr) console.warn('Profiles reliability score update notice:', profErr)
     }
 
