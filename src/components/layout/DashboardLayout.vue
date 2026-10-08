@@ -947,39 +947,39 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Desktop Sidebar Menu (M3 Pill List Items) -->
-      <nav class="space-y-1 flex-1" aria-label="Desktop Navigation Menu">
+      <!-- Desktop Sidebar Menu (Official M3 Navigation Drawer Items) -->
+      <nav class="space-y-1.5 flex-1" aria-label="Desktop Navigation Menu">
         
         <RouterLink 
           to="/dashboard" 
-          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all space-x-3 cursor-pointer min-h-[48px]"
           :class="route.name === 'dashboard-home' 
-            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
+            ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)] font-semibold shadow-2xs' 
+            : 'text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
         >
-          <Home class="w-4 h-4 flex-shrink-0" />
+          <Home class="w-5 h-5 flex-shrink-0" />
           <span>Home Dashboard</span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/schedule" 
-          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all space-x-3 cursor-pointer min-h-[48px]"
           :class="route.name === 'dashboard-schedule' 
-            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
+            ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)] font-semibold shadow-2xs' 
+            : 'text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
         >
-          <Calendar class="w-4 h-4 flex-shrink-0" />
+          <Calendar class="w-5 h-5 flex-shrink-0" />
           <span>Schedule & Events</span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/members" 
-          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all space-x-3 cursor-pointer min-h-[48px]"
           :class="route.name === 'dashboard-members' 
-            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
+            ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)] font-semibold shadow-2xs' 
+            : 'text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
         >
-          <Users class="w-4 h-4 flex-shrink-0" />
+          <Users class="w-5 h-5 flex-shrink-0" />
           <span>{{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}</span>
         </RouterLink>
 
@@ -987,28 +987,28 @@ onUnmounted(() => {
         <RouterLink 
           v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
           to="/dashboard/admin" 
-          class="flex items-center justify-between px-4 py-3 rounded-full font-medium text-xs transition-colors cursor-pointer min-h-[44px]"
+          class="flex items-center justify-between px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all cursor-pointer min-h-[48px]"
           :class="route.name === 'dashboard-admin' 
-            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
+            ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)] font-semibold shadow-2xs' 
+            : 'text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
         >
           <div class="flex items-center space-x-3">
-            <ShieldCheck class="w-4 h-4 flex-shrink-0 text-slate-700 dark:text-neutral-300" />
+            <ShieldCheck class="w-5 h-5 flex-shrink-0" />
             <span>{{ store.isSuperAdmin ? 'Admin Operations' : store.isSecretaryAdmin ? 'Band Operations' : 'Executive Analytics' }}</span>
           </div>
-          <span v-if="pendingCount > 0 && store.isSuperAdmin" class="px-2 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-[10px]">
+          <span v-if="pendingCount > 0 && store.isSuperAdmin" class="px-2 py-0.5 rounded-full bg-[var(--md-error)] text-[var(--md-on-error)] font-bold text-[11px]">
             {{ pendingCount }}
           </span>
         </RouterLink>
 
         <RouterLink 
           to="/dashboard/profile" 
-          class="flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[44px]"
+          class="flex items-center px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all space-x-3 cursor-pointer min-h-[48px]"
           :class="route.name === 'dashboard-profile' 
-            ? 'bg-slate-200 text-slate-900 font-semibold dark:bg-[#282a2c] dark:text-white' 
-            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60'"
+            ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)] font-semibold shadow-2xs' 
+            : 'text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
         >
-          <User class="w-4 h-4 flex-shrink-0" />
+          <User class="w-5 h-5 flex-shrink-0" />
           <span>My Profile</span>
         </RouterLink>
 
@@ -1016,9 +1016,9 @@ onUnmounted(() => {
         <button 
           @click="showRoleGuideModal = true" 
           type="button"
-          class="w-full flex items-center px-4 py-3 rounded-full font-medium text-xs transition-colors space-x-3 cursor-pointer min-h-[44px] text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-[#282a2c]/60 text-left"
+          class="w-full flex items-center px-4 py-3.5 rounded-full font-medium text-xs sm:text-sm transition-all space-x-3 cursor-pointer min-h-[48px] text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)] text-left"
         >
-          <HelpCircle class="w-4 h-4 flex-shrink-0 text-slate-500" />
+          <HelpCircle class="w-5 h-5 flex-shrink-0 text-[var(--md-outline)]" />
           <span>Role & User Guide</span>
         </button>
 
@@ -1075,53 +1075,53 @@ onUnmounted(() => {
     <div class="flex-1 min-w-0 min-h-screen flex flex-col w-full sm:pl-[72px] lg:pl-64 xl:pl-72">
       <div class="flex-1 min-w-0 flex flex-col max-w-6xl mx-auto w-full">
       
-      <!-- TOP APP BAR (Material 3 Lightweight Header) -->
-      <header class="sticky top-0 z-40 bg-[#f8fafc]/95 dark:bg-[#121214]/95 border-b border-slate-200/50 dark:border-white/[0.04] px-4 sm:px-6 h-16 flex items-center justify-between transition-colors">
+      <!-- TOP APP BAR (Official Material 3 Small Top App Bar) -->
+      <header class="sticky top-0 z-40 bg-[var(--md-surface)]/95 border-b border-[var(--md-outline-variant)]/30 px-4 sm:px-6 h-16 flex items-center justify-between transition-colors">
         <div class="flex items-center space-x-3">
           <!-- Mobile Brand Logo (Visible only on <600px mobile screens) -->
           <div class="flex items-center space-x-2.5 sm:hidden">
-            <div class="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">
+            <div class="w-8 h-8 rounded-xl overflow-hidden border border-[var(--md-outline-variant)] bg-white flex items-center justify-center p-0.5 shadow-xs">
               <img src="/band1870logo.jpg" alt="Logo" class="w-full h-full object-contain" />
             </div>
-            <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white">SmartBand</span>
+            <span class="font-bold text-base tracking-tight text-[var(--md-on-surface)]">SmartBand</span>
           </div>
 
-          <!-- Tablet & Desktop View Title (M3 Title Large) -->
+          <!-- Tablet & Desktop View Title (Official M3 Title Large) -->
           <div class="hidden sm:flex items-center space-x-2.5">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 class="text-lg sm:text-xl font-medium tracking-tight text-[var(--md-on-surface)]">
               {{ currentViewTitle }}
             </h1>
-            <span v-if="store.currentRole" class="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300">
+            <span v-if="store.currentRole" class="m3-chip m3-chip-assist h-6 text-[11px] px-2.5 rounded-md">
               {{ currentRoleBadge }}
             </span>
           </div>
         </div>
 
-        <!-- Trailing Action Icons (Clean & Uncluttered: Theme + Notifications) -->
+        <!-- Trailing Action Icons (M3 48x48dp Touch Targets) -->
         <div class="flex items-center space-x-1 sm:space-x-1.5">
           <!-- Theme Switcher (Available on all form factors) -->
           <button 
             @click="toggleTheme" 
             type="button"
-            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/60 dark:hover:bg-[#282a2c] transition-colors flex items-center justify-center cursor-pointer shrink-0"
+            class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)] transition-colors flex items-center justify-center cursor-pointer shrink-0"
             :aria-label="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
             :title="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
           >
-            <Sun v-if="isDark" class="w-5 h-5 text-slate-700" />
-            <Moon v-else class="w-5 h-5 text-neutral-300" />
+            <Sun v-if="isDark" class="w-5 h-5 text-[var(--md-on-surface)]" />
+            <Moon v-else class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
           </button>
 
           <!-- Notification & Settings Drawer Bell Trigger -->
           <button 
             @click="showSettingsDrawer = true" 
             type="button"
-            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/60 dark:hover:bg-[#282a2c] transition-colors flex items-center justify-center relative cursor-pointer shrink-0"
+            class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)] transition-colors flex items-center justify-center relative cursor-pointer shrink-0"
             :aria-label="notificationPermission !== 'granted' ? 'Enable Push Notifications & Settings' : 'Open App Settings & Alerts'"
             :title="notificationPermission !== 'granted' ? 'Enable Push Notifications' : 'App Settings & Alerts'"
           >
             <Bell class="w-5 h-5" />
             <span v-if="notificationPermission !== 'granted'" class="absolute top-2.5 right-2.5 w-2 h-2 bg-amber-500 rounded-full animate-pulse" title="Push notifications disabled"></span>
-            <span v-else-if="pendingCount > 0" class="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+            <span v-else-if="pendingCount > 0" class="absolute top-2.5 right-2.5 w-2 h-2 bg-[var(--md-error)] rounded-full"></span>
           </button>
         </div>
       </header>
@@ -1177,82 +1177,122 @@ onUnmounted(() => {
       </Transition>
 
       <!-- Main Router Page Body (Safe spacing at bottom so mobile bar never overlaps) -->
-      <main class="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-28 sm:pb-12">
+      <main class="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-32 sm:pb-12">
         <RouterView />
       </main>
 
-      <!-- 4. MOBILE BOTTOM NAVIGATION BAR (< 600px: Fixed 64px-72px with M3 Active Pill Indicator, Table 8) -->
+      <!-- 4. OFFICIAL MATERIAL 3 NAVIGATION BAR (80dp Height with 32x64dp Pill Active Indicator, Table 8) -->
       <nav 
-        class="sm:hidden fixed bottom-0 left-0 w-full bg-[#f8fafc] dark:bg-[#1e1f20] border-t border-slate-200 dark:border-[#2d3035] shadow-xs pb-safe z-30 select-none"
+        class="sm:hidden fixed bottom-0 left-0 w-full bg-[var(--md-surface-container)] border-t border-[var(--md-outline-variant)]/30 shadow-xs pb-safe z-30 select-none"
         aria-label="Mobile Bottom Navigation Bar"
       >
-        <div class="flex justify-around items-center h-16 px-1 max-w-md mx-auto" role="menubar">
+        <div class="flex justify-around items-center h-20 px-2 max-w-md mx-auto" role="menubar">
           
+          <!-- Tab 1: Home Dashboard -->
           <RouterLink 
             to="/dashboard" 
             role="menuitem"
             aria-label="Home Dashboard Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[48px]"
-            :class="route.name === 'dashboard-home' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
-            <div :class="route.name === 'dashboard-home' ? 'px-4 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c]' : 'px-4 py-1'">
-              <Home class="w-5 h-5" :stroke-width="route.name === 'dashboard-home' ? 2.5 : 2" />
+            <div 
+              class="w-16 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+              :class="route.name === 'dashboard-home' ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)]' : 'text-[var(--md-on-surface-variant)]'"
+            >
+              <Home class="w-6 h-6" :stroke-width="route.name === 'dashboard-home' ? 2.4 : 2" />
             </div>
-            <span class="text-[10px] mt-0.5">Home</span>
+            <span 
+              class="text-xs mt-1 transition-colors tracking-tight"
+              :class="route.name === 'dashboard-home' ? 'font-semibold text-[var(--md-on-surface)]' : 'font-normal text-[var(--md-on-surface-variant)]'"
+            >
+              Home
+            </span>
           </RouterLink>
 
+          <!-- Tab 2: Events Schedule -->
           <RouterLink 
             to="/dashboard/schedule" 
             role="menuitem"
             aria-label="Events Schedule Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[48px]"
-            :class="route.name === 'dashboard-schedule' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
-            <div :class="route.name === 'dashboard-schedule' ? 'px-4 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c]' : 'px-4 py-1'">
-              <Calendar class="w-5 h-5" :stroke-width="route.name === 'dashboard-schedule' ? 2.5 : 2" />
+            <div 
+              class="w-16 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+              :class="route.name === 'dashboard-schedule' ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)]' : 'text-[var(--md-on-surface-variant)]'"
+            >
+              <Calendar class="w-6 h-6" :stroke-width="route.name === 'dashboard-schedule' ? 2.4 : 2" />
             </div>
-            <span class="text-[10px] mt-0.5">Events</span>
+            <span 
+              class="text-xs mt-1 transition-colors tracking-tight"
+              :class="route.name === 'dashboard-schedule' ? 'font-semibold text-[var(--md-on-surface)]' : 'font-normal text-[var(--md-on-surface-variant)]'"
+            >
+              Events
+            </span>
           </RouterLink>
 
+          <!-- Tab 3: Member Directory -->
           <RouterLink 
             to="/dashboard/members" 
             role="menuitem"
             aria-label="Band Member Directory Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[48px]"
-            :class="route.name === 'dashboard-members' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
-            <div :class="route.name === 'dashboard-members' ? 'px-4 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c]' : 'px-4 py-1'">
-              <Users class="w-5 h-5" :stroke-width="route.name === 'dashboard-members' ? 2.5 : 2" />
+            <div 
+              class="w-16 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+              :class="route.name === 'dashboard-members' ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)]' : 'text-[var(--md-on-surface-variant)]'"
+            >
+              <Users class="w-6 h-6" :stroke-width="route.name === 'dashboard-members' ? 2.4 : 2" />
             </div>
-            <span class="text-[10px] mt-0.5">Roster</span>
+            <span 
+              class="text-xs mt-1 transition-colors tracking-tight"
+              :class="route.name === 'dashboard-members' ? 'font-semibold text-[var(--md-on-surface)]' : 'font-normal text-[var(--md-on-surface-variant)]'"
+            >
+              Roster
+            </span>
           </RouterLink>
 
+          <!-- Tab 4: Admin Operations -->
           <RouterLink 
             v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
             to="/dashboard/admin" 
             role="menuitem"
             aria-label="Admin Operations Hub Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors relative min-h-[48px]"
-            :class="route.name === 'dashboard-admin' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex flex-col items-center justify-center flex-1 h-full py-1 relative min-h-[48px]"
           >
-            <div :class="route.name === 'dashboard-admin' ? 'px-4 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c]' : 'px-4 py-1'">
-              <ShieldCheck class="w-5 h-5" :stroke-width="route.name === 'dashboard-admin' ? 2.5 : 2" />
+            <div 
+              class="w-16 h-8 rounded-full flex items-center justify-center transition-all duration-200 relative"
+              :class="route.name === 'dashboard-admin' ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)]' : 'text-[var(--md-on-surface-variant)]'"
+            >
+              <ShieldCheck class="w-6 h-6" :stroke-width="route.name === 'dashboard-admin' ? 2.4 : 2" />
+              <span v-if="pendingCount > 0 && store.isSuperAdmin" class="absolute top-1 right-3 w-2 h-2 bg-[var(--md-error)] rounded-full"></span>
             </div>
-            <span class="text-[10px] mt-0.5">{{ store.isSuperAdmin ? 'Admin' : 'Ops' }}</span>
-            <span v-if="pendingCount > 0 && store.isSuperAdmin" class="absolute top-2 right-4 w-2 h-2 bg-rose-500 rounded-full"></span>
+            <span 
+              class="text-xs mt-1 transition-colors tracking-tight"
+              :class="route.name === 'dashboard-admin' ? 'font-semibold text-[var(--md-on-surface)]' : 'font-normal text-[var(--md-on-surface-variant)]'"
+            >
+              {{ store.isSuperAdmin ? 'Admin' : 'Ops' }}
+            </span>
           </RouterLink>
 
+          <!-- Tab 5: Profile -->
           <RouterLink 
             to="/dashboard/profile" 
             role="menuitem"
             aria-label="User Profile Tab"
-            class="flex flex-col items-center justify-center flex-1 h-full transition-colors min-h-[48px]"
-            :class="route.name === 'dashboard-profile' ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
-            <div :class="route.name === 'dashboard-profile' ? 'px-4 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c]' : 'px-4 py-1'">
-              <User class="w-5 h-5" :stroke-width="route.name === 'dashboard-profile' ? 2.5 : 2" />
+            <div 
+              class="w-16 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+              :class="route.name === 'dashboard-profile' ? 'bg-[var(--md-secondary-container)] text-[var(--md-on-secondary-container)]' : 'text-[var(--md-on-surface-variant)]'"
+            >
+              <User class="w-6 h-6" :stroke-width="route.name === 'dashboard-profile' ? 2.4 : 2" />
             </div>
-            <span class="text-[10px] mt-0.5">Profile</span>
+            <span 
+              class="text-xs mt-1 transition-colors tracking-tight"
+              :class="route.name === 'dashboard-profile' ? 'font-semibold text-[var(--md-on-surface)]' : 'font-normal text-[var(--md-on-surface-variant)]'"
+            >
+              Profile
+            </span>
           </RouterLink>
 
         </div>

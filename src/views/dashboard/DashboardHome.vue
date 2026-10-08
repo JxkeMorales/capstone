@@ -978,30 +978,30 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Member Profile Summary Card (Google Material 3 Clean Surface) -->
-    <div class="bg-white dark:bg-[#202124] rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between">
+    <!-- Member Profile Summary Card (Official M3 Outlined Card) -->
+    <div class="m3-card-outlined p-4 sm:p-5 flex items-center justify-between">
       <div class="flex items-center space-x-3.5">
-        <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 relative bg-slate-100 dark:bg-neutral-800">
+        <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] relative bg-[var(--md-surface-container)]">
           <img v-if="store.profile?.profile_picture" 
                :src="store.profile.profile_picture" 
                alt="Avatar" 
                class="w-full h-full object-cover" />
-          <div v-else class="w-full h-full text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-sm">
+          <div v-else class="w-full h-full text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm">
             {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
           </div>
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <span class="font-bold text-slate-900 dark:text-white text-base leading-tight">
+            <span class="font-bold text-[var(--md-on-surface)] text-base leading-tight">
               {{ store.profile?.full_name || 'Band Member' }}
             </span>
-            <span v-if="store.profile?.is_verified" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">Verified</span>
-            <span v-else class="text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40">Pending</span>
-            <span v-if="!store.profile?.is_verified" class="text-[10px] font-medium bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-neutral-300 px-2 py-0.5 rounded-full border border-slate-300/60 dark:border-neutral-600/40">
+            <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-6 px-2.5 text-[11px] rounded-md font-semibold">Verified</span>
+            <span v-else class="m3-chip m3-chip-rsvp h-6 px-2.5 text-[11px] rounded-md font-semibold">Pending</span>
+            <span v-if="!store.profile?.is_verified" class="m3-chip m3-chip-assist h-6 px-2.5 text-[11px] rounded-md">
               {{ pushPermission === 'granted' ? 'Push ✓' : pushPermission === 'denied' ? 'Push ×' : 'Push ⚠' }}
             </span>
           </div>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 flex items-center mt-1 font-medium capitalize">
+          <p class="text-xs text-[var(--md-on-surface-variant)] flex items-center mt-1 font-medium capitalize">
             <TrendingUp class="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             {{ store.profile?.rank || 'Junior' }} Rank • {{ store.profile?.reliability_score || 100 }}% Reliability
           </p>
@@ -1015,17 +1015,17 @@ onUnmounted(() => {
       <!-- AUTOMATIC EVENTS & GIGS SECTION -->
       <section id="events-section" class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-          <!-- Upcoming vs My Accepted vs Past Gigs Tab Pill Toggle -->
-          <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium border border-slate-200/60 dark:border-neutral-800 shrink-0">
+          <!-- Upcoming vs My Accepted vs Past Gigs Tab Toggle (Official M3 Surface Container) -->
+          <div class="flex items-center space-x-1 p-1 bg-[var(--md-surface-container-high)] rounded-full text-xs font-medium shrink-0">
             <button 
               @click="activeEventsTab = 'upcoming'"
               type="button"
               class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
               :class="activeEventsTab === 'upcoming' 
-                ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
             >
-              <Calendar class="w-3.5 h-3.5 mr-1.5" />
+              <Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-primary)]" />
               <span>Upcoming ({{ upcomingEvents.length }})</span>
             </button>
 
@@ -1035,8 +1035,8 @@ onUnmounted(() => {
               type="button"
               class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
               :class="activeEventsTab === 'accepted' 
-                ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
             >
               <CheckCircle class="w-3.5 h-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
               <span>Attending ({{ myAcceptedEvents.length }})</span>
@@ -1047,10 +1047,10 @@ onUnmounted(() => {
               type="button"
               class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
               :class="activeEventsTab === 'past' 
-                ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
             >
-              <History class="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+              <History class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
               <span>Past ({{ pastEvents.length }})</span>
             </button>
           </div>
@@ -1059,7 +1059,7 @@ onUnmounted(() => {
             v-if="store.canManageEvents" 
             @click="showEventModal = true" 
             type="button" 
-            class="text-xs font-semibold text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] hover:bg-slate-50 dark:hover:bg-[#282a2c] border border-slate-200 dark:border-neutral-800 px-3.5 py-1.5 rounded-full flex items-center transition-all cursor-pointer min-h-[34px] shrink-0 shadow-xs"
+            class="m3-btn-outlined min-h-[36px] h-9 text-xs px-3.5"
           >
             <Plus class="w-3.5 h-3.5 mr-1" /> Schedule Event
           </button>
@@ -1071,11 +1071,11 @@ onUnmounted(() => {
             <div 
               v-for="ev in upcomingEvents" 
               :key="ev.id"
-              class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs relative overflow-hidden border border-slate-200/90 dark:border-neutral-800"
+              class="m3-card-elevated p-5 relative overflow-hidden border border-[var(--md-outline-variant)]/40 hover:shadow-md transition-all"
             >
               <div class="relative z-10">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <span class="inline-block px-3 py-0.5 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 rounded-full text-xs font-medium">
+                  <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
                     {{ ev.type }}
                   </span>
                   
@@ -1102,37 +1102,39 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <!-- RSVP Action Buttons (Google-style Pill Buttons) -->
+                <!-- RSVP Action Buttons (Official M3 Filled & Outlined Buttons) -->
                 <div v-if="!ev.rsvpStatus" class="grid grid-cols-2 gap-2 pt-1">
                   <button 
                     @click="rsvp(ev, 'attending')"
                     type="button"
                     aria-label="Confirm attendance for this event"
-                    class="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold py-2 px-3 rounded-full flex items-center justify-center transition-all shadow-xs text-xs cursor-pointer min-h-[40px]"
+                    class="m3-btn-filled text-xs font-semibold py-2 px-3 min-h-[40px]"
                   >
-                    <CheckCircle class="w-3.5 h-3.5 mr-1.5" />
+                    <CheckCircle class="w-4 h-4 mr-1.5" />
                     <span>I Will Attend</span>
                   </button>
                   <button 
                     @click="promptDeclineWithExcuse(ev)"
                     type="button"
                     aria-label="Cannot attend event and submit excuse justification"
-                    class="bg-white hover:bg-slate-50 dark:bg-transparent dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium py-2 px-3 rounded-full flex items-center justify-center transition-all text-xs cursor-pointer min-h-[40px] border border-slate-200 dark:border-neutral-700"
+                    class="m3-btn-outlined text-xs font-semibold py-2 px-3 min-h-[40px]"
                   >
-                    <XCircle class="w-3.5 h-3.5 mr-1.5 text-rose-500" />
+                    <XCircle class="w-4 h-4 mr-1.5 text-[var(--md-error)]" />
                     <span>Cannot Attend</span>
                   </button>
                 </div>
                 
                 <!-- Color-Coded Confirmed RSVP Status with Excuse Details -->
-                <div v-else class="p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-neutral-800 rounded-2xl space-y-1">
+                <div v-else class="p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40 rounded-xl space-y-1">
                   <div class="flex items-center justify-between">
-                    <span class="font-medium text-xs" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
-                      {{ ev.rsvpStatus === 'attending' ? '✓ Confirmed Attending' : '✗ Declined' }}
+                    <span class="font-medium text-xs flex items-center" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-[var(--md-error)]'">
+                      <CheckCircle v-if="ev.rsvpStatus === 'attending'" class="w-4 h-4 mr-1.5" />
+                      <XCircle v-else class="w-4 h-4 mr-1.5" />
+                      {{ ev.rsvpStatus === 'attending' ? 'Confirmed Attending' : 'Declined' }}
                     </span>
-                    <button @click="ev.rsvpStatus = null" aria-label="Change RSVP Status" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer px-2 py-1">Change</button>
+                    <button @click="ev.rsvpStatus = null" aria-label="Change RSVP Status" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
                   </div>
-                  <p v-if="ev.rsvpStatus === 'declined' && ev.excuseJustification" class="text-[11px] text-slate-500 dark:text-neutral-400 italic">
+                  <p v-if="ev.rsvpStatus === 'declined' && ev.excuseJustification" class="text-[11px] text-[var(--md-on-surface-variant)] italic">
                     Reason: {{ ev.excuseJustification }}
                   </p>
                 </div>
@@ -1140,10 +1142,10 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200/80 dark:border-neutral-800">
-            <Calendar class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
-            <p class="text-sm font-semibold text-slate-700 dark:text-neutral-300">No upcoming events scheduled.</p>
-            <p class="text-xs text-slate-400 dark:text-neutral-500 mt-1">Past events are automatically archived in the Past tab.</p>
+          <div v-else class="m3-card-outlined p-8 text-center">
+            <Calendar class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2" />
+            <p class="text-sm font-semibold text-[var(--md-on-surface)]">No upcoming events scheduled.</p>
+            <p class="text-xs text-[var(--md-on-surface-variant)] mt-1">Past events are automatically archived in the Past tab.</p>
           </div>
         </div>
 
@@ -1153,60 +1155,60 @@ onUnmounted(() => {
             <div 
               v-for="ev in myAcceptedEvents" 
               :key="ev.id"
-              class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs relative overflow-hidden border border-slate-200/90 dark:border-neutral-800"
+              class="m3-card-elevated p-5 relative overflow-hidden border border-[var(--md-outline-variant)]/40 hover:shadow-md transition-all"
             >
               <div class="relative z-10">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="inline-block px-3 py-0.5 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 rounded-full text-xs font-medium">
+                    <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
                       {{ ev.type }}
                     </span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                    <span class="m3-chip m3-chip-info h-6 text-xs px-2.5 rounded-md font-semibold">
                       ✓ Confirmed
                     </span>
                   </div>
                   
                   <div class="flex items-center space-x-1.5 shrink-0">
-                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px] transition-colors">
+                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="m3-btn-tonal h-8 min-h-[32px] text-xs px-3">
                       <Users class="w-3.5 h-3.5 mr-1" /> Roll Call
                     </button>
                   </div>
                 </div>
                 
-                <h3 class="text-lg font-bold mb-2 leading-snug text-slate-900 dark:text-white">{{ ev.title }}</h3>
+                <h3 class="text-lg font-bold mb-2 leading-snug text-[var(--md-on-surface)]">{{ ev.title }}</h3>
                 
-                <div class="space-y-1 mb-4 text-xs font-medium text-slate-600 dark:text-neutral-400">
+                <div class="space-y-1 mb-4 text-xs font-medium text-[var(--md-on-surface-variant)]">
                   <div class="flex items-center">
-                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400" />
+                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-[var(--md-outline)]" />
                     <span>{{ ev.date }} at {{ ev.time }}</span>
                   </div>
                   <div class="flex items-center">
-                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400" />
+                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-[var(--md-outline)]" />
                     <span>{{ ev.location }}</span>
                   </div>
                 </div>
 
                 <!-- Confirmed Status Banner & Change Option -->
-                <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-neutral-800 rounded-2xl">
-                  <div class="flex items-center space-x-2 text-slate-700 dark:text-neutral-300">
+                <div class="flex items-center justify-between p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40 rounded-xl">
+                  <div class="flex items-center space-x-2 text-[var(--md-on-surface)]">
                     <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                     <span class="font-medium text-xs">You are scheduled to attend this call-time.</span>
                   </div>
-                  <button @click="ev.rsvpStatus = null" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer px-2 py-1">Change</button>
+                  <button @click="ev.rsvpStatus = null" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200/80 dark:border-neutral-800 space-y-3">
-            <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 mx-auto flex items-center justify-center">
+          <div v-else class="m3-card-outlined p-8 text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-[var(--md-surface-container-high)] text-[var(--md-outline)] mx-auto flex items-center justify-center">
               <CheckCircle class="w-5 h-5" />
             </div>
-            <p class="text-sm font-semibold text-slate-800 dark:text-white">No accepted events on your schedule yet.</p>
-            <p class="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto">
+            <p class="text-sm font-semibold text-[var(--md-on-surface)]">No accepted events on your schedule yet.</p>
+            <p class="text-xs text-[var(--md-on-surface-variant)] max-w-sm mx-auto">
               Browse the <strong>Upcoming</strong> tab and click <strong>"I Will Attend"</strong> to add gigs to your schedule.
             </p>
-            <button @click="activeEventsTab = 'upcoming'" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white rounded-full text-xs font-medium transition-colors cursor-pointer shadow-xs">
+            <button @click="activeEventsTab = 'upcoming'" class="m3-btn-filled text-xs">
               View Upcoming Events
             </button>
           </div>
@@ -1218,26 +1220,26 @@ onUnmounted(() => {
             <div 
               v-for="ev in pastEvents" 
               :key="ev.id"
-              class="bg-white dark:bg-[#202124] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+              class="m3-card-elevated p-4 sm:p-5 border border-[var(--md-outline-variant)]/40 space-y-3 hover:shadow-md transition-all"
             >
               <div class="flex items-start justify-between">
                 <div>
                   <div class="flex items-center space-x-1.5">
-                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400">
+                    <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
                       {{ ev.type }}
                     </span>
-                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400">
+                    <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md">
                       Completed
                     </span>
                   </div>
-                  <h3 class="font-bold text-base text-slate-900 dark:text-white mt-1 leading-snug">{{ ev.title }}</h3>
+                  <h3 class="font-bold text-base text-[var(--md-on-surface)] mt-1 leading-snug">{{ ev.title }}</h3>
                 </div>
 
                 <div class="flex items-center space-x-1.5">
                   <button 
                     v-if="store.canConductRollCall || store.canManageEvents" 
                     @click="openAttendanceTracker(ev)" 
-                    class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px]"
+                    class="m3-btn-tonal h-8 min-h-[32px] text-xs px-3"
                   >
                     <Users class="w-3.5 h-3.5 mr-1" /> Log
                   </button>
@@ -1245,7 +1247,7 @@ onUnmounted(() => {
                     v-if="store.canManageEvents" 
                     @click="promptDeleteEvent(ev.id)" 
                     aria-label="Delete Event"
-                    class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
+                    class="p-1.5 rounded-full text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]"
                     title="Delete Record"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
@@ -1253,17 +1255,17 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-neutral-400 bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl">
-                <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.date }}</div>
-                <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.time }}</div>
-                <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-slate-400" /> {{ ev.location }}</div>
+              <div class="grid grid-cols-2 gap-2 text-xs font-medium text-[var(--md-on-surface-variant)] bg-[var(--md-surface-container)] p-3 rounded-xl">
+                <div class="flex items-center"><Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.date }}</div>
+                <div class="flex items-center"><Clock class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.time }}</div>
+                <div class="col-span-2 flex items-center"><MapPin class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> {{ ev.location }}</div>
               </div>
             </div>
           </div>
 
-          <div v-else class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200/80 dark:border-neutral-800">
-            <History class="w-8 h-8 text-slate-400 dark:text-neutral-500 mx-auto mb-2" />
-            <p class="text-sm font-semibold text-slate-700 dark:text-neutral-300">No past gigs recorded yet.</p>
+          <div v-else class="m3-card-outlined p-8 text-center">
+            <History class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2" />
+            <p class="text-sm font-semibold text-[var(--md-on-surface)]">No past gigs recorded yet.</p>
           </div>
         </div>
       </section>
@@ -1271,17 +1273,17 @@ onUnmounted(() => {
       <!-- Announcements Section -->
       <section class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-          <!-- Announcements Tab Pill Toggle -->
-          <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium border border-slate-200/60 dark:border-neutral-800 shrink-0">
+          <!-- Announcements Tab Pill Toggle (M3 Surface Container) -->
+          <div class="flex items-center space-x-1 p-1 bg-[var(--md-surface-container-high)] rounded-full text-xs font-medium shrink-0">
             <button 
               @click="activeAnnouncementTab = 'recent'"
               type="button"
               class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
               :class="activeAnnouncementTab === 'recent' 
-                ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
             >
-              <Bell class="w-3.5 h-3.5 mr-1.5 text-slate-500" />
+              <Bell class="w-3.5 h-3.5 mr-1.5 text-[var(--md-primary)]" />
               <span>Recent ({{ recentAnnouncements.length }})</span>
             </button>
 
@@ -1290,10 +1292,10 @@ onUnmounted(() => {
               type="button"
               class="px-3.5 py-1.5 rounded-full transition-all min-h-[34px] flex items-center cursor-pointer"
               :class="activeAnnouncementTab === 'archived' 
-                ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' 
-                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200'"
+                ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+                : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
             >
-              <History class="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+              <History class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
               <span>Archived ({{ archivedAnnouncements.length }})</span>
             </button>
           </div>
@@ -1302,79 +1304,80 @@ onUnmounted(() => {
             v-if="store.canManageAnnouncements" 
             @click="showAnnouncementModal = true" 
             type="button" 
-            class="text-xs font-semibold text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] hover:bg-slate-50 dark:hover:bg-[#282a2c] border border-slate-200 dark:border-neutral-800 px-3.5 py-1.5 rounded-full flex items-center transition-all cursor-pointer min-h-[34px] shrink-0 shadow-xs"
+            class="m3-btn-outlined min-h-[36px] h-9 text-xs px-3.5"
           >
             <Plus class="w-3.5 h-3.5 mr-1" /> Post
           </button>
         </div>
         
-        <div v-if="displayedAnnouncements.length > 0" class="bg-white dark:bg-[#202124] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col max-h-[420px] overflow-y-auto">
+        <div v-if="displayedAnnouncements.length > 0" class="m3-card-outlined p-4 sm:p-5 shadow-xs flex flex-col max-h-[460px] overflow-y-auto space-y-3">
           <article 
-            v-for="(post, index) in displayedAnnouncements" 
+            v-for="post in displayedAnnouncements" 
             :key="post.id"
-            class="py-3.5 first:pt-0 last:pb-0"
-            :class="{ 'border-b border-slate-100 dark:border-neutral-800/80': index !== displayedAnnouncements.length - 1 }"
+            class="m3-card-elevated p-4 sm:p-5 border border-[var(--md-outline-variant)]/40 transition-all hover:shadow-md"
           >
-            <!-- Urgency & Target Section Badges (M3 High-Contrast Non-Color-Cued Indicators) -->
-            <div class="flex items-center justify-between gap-2 mb-2">
+            <!-- Urgency & Target Section Chips (Official M3 Chips: 8dp Radius, 32dp Height) -->
+            <div class="flex items-center justify-between gap-2 mb-2.5">
               <div class="flex flex-wrap items-center gap-1.5">
-                <!-- Action Required & RSVP Notice Pill Badges -->
+                <!-- Action Required M3 Chip -->
                 <span 
                   v-if="isRsvpAnnouncement(post)" 
-                  class="inline-flex items-center text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-600 text-white dark:bg-rose-500 dark:text-slate-950 shadow-xs"
+                  class="m3-chip m3-chip-urgent"
                 >
-                  <AlertTriangle class="w-3.5 h-3.5 mr-1" />
-                  ACTION REQUIRED
+                  <AlertTriangle class="w-4 h-4 text-[var(--md-error)]" />
+                  <span>Action Required</span>
                 </span>
+                
+                <!-- RSVP Notice M3 Chip -->
                 <span 
                   v-if="isRsvpAnnouncement(post)" 
-                  class="inline-flex items-center text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700"
+                  class="m3-chip m3-chip-rsvp"
                 >
-                  <CalendarCheck class="w-3.5 h-3.5 mr-1" />
-                  RSVP NOTICE
+                  <CalendarCheck class="w-4 h-4 text-[var(--md-tertiary)]" />
+                  <span>RSVP Notice</span>
                 </span>
 
                 <!-- General High Urgency (Non-RSVP) -->
                 <span 
                   v-else-if="isUrgentAnnouncement(post)" 
-                  class="inline-flex items-center text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-600 text-white dark:bg-rose-500 dark:text-slate-950 shadow-xs"
+                  class="m3-chip m3-chip-urgent"
                 >
-                  <AlertTriangle class="w-3.5 h-3.5 mr-1" />
-                  HIGH URGENCY
+                  <AlertTriangle class="w-4 h-4 text-[var(--md-error)]" />
+                  <span>High Urgency</span>
                 </span>
 
                 <!-- Medium Priority -->
                 <span 
                   v-else-if="post.priority === 'MEDIUM'" 
-                  class="inline-flex items-center text-[10px] sm:text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700"
+                  class="m3-chip m3-chip-rsvp"
                 >
-                  MEDIUM PRIORITY
+                  <span>Medium Priority</span>
                 </span>
 
                 <!-- General Informational Notice -->
                 <span 
                   v-else 
-                  class="inline-flex items-center text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-200 dark:bg-[#282a2c] text-slate-800 dark:text-neutral-200 border border-slate-300 dark:border-neutral-700"
+                  class="m3-chip m3-chip-assist"
                 >
-                  GENERAL NOTICE
+                  <span>General Notice</span>
                 </span>
 
-                <!-- Target Section Badge -->
+                <!-- Target Section M3 Chip -->
                 <span 
                   v-if="post.targetSection && post.targetSection !== 'all'"
-                  class="text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 capitalize border border-blue-300 dark:border-blue-800"
+                  class="m3-chip m3-chip-info capitalize"
                 >
                   {{ post.targetSection }}
                 </span>
               </div>
 
-              <div class="flex items-center space-x-1.5">
-                <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500 whitespace-nowrap">{{ post.date }}</span>
+              <div class="flex items-center space-x-1.5 shrink-0">
+                <span class="text-xs font-medium text-[var(--md-on-surface-variant)]">{{ post.date }}</span>
                 <button 
                   v-if="store.canManageAnnouncements" 
                   @click="promptDeleteAnnouncement(post.id)" 
                   aria-label="Delete Announcement"
-                  class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer p-1 rounded-full min-w-[32px] min-h-[32px] flex items-center justify-center" 
+                  class="text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer p-1.5 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]" 
                   title="Delete Announcement"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -1382,22 +1385,22 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-snug mb-1.5">{{ post.title }}</h3>
-            <p class="text-slate-600 dark:text-neutral-300 text-xs sm:text-sm mb-3 leading-relaxed whitespace-pre-wrap">
+            <h3 class="font-semibold text-base sm:text-lg text-[var(--md-on-surface)] leading-snug mb-1.5">{{ post.title }}</h3>
+            <p class="text-xs sm:text-sm text-[var(--md-on-surface-variant)] leading-relaxed mb-3.5 whitespace-pre-wrap">
               {{ post.content }}
             </p>
 
             <!-- Bottom Row: Author & Two-Way Acknowledgment (TC-05 & SOP 2.4) -->
-            <div class="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 dark:border-[#2d3035]">
-              <span class="text-xs font-medium text-slate-600 dark:text-neutral-400 flex items-center">
-                <User class="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--md-outline-variant)]/30">
+              <span class="text-xs font-medium text-[var(--md-on-surface-variant)] flex items-center">
+                <User class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
                 {{ post.author }}
-                <span v-if="post.ackCount > 0" class="text-[11px] text-slate-400 dark:text-neutral-500 font-normal ml-2">
+                <span v-if="post.ackCount > 0" class="text-[11px] text-[var(--md-outline)] font-normal ml-2">
                   ({{ post.ackCount }} ack'd)
                 </span>
               </span>
 
-              <!-- High-Contrast Action Triggers (44-48px Touch Target Standard) -->
+              <!-- High-Contrast Action Triggers (Official M3 Buttons) -->
               <div class="flex items-center space-x-2">
                 <!-- State 1: Action Required (Not yet acknowledged / reviewed) -->
                 <template v-if="!isAcknowledged(post.id)">
@@ -1407,7 +1410,7 @@ onUnmounted(() => {
                     @click="handleAnnouncementAction(post)" 
                     type="button" 
                     aria-label="Review and RSVP to upcoming events" 
-                    class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
+                    class="m3-btn-filled text-xs font-semibold px-5 min-h-[44px]"
                   >
                     <CalendarCheck class="w-4 h-4 mr-1.5" />
                     <span>Review &amp; RSVP</span>
@@ -1419,7 +1422,7 @@ onUnmounted(() => {
                     @click="handleAcknowledgeAnnouncement(post)" 
                     type="button" 
                     aria-label="Acknowledge Notice" 
-                    class="inline-flex items-center justify-center text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-4 py-2.5 rounded-full shadow-sm min-h-[44px] cursor-pointer transition-all active:scale-[0.98]"
+                    class="m3-btn-filled text-xs font-semibold px-5 min-h-[44px]"
                   >
                     <Check class="w-4 h-4 mr-1.5" />
                     <span>Acknowledge Notice</span>
@@ -1428,9 +1431,7 @@ onUnmounted(() => {
 
                 <!-- State 2: Already Confirmed / Reviewed -->
                 <template v-else>
-                  <span 
-                    class="inline-flex items-center text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 rounded-full min-h-[44px]"
-                  >
+                  <span class="m3-chip m3-chip-info font-semibold h-10 px-4 rounded-full">
                     <Check class="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                     <span>{{ isRsvpAnnouncement(post) ? 'Reviewed' : 'Acknowledged' }}</span>
                   </span>
@@ -1441,7 +1442,7 @@ onUnmounted(() => {
                     @click="scrollToEvents"
                     type="button" 
                     aria-label="View upcoming gigs and schedules" 
-                    class="inline-flex items-center text-xs font-semibold text-slate-700 dark:text-neutral-300 hover:text-slate-950 dark:hover:text-white px-3 py-2 rounded-full border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors min-h-[44px] cursor-pointer"
+                    class="m3-btn-outlined text-xs font-semibold px-4 min-h-[40px]"
                   >
                     <Calendar class="w-3.5 h-3.5 mr-1" />
                     <span>View Gigs</span>
@@ -1452,8 +1453,8 @@ onUnmounted(() => {
           </article>
         </div>
 
-        <div v-else class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200/80 dark:border-neutral-800">
-          <p class="text-sm font-semibold text-slate-700 dark:text-neutral-300">No announcements posted yet.</p>
+        <div v-else class="m3-card-outlined p-8 text-center">
+          <p class="text-sm font-semibold text-[var(--md-on-surface-variant)]">No announcements posted yet.</p>
         </div>
       </section>
 

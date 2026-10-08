@@ -5,31 +5,103 @@
 
 @layer base {
   :root {
-    --m3-surface-0: #f8fafc;
-    --m3-surface-1: #ffffff;
-    --m3-surface-2: #f1f5f9;
-    --m3-border-1: #e2e8f0;
-    --m3-border-2: #cbd5e1;
-    --m3-on-surface: #0f172a;
-    --m3-on-surface-variant: #64748b;
-    --m3-primary: #0f172a;
-    --m3-on-primary: #ffffff;
-    --m3-primary-tonal: #e2e8f0;
-    --m3-on-primary-tonal: #0f172a;
+    /* M3 Surface Container Hierarchy */
+    --md-surface: #fdfbff;
+    --md-surface-dim: #ded8e1;
+    --md-surface-bright: #fdfbff;
+    --md-surface-container-lowest: #ffffff;
+    --md-surface-container-low: #f7f2fa;
+    --md-surface-container: #f3edf7;
+    --md-surface-container-high: #ece6f0;
+    --md-surface-container-highest: #e6e0e9;
+    --md-on-surface: #1d1b20;
+    --md-on-surface-variant: #49454f;
+    --md-outline: #79747e;
+    --md-outline-variant: #cac4d0;
+
+    /* M3 Brand & Semantic Roles (Peñaranda Band 1870 Heritage Palette) */
+    --md-primary: #003366;
+    --md-on-primary: #ffffff;
+    --md-primary-container: #d6e3ff;
+    --md-on-primary-container: #001b3e;
+
+    --md-secondary: #555f71;
+    --md-on-secondary: #ffffff;
+    --md-secondary-container: #d9e3f9;
+    --md-on-secondary-container: #121c2b;
+
+    --md-tertiary: #7d5260;
+    --md-on-tertiary: #ffffff;
+    --md-tertiary-container: #ffd8e4;
+    --md-on-tertiary-container: #31111d;
+
+    --md-error: #ba1a1a;
+    --md-on-error: #ffffff;
+    --md-error-container: #ffdad6;
+    --md-on-error-container: #410002;
+
+    /* Legacy M3 compatibility aliases */
+    --m3-surface-0: var(--md-surface-container-low);
+    --m3-surface-1: var(--md-surface-container-lowest);
+    --m3-surface-2: var(--md-surface-container);
+    --m3-border-1: var(--md-outline-variant);
+    --m3-border-2: var(--md-outline);
+    --m3-on-surface: var(--md-on-surface);
+    --m3-on-surface-variant: var(--md-on-surface-variant);
+    --m3-primary: var(--md-primary);
+    --m3-on-primary: var(--md-on-primary);
+    --m3-primary-tonal: var(--md-primary-container);
+    --m3-on-primary-tonal: var(--md-on-primary-container);
   }
 
   .dark {
-    --m3-surface-0: #121214;
-    --m3-surface-1: #1e1f20;
-    --m3-surface-2: #282a2c;
-    --m3-border-1: #2d3035;
-    --m3-border-2: #383b40;
-    --m3-on-surface: #f8fafc;
-    --m3-on-surface-variant: #94a3b8;
-    --m3-primary: #f8fafc;
-    --m3-on-primary: #0f172a;
-    --m3-primary-tonal: #282a2c;
-    --m3-on-primary-tonal: #f8fafc;
+    /* M3 Dark Surface Container Hierarchy */
+    --md-surface: #141218;
+    --md-surface-dim: #141218;
+    --md-surface-bright: #3b383e;
+    --md-surface-container-lowest: #0f0d13;
+    --md-surface-container-low: #1d1b20;
+    --md-surface-container: #211f26;
+    --md-surface-container-high: #2b2930;
+    --md-surface-container-highest: #36343b;
+    --md-on-surface: #e6e1e5;
+    --md-on-surface-variant: #cac4d0;
+    --md-outline: #938f99;
+    --md-outline-variant: #49454f;
+
+    /* M3 Dark Brand & Semantic Roles */
+    --md-primary: #a8c7fa;
+    --md-on-primary: #003062;
+    --md-primary-container: #00468a;
+    --md-on-primary-container: #d6e3ff;
+
+    --md-secondary: #bdc7dc;
+    --md-on-secondary: #273141;
+    --md-secondary-container: #3e4758;
+    --md-on-secondary-container: #d9e3f9;
+
+    --md-tertiary: #efb8c8;
+    --md-on-tertiary: #492532;
+    --md-tertiary-container: #633b48;
+    --md-on-tertiary-container: #ffd8e4;
+
+    --md-error: #ffb4ab;
+    --md-on-error: #690005;
+    --md-error-container: #93000a;
+    --md-on-error-container: #ffdad6;
+
+    /* Legacy M3 compatibility aliases */
+    --m3-surface-0: var(--md-surface);
+    --m3-surface-1: var(--md-surface-container-low);
+    --m3-surface-2: var(--md-surface-container);
+    --m3-border-1: var(--md-outline-variant);
+    --m3-border-2: var(--md-outline);
+    --m3-on-surface: var(--md-on-surface);
+    --m3-on-surface-variant: var(--md-on-surface-variant);
+    --m3-primary: var(--md-primary);
+    --m3-on-primary: var(--md-on-primary);
+    --m3-primary-tonal: var(--md-primary-container);
+    --m3-on-primary-tonal: var(--md-on-primary-container);
   }
 
   html, body {
@@ -418,26 +490,135 @@
 }
 
 /* ==========================================================================
+   OFFICIAL MATERIAL 3 CHIPS (8dp Corner Radius, 32dp Height, M3 Spec)
+   https://m3.material.io/components/chips/specs
+   ========================================================================== */
+.m3-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px; /* Strict M3 8dp radius */
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.m3-chip-assist {
+  background-color: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline-variant);
+}
+
+.m3-chip-urgent {
+  background-color: var(--md-error-container);
+  color: var(--md-on-error-container);
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.m3-chip-rsvp {
+  background-color: var(--md-tertiary-container);
+  color: var(--md-on-tertiary-container);
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.m3-chip-info {
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+  border: 1px solid transparent;
+}
+
+.m3-chip-neutral {
+  background-color: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+  border: 1px solid var(--md-outline-variant);
+}
+
+/* ==========================================================================
+   OFFICIAL MATERIAL 3 CARDS (16dp Radius, Elevated, Outlined, Filled)
+   https://m3.material.io/components/cards/specs
+   ========================================================================== */
+.m3-card-elevated {
+  background-color: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
+}
+
+.m3-card-outlined {
+  background-color: var(--md-surface);
+  color: var(--md-on-surface);
+  border-radius: 16px;
+  border: 1px solid var(--md-outline-variant);
+}
+
+.m3-card-filled {
+  background-color: var(--md-surface-container-highest);
+  color: var(--md-on-surface);
+  border-radius: 16px;
+  border: 1px solid transparent;
+}
+
+/* ==========================================================================
+   OFFICIAL MATERIAL 3 NAVIGATION BAR (80dp, 32x64dp Pill Indicator)
+   https://m3.material.io/components/navigation-bar/specs
+   ========================================================================== */
+.m3-nav-bar {
+  height: 80px;
+  background-color: var(--md-surface-container);
+  color: var(--md-on-surface);
+}
+
+.m3-nav-indicator {
+  width: 64px;
+  height: 32px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), transform 0.15s ease;
+}
+
+.m3-nav-indicator-active {
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.m3-nav-indicator-inactive {
+  background-color: transparent;
+  color: var(--md-on-surface-variant);
+}
+
+/* ==========================================================================
    SURFACE CARDS & ELEVATIONS (Table 7 - Zero-Lag GPU Rasterization)
    ========================================================================== */
 .m3-surface-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
+  background-color: var(--md-surface);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 16px;
 }
 .dark .m3-surface-card {
-  background-color: #1e1f20;
-  border-color: #2d3035;
+  background-color: var(--md-surface-container-low);
+  border-color: var(--md-outline-variant);
 }
 
 .m3-surface-modal {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
+  background-color: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline-variant);
   border-radius: 28px;
 }
 .dark .m3-surface-modal {
-  background-color: #1e1f20;
-  border-color: #383b40;
+  background-color: var(--md-surface-container-high);
+  border-color: var(--md-outline-variant);
 }
 
 /* Scrim overlay: strictly flat with zero backdrop-filter blur */
