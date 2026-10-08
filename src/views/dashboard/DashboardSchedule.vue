@@ -460,8 +460,8 @@ const alertUnconfirmedForEvent = async () => {
   isAlertingEventUnconfirmed.value = true
 
   const ev = selectedEventForAttendance.value
-  const alertTitle = `🚨 Urgent RSVP: ${ev.title}`
-  const alertMsg = `Please confirm your attendance for ${ev.title} on ${ev.date || 'upcoming schedule'} at ${ev.location || 'designated venue'}.`
+  const alertTitle = `🚨 Urgent Attendance Reminder: ${ev.title}`
+  const alertMsg = `Please confirm if you are attending or not attending for ${ev.title} on ${ev.date || 'upcoming schedule'} at ${ev.location || 'designated venue'}.`
   const senderName = store.profile?.full_name || 'Band Secretary'
 
   try {
@@ -517,7 +517,7 @@ const alertUnconfirmedForEvent = async () => {
       senderId: store.user?.id
     })
 
-    showToastNotification(`✓ RSVP reminder sent to ${attendanceCounts.value.unconfirmed} unconfirmed members!`)
+    showToastNotification(`✓ Attendance reminder sent to ${attendanceCounts.value.unconfirmed} pending members!`)
   } catch (err) {
     showToastNotification('Failed to send reminder alerts.')
   } finally {

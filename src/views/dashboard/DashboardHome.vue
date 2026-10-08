@@ -754,7 +754,7 @@ const rsvp = async (eventObj, status, excuseJustification = null) => {
     }
 
     notifyOtherTabs('RSVP_CHANGED')
-    showToast(status === 'attending' ? '✓ RSVP Confirmed: Attending' : '✓ Absence Excuse Recorded', 'success')
+    showToast(status === 'attending' ? '✓ Attendance Confirmed: Attending' : '✓ Absence Excuse Recorded', 'success')
 
     // If Secretary / Admin attendance modal is open, refresh it immediately!
     if (showAttendanceModal.value && selectedEventForAttendance.value?.id === eventObj.id) {
