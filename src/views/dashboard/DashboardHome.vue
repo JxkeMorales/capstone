@@ -943,34 +943,34 @@ onUnmounted(() => {
     <!-- Clean Header Title -->
     <div class="flex items-center justify-between pt-1">
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">
+        <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">
           {{ store.currentRole === 'super_admin' ? 'IT Super Admin' : store.currentRole === 'secretary_admin' ? 'Band Secretary' : 'Welcome back' }}
         </p>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+        <h1 class="text-2xl font-bold text-[var(--md-on-surface)] tracking-tight">Dashboard</h1>
       </div>
     </div>
 
     <!-- PENDING APPROVALS QUEUE (Super Admin Only) -->
-    <section v-if="store.canApproveAccounts && pendingAccounts.length > 0" class="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-3xl p-4 sm:p-5 space-y-3">
+    <section v-if="store.canApproveAccounts && pendingAccounts.length > 0" class="bg-[var(--md-surface-container)] border border-amber-500/30 dark:border-amber-500/20 rounded-3xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <ShieldAlert class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-          <h2 class="font-semibold text-xs sm:text-sm text-slate-900 dark:text-amber-200">Pending Master List Approvals</h2>
+          <h2 class="font-semibold text-xs sm:text-sm text-[var(--md-on-surface)]">Pending Master List Approvals</h2>
         </div>
-        <span class="text-xs font-medium bg-amber-200/80 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 px-3 py-0.5 rounded-full">
+        <span class="text-xs font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
           {{ pendingAccounts.length }} Pending
         </span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div v-for="acc in pendingAccounts" :key="acc.id" class="bg-white dark:bg-[#202124] p-3.5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between">
+        <div v-for="acc in pendingAccounts" :key="acc.id" class="bg-[var(--md-surface)] p-3.5 rounded-2xl border border-[var(--md-outline-variant)]/60 flex items-center justify-between shadow-xs">
           <div>
-            <p class="font-medium text-xs text-slate-900 dark:text-white">{{ acc.full_name }} ({{ acc.instrument }})</p>
-            <p class="text-[11px] text-slate-500 dark:text-neutral-400">{{ acc.email }}</p>
+            <p class="font-semibold text-xs text-[var(--md-on-surface)]">{{ acc.full_name }} ({{ acc.instrument }})</p>
+            <p class="text-[11px] text-[var(--md-on-surface-variant)]">{{ acc.email }}</p>
           </div>
-          <div class="flex space-x-2">
-            <button @click="approveAccount(acc.id)" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full cursor-pointer min-h-[34px] shadow-xs">Approve</button>
-            <button @click="promptRejectAccount(acc.id)" class="px-3 py-1.5 border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 text-rose-600 dark:text-rose-400 font-medium text-xs rounded-full cursor-pointer min-h-[34px]">Decline</button>
+          <div class="flex items-center space-x-2">
+            <button @click="approveAccount(acc.id)" type="button" class="m3-btn-filled text-xs px-4 min-h-[44px]">Approve</button>
+            <button @click="promptRejectAccount(acc.id)" type="button" class="m3-btn-outlined text-xs px-4 min-h-[44px] text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/20">Decline</button>
           </div>
         </div>
       </div>
@@ -1020,9 +1020,9 @@ onUnmounted(() => {
             v-if="store.canManageEvents" 
             @click="showEventModal = true" 
             type="button" 
-            class="m3-btn-outlined min-h-[34px] h-8.5 text-xs px-3 font-semibold shrink-0"
+            class="m3-btn-outlined min-h-[44px] text-xs px-4 font-semibold shrink-0"
           >
-            <Plus class="w-3.5 h-3.5 mr-1" /> Schedule Event
+            <Plus class="w-4 h-4 mr-1.5" /> Schedule Event
           </button>
         </div>
 
@@ -1031,7 +1031,7 @@ onUnmounted(() => {
           <button 
             @click="activeEventsTab = 'upcoming'"
             type="button"
-            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            class="py-2.5 px-1 rounded-xl transition-all min-h-[44px] flex items-center justify-center cursor-pointer text-center"
             :class="activeEventsTab === 'upcoming' 
               ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
               : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
@@ -1044,7 +1044,7 @@ onUnmounted(() => {
           <button 
             @click="activeEventsTab = 'accepted'"
             type="button"
-            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            class="py-2.5 px-1 rounded-xl transition-all min-h-[44px] flex items-center justify-center cursor-pointer text-center"
             :class="activeEventsTab === 'accepted' 
               ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
               : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
@@ -1056,7 +1056,7 @@ onUnmounted(() => {
           <button 
             @click="activeEventsTab = 'past'"
             type="button"
-            class="py-2 px-1 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            class="py-2.5 px-1 rounded-xl transition-all min-h-[44px] flex items-center justify-center cursor-pointer text-center"
             :class="activeEventsTab === 'past' 
               ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
               : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
@@ -1081,35 +1081,47 @@ onUnmounted(() => {
                   </span>
                   
                   <div class="flex items-center space-x-1.5 shrink-0">
-                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px] transition-colors">
-                      <Users class="w-3.5 h-3.5 mr-1" /> Attendance Check
+                    <button 
+                      v-if="store.canConductRollCall || store.canManageEvents" 
+                      @click="openAttendanceTracker(ev)" 
+                      type="button"
+                      class="m3-btn-tonal text-xs px-3.5 min-h-[44px] flex items-center"
+                    >
+                      <Users class="w-3.5 h-3.5 mr-1.5" /> Attendance Check
                     </button>
-                    <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" aria-label="Delete Event" class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors" title="Delete Event">
-                      <Trash2 class="w-3.5 h-3.5" />
+                    <button 
+                      v-if="store.canManageEvents" 
+                      @click="promptDeleteEvent(ev.id)" 
+                      type="button"
+                      aria-label="Delete Event" 
+                      class="p-2 rounded-full text-[var(--md-outline)] hover:text-[var(--md-error)] hover:bg-[var(--md-surface-container-high)] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors" 
+                      title="Delete Event"
+                    >
+                      <Trash2 class="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 
-                <h3 class="text-lg font-bold mb-2 leading-snug text-slate-900 dark:text-white">{{ ev.title }}</h3>
+                <h3 class="text-lg font-bold mb-2 leading-snug text-[var(--md-on-surface)]">{{ ev.title }}</h3>
                 
-                <div class="space-y-1 mb-4 text-xs font-medium text-slate-600 dark:text-neutral-400">
+                <div class="space-y-1 mb-4 text-xs font-medium text-[var(--md-on-surface-variant)]">
                   <div class="flex items-center">
-                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400 dark:text-neutral-500" />
+                    <Calendar class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-[var(--md-outline)]" />
                     <span>{{ ev.date }} at {{ ev.time }}</span>
                   </div>
                   <div class="flex items-center">
-                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-slate-400 dark:text-neutral-500" />
+                    <MapPin class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-[var(--md-outline)]" />
                     <span>{{ ev.location }}</span>
                   </div>
                 </div>
 
-                <!-- Attendance Action Buttons (Official M3 Filled & Outlined Buttons) -->
+                <!-- Attendance Action Buttons (Official M3 Filled & Outlined Buttons - WCAG 44px) -->
                 <div v-if="!ev.rsvpStatus" class="grid grid-cols-2 gap-2 pt-1">
                   <button 
                     @click="rsvp(ev, 'attending')"
                     type="button"
                     aria-label="Confirm attendance for this event"
-                    class="m3-btn-filled text-xs font-semibold py-2 px-3 min-h-[40px]"
+                    class="m3-btn-filled text-xs font-semibold py-2.5 px-4 min-h-[44px]"
                   >
                     <CheckCircle class="w-4 h-4 mr-1.5" />
                     <span>Attending</span>
@@ -1118,7 +1130,7 @@ onUnmounted(() => {
                     @click="promptDeclineWithExcuse(ev)"
                     type="button"
                     aria-label="Cannot attend event and submit excuse justification"
-                    class="m3-btn-outlined text-xs font-semibold py-2 px-3 min-h-[40px]"
+                    class="m3-btn-outlined text-xs font-semibold py-2.5 px-4 min-h-[44px]"
                   >
                     <XCircle class="w-4 h-4 mr-1.5 text-[var(--md-error)]" />
                     <span>Not Attending</span>
@@ -1133,7 +1145,7 @@ onUnmounted(() => {
                       <XCircle v-else class="w-4 h-4 mr-1.5" />
                       {{ ev.rsvpStatus === 'attending' ? 'Attending' : 'Not Attending' }}
                     </span>
-                    <button @click="ev.rsvpStatus = null" aria-label="Change Attendance Status" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
+                    <button @click="ev.rsvpStatus = null" aria-label="Change Attendance Status" class="m3-btn-text text-xs min-h-[44px] px-3 font-medium text-[var(--md-primary)] hover:underline">Change</button>
                   </div>
                   <p v-if="ev.rsvpStatus === 'declined' && ev.excuseJustification" class="text-[11px] text-[var(--md-on-surface-variant)] italic">
                     Reason: {{ ev.excuseJustification }}
@@ -1170,8 +1182,13 @@ onUnmounted(() => {
                   </div>
                   
                   <div class="flex items-center space-x-1.5 shrink-0">
-                    <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="m3-btn-tonal h-8 min-h-[32px] text-xs px-3">
-                      <Users class="w-3.5 h-3.5 mr-1" /> Roll Call
+                    <button 
+                      v-if="store.canConductRollCall || store.canManageEvents" 
+                      @click="openAttendanceTracker(ev)" 
+                      type="button"
+                      class="m3-btn-tonal text-xs px-3.5 min-h-[44px] flex items-center"
+                    >
+                      <Users class="w-3.5 h-3.5 mr-1.5" /> Attendance Check
                     </button>
                   </div>
                 </div>
@@ -1195,7 +1212,7 @@ onUnmounted(() => {
                     <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                     <span class="font-medium text-xs">You are scheduled to attend this call-time.</span>
                   </div>
-                  <button @click="ev.rsvpStatus = null" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
+                  <button @click="ev.rsvpStatus = null" type="button" class="m3-btn-text text-xs min-h-[44px] px-3 font-medium text-[var(--md-primary)] hover:underline">Change</button>
                 </div>
               </div>
             </div>
@@ -1207,9 +1224,9 @@ onUnmounted(() => {
             </div>
             <p class="text-sm font-semibold text-[var(--md-on-surface)]">No accepted events on your schedule yet.</p>
             <p class="text-xs text-[var(--md-on-surface-variant)] max-w-sm mx-auto">
-              Browse the <strong>Upcoming</strong> tab and click <strong>"I Will Attend"</strong> to add gigs to your schedule.
+              Browse the <strong>Upcoming</strong> tab and click <strong>"Attending"</strong> to add gigs to your schedule.
             </p>
-            <button @click="activeEventsTab = 'upcoming'" class="m3-btn-filled text-xs">
+            <button @click="activeEventsTab = 'upcoming'" type="button" class="m3-btn-filled text-xs min-h-[44px] px-5">
               View Upcoming Events
             </button>
           </div>
@@ -1240,18 +1257,20 @@ onUnmounted(() => {
                   <button 
                     v-if="store.canConductRollCall || store.canManageEvents" 
                     @click="openAttendanceTracker(ev)" 
-                    class="m3-btn-tonal h-8 min-h-[32px] text-xs px-3"
+                    type="button"
+                    class="m3-btn-tonal text-xs px-3.5 min-h-[44px] flex items-center"
                   >
-                    <Users class="w-3.5 h-3.5 mr-1" /> Log
+                    <Users class="w-3.5 h-3.5 mr-1.5" /> Log
                   </button>
                   <button 
                     v-if="store.canManageEvents" 
                     @click="promptDeleteEvent(ev.id)" 
+                    type="button"
                     aria-label="Delete Event"
-                    class="p-1.5 rounded-full text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]"
+                    class="p-2 rounded-full text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]"
                     title="Delete Record"
                   >
-                    <Trash2 class="w-3.5 h-3.5" />
+                    <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1281,9 +1300,9 @@ onUnmounted(() => {
             v-if="store.canManageAnnouncements" 
             @click="showAnnouncementModal = true" 
             type="button" 
-            class="m3-btn-outlined min-h-[34px] h-8.5 text-xs px-3 font-semibold shrink-0"
+            class="m3-btn-outlined min-h-[44px] text-xs px-4 font-semibold shrink-0"
           >
-            <Plus class="w-3.5 h-3.5 mr-1" /> Post Notice
+            <Plus class="w-4 h-4 mr-1.5" /> Post Notice
           </button>
         </div>
 
@@ -1292,7 +1311,7 @@ onUnmounted(() => {
           <button 
             @click="activeAnnouncementTab = 'recent'"
             type="button"
-            class="py-2 px-2 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            class="py-2.5 px-2 rounded-xl transition-all min-h-[44px] flex items-center justify-center cursor-pointer text-center"
             :class="activeAnnouncementTab === 'recent' 
               ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
               : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
@@ -1304,7 +1323,7 @@ onUnmounted(() => {
           <button 
             @click="activeAnnouncementTab = 'archived'"
             type="button"
-            class="py-2 px-2 rounded-xl transition-all min-h-[36px] flex items-center justify-center cursor-pointer text-center"
+            class="py-2.5 px-2 rounded-xl transition-all min-h-[44px] flex items-center justify-center cursor-pointer text-center"
             :class="activeAnnouncementTab === 'archived' 
               ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
               : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
@@ -1332,16 +1351,16 @@ onUnmounted(() => {
                   <span>Action Required</span>
                 </span>
                 
-                <!-- RSVP Notice M3 Chip -->
+                <!-- Attendance Notice M3 Chip -->
                 <span 
                   v-if="isRsvpAnnouncement(post)" 
                   class="m3-chip m3-chip-rsvp"
                 >
                   <CalendarCheck class="w-4 h-4 text-[var(--md-tertiary)]" />
-                  <span>RSVP Notice</span>
+                  <span>Attendance Notice</span>
                 </span>
 
-                <!-- General High Urgency (Non-RSVP) -->
+                <!-- General High Urgency -->
                 <span 
                   v-else-if="isUrgentAnnouncement(post)" 
                   class="m3-chip m3-chip-urgent"
@@ -1380,8 +1399,9 @@ onUnmounted(() => {
                 <button 
                   v-if="store.canManageAnnouncements" 
                   @click="promptDeleteAnnouncement(post.id)" 
+                  type="button"
                   aria-label="Delete Announcement"
-                  class="text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer p-1.5 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]" 
+                  class="text-[var(--md-outline)] hover:text-[var(--md-error)] cursor-pointer p-2 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors hover:bg-[var(--md-surface-container-high)]" 
                   title="Delete Announcement"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -1443,12 +1463,12 @@ onUnmounted(() => {
                   <!-- Secondary View Schedule link button for attendance notices -->
                   <button 
                     v-if="isRsvpAnnouncement(post)"
-                    @scrollToEvents="scrollToEvents"
+                    @click="scrollToEvents"
                     type="button" 
                     aria-label="View upcoming schedules" 
-                    class="m3-btn-outlined text-xs font-semibold px-4 min-h-[40px]"
+                    class="m3-btn-outlined text-xs font-semibold px-4 min-h-[44px]"
                   >
-                    <Calendar class="w-3.5 h-3.5 mr-1" />
+                    <Calendar class="w-3.5 h-3.5 mr-1.5" />
                     <span>View Schedule</span>
                   </button>
                 </template>
@@ -1464,41 +1484,41 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <!-- SECRETARY / ADMIN EVENT ATTENDANCE TRACKER & ATTENDANCE CHECK MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showAttendanceModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="m3-surface-modal p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
-        <div class="flex items-start justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+        <div class="flex items-start justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="min-w-0 pr-2">
             <div class="flex items-center space-x-1.5 mb-1">
-              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
+              <span class="m3-chip m3-chip-assist h-5 text-[10px] px-2 rounded-md">
                 {{ selectedEventForAttendance?.type || 'Event' }}
               </span>
-              <span class="text-[10px] text-slate-400 dark:text-neutral-500">Roll-Call Log</span>
+              <span class="text-[10px] text-[var(--md-outline)] font-medium">Attendance Check Log</span>
             </div>
-            <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">
+            <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">
               {{ selectedEventForAttendance?.title }}
             </h3>
-            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+            <p class="text-xs text-[var(--md-on-surface-variant)] mt-0.5">
               {{ selectedEventForAttendance?.date }} at {{ selectedEventForAttendance?.time }} • {{ selectedEventForAttendance?.location }}
             </p>
           </div>
-          <button @click="showAttendanceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+          <button @click="showAttendanceModal = false" type="button" aria-label="Close modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Quick Summary Metrics & Batch Action -->
-        <div class="bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl border border-slate-200/80 dark:border-neutral-800 space-y-2.5">
+        <div class="bg-[var(--md-surface-container)] p-3.5 rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-3">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-medium text-slate-600 dark:text-neutral-400">Turnout Tally</span>
+            <span class="font-semibold text-[var(--md-on-surface)]">Turnout Tally</span>
             <div class="flex items-center space-x-2 font-medium text-[11px]">
-              <span class="text-emerald-600 dark:text-emerald-400">{{ attendanceCounts.present }} Present</span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ attendanceCounts.present }} Present</span>
               <span>•</span>
-              <span class="text-rose-600 dark:text-rose-400">{{ attendanceCounts.absent }} Absent</span>
+              <span class="text-rose-600 dark:text-rose-400 font-semibold">{{ attendanceCounts.absent }} Absent</span>
               <span>•</span>
-              <span class="text-amber-600 dark:text-amber-400">{{ attendanceCounts.excused }} Excused</span>
+              <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ attendanceCounts.excused }} Excused</span>
             </div>
           </div>
 
@@ -1508,9 +1528,9 @@ onUnmounted(() => {
               @click="markAllAttendingAsPresent" 
               :disabled="isBatchMarking"
               type="button" 
-              class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[36px]"
+              class="m3-btn-filled text-xs flex-1 min-h-[44px]"
             >
-              <CheckCircle class="w-3.5 h-3.5" />
+              <CheckCircle class="w-4 h-4 mr-1.5" />
               <span>{{ isBatchMarking ? 'Updating...' : 'Mark Attending as Present' }}</span>
             </button>
 
@@ -1518,53 +1538,53 @@ onUnmounted(() => {
               @click="handleExportAttendancePdf"
               :disabled="isExportingAttendancePdf"
               type="button"
-              class="py-2 px-3 border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[36px] shrink-0"
+              class="m3-btn-outlined text-xs min-h-[44px] px-3.5 shrink-0"
               title="Export official printable attendance sheet PDF"
             >
-              <Download class="w-3.5 h-3.5" />
+              <Download class="w-4 h-4 mr-1.5" />
               <span>{{ isExportingAttendancePdf ? 'Exporting...' : 'Export PDF' }}</span>
             </button>
           </div>
         </div>
 
         <!-- Filter Sub-Tabs (Pill Chips) -->
-        <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium overflow-x-auto border border-slate-200/60 dark:border-neutral-800">
+        <div class="flex items-center space-x-1 p-1 bg-[var(--md-surface-container)] rounded-full text-xs font-medium overflow-x-auto border border-[var(--md-outline-variant)]/40">
           <button 
             @click="attendanceTabFilter = 'all'"
             type="button"
-            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'all' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
+            :class="attendanceTabFilter === 'all' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             All ({{ attendanceCounts.total }})
           </button>
           <button 
             @click="attendanceTabFilter = 'attending'"
             type="button"
-            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#2d2f31] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
+            :class="attendanceTabFilter === 'attending' ? 'bg-[var(--md-surface)] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Attending ({{ attendanceCounts.attending }})
           </button>
           <button 
             @click="attendanceTabFilter = 'declined'"
             type="button"
-            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'declined' ? 'bg-white dark:bg-[#2d2f31] text-rose-600 dark:text-rose-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
+            :class="attendanceTabFilter === 'declined' ? 'bg-[var(--md-surface)] text-rose-600 dark:text-rose-400 shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Declined ({{ attendanceCounts.declined }})
           </button>
           <button 
             @click="attendanceTabFilter = 'unconfirmed'"
             type="button"
-            class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
-            :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
+            class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
+            :class="attendanceTabFilter === 'unconfirmed' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Pending ({{ attendanceCounts.unconfirmed }})
           </button>
         </div>
 
         <!-- Attendance Roster List -->
-        <div v-if="isLoadingAttendance" class="py-12 text-center text-xs font-medium text-slate-400">
+        <div v-if="isLoadingAttendance" class="py-12 text-center text-xs font-medium text-[var(--md-outline)]">
           Loading band attendance roster...
         </div>
 
@@ -1572,30 +1592,30 @@ onUnmounted(() => {
           <div 
             v-for="member in filteredRollCallRoster" 
             :key="member.userId"
-            class="p-3 bg-white dark:bg-[#202124] rounded-2xl border border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-xs transition-colors"
+            class="p-3 bg-[var(--md-surface)] rounded-2xl border border-[var(--md-outline-variant)]/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-xs transition-colors"
           >
             <!-- Member Details -->
             <div class="flex items-center space-x-2.5 min-w-0">
-              <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+              <div class="w-9 h-9 rounded-full overflow-hidden bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-[var(--md-outline-variant)]">
                 <img v-if="member.profile_picture" :src="member.profile_picture" alt="" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
-                <p class="font-semibold text-xs text-slate-900 dark:text-white truncate">
+                <p class="font-semibold text-xs text-[var(--md-on-surface)] truncate">
                   {{ member.name }}
                 </p>
                 <div class="flex items-center space-x-1.5 mt-0.5">
-                  <span class="text-[11px] text-slate-500 dark:text-neutral-400 capitalize">
+                  <span class="text-[11px] text-[var(--md-on-surface-variant)] capitalize">
                     {{ member.instrument }}
                   </span>
                   <span>•</span>
                   <!-- Initial Attendance Status Tag -->
                   <span 
-                    class="text-[10px] font-medium px-2 py-0.2 rounded-full"
+                    class="text-[10px] font-medium px-2 py-0.5 rounded-full"
                     :class="{
-                      'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400': member.initialRsvp === 'attending',
-                      'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400': member.initialRsvp === 'declined',
-                      'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
+                      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400': member.initialRsvp === 'attending',
+                      'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)]': member.initialRsvp === 'declined',
+                      'bg-amber-500/15 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
                     }"
                   >
                     {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'Pending' }}
@@ -1608,34 +1628,34 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Roll-Call Action Controls -->
+            <!-- Attendance Action Controls (WCAG 44px Touch Targets) -->
             <div v-if="store.canConductRollCall" class="flex items-center space-x-1.5 flex-shrink-0 self-end sm:self-center">
               <!-- Present Button -->
               <button 
                 @click="setMemberAttendance(member, 'present')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
+                class="px-3 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer min-h-[44px] flex items-center"
                 :class="member.currentStatus === 'present' 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' 
-                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700'"
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
                 title="Mark Present"
               >
-                <CheckCircle class="w-3 h-3 mr-1 text-emerald-500" /> Present
+                <CheckCircle class="w-3.5 h-3.5 mr-1 text-emerald-500" /> Present
               </button>
 
-              <!-- Absent / Flake Button -->
+              <!-- Absent Button -->
               <button 
                 @click="setMemberAttendance(member, 'absent')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
+                class="px-3 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer min-h-[44px] flex items-center"
                 :class="member.currentStatus === 'absent' 
                   ? 'bg-rose-600 text-white shadow-xs' 
-                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40'"
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40'"
                 title="Mark Absent"
               >
-                <XCircle class="w-3 h-3 mr-1" /> Absent
+                <XCircle class="w-3.5 h-3.5 mr-1" /> Absent
               </button>
 
               <!-- Excused Button -->
@@ -1643,10 +1663,10 @@ onUnmounted(() => {
                 @click="setMemberAttendance(member, 'excused')"
                 :disabled="member.isSaving"
                 type="button"
-                class="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[30px] flex items-center"
+                class="px-3 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer min-h-[44px] flex items-center"
                 :class="member.currentStatus === 'excused' 
                   ? 'bg-amber-600 text-white shadow-xs' 
-                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40'"
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40'"
                 title="Mark Excused Absence"
               >
                 Excused
@@ -1658,10 +1678,10 @@ onUnmounted(() => {
               <span 
                 class="px-2.5 py-0.5 rounded-full text-[10px] font-medium capitalize"
                 :class="{
-                  'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300': member.currentStatus === 'present',
-                  'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300': member.currentStatus === 'absent',
-                  'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300': member.currentStatus === 'excused',
-                  'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400': !['present', 'absent', 'excused'].includes(member.currentStatus)
+                  'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300': member.currentStatus === 'present',
+                  'bg-rose-500/15 text-rose-700 dark:text-rose-300': member.currentStatus === 'absent',
+                  'bg-amber-500/15 text-amber-700 dark:text-amber-300': member.currentStatus === 'excused',
+                  'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)]': !['present', 'absent', 'excused'].includes(member.currentStatus)
                 }"
               >
                 {{ member.currentStatus }}
@@ -1670,16 +1690,16 @@ onUnmounted(() => {
 
           </div>
 
-          <div v-if="filteredRollCallRoster.length === 0" class="py-8 text-center text-xs text-slate-400">
+          <div v-if="filteredRollCallRoster.length === 0" class="py-8 text-center text-xs text-[var(--md-outline)]">
             No musicians match this filter category.
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-end">
+        <div class="pt-3 border-t border-[var(--md-outline-variant)]/40 flex justify-end">
           <button 
             @click="showAttendanceModal = false" 
             type="button" 
-            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer"
+            class="m3-btn-filled w-full min-h-[48px] text-xs font-semibold"
           >
             Close Roster
           </button>
@@ -1688,46 +1708,48 @@ onUnmounted(() => {
     </div>
 
     <!-- CREATE ANNOUNCEMENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAnnouncementModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
+    <div v-if="showAnnouncementModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
           <div>
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Post Announcement</h3>
-            <p class="text-[11px] text-slate-500 dark:text-neutral-400">Broadcasts to musician dashboards & closed devices</p>
+            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Post Announcement</h3>
+            <p class="text-[11px] text-[var(--md-on-surface-variant)]">Broadcasts to musician dashboards &amp; closed devices</p>
           </div>
-          <button @click="showAnnouncementModal = false" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+          <button @click="showAnnouncementModal = false" type="button" aria-label="Close modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
+            <X class="w-4 h-4" />
+          </button>
         </div>
         <div class="space-y-3">
           <div>
-            <label for="ann-priority-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Urgency Level *</label>
-            <select id="ann-priority-in" v-model="newAnnPriority" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
-              <option value="HIGH">🚨 High Urgency (Triggers 5s Brass Fanfare Siren)</option>
+            <label for="ann-priority-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Urgency Level *</label>
+            <select id="ann-priority-in" v-model="newAnnPriority" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer">
+              <option value="HIGH">🚨 High Urgency (Triggers Brass Fanfare Siren)</option>
               <option value="MEDIUM">⚠️ Medium (Standard Notice / Rehearsal Update)</option>
               <option value="LOW">ℹ️ Low (General Band Announcement)</option>
             </select>
           </div>
           <div>
-            <label for="ann-target-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Target Section *</label>
-            <select id="ann-target-in" v-model="newAnnTargetSection" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+            <label for="ann-target-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Target Section *</label>
+            <select id="ann-target-in" v-model="newAnnTargetSection" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer">
               <option value="all">All Sections (Entire Marching Band)</option>
               <option value="woodwinds">Woodwinds (Clarinet, Flute, Saxophone)</option>
               <option value="brass">Brass (Trumpet, Trombone, Euphonium, Tuba)</option>
               <option value="percussion">Percussion (Snare, Bass Drum, Cymbals)</option>
-              <option value="officers">Officers & Section Leaders</option>
+              <option value="officers">Officers &amp; Section Leaders</option>
             </select>
           </div>
           <div>
-            <label for="ann-title-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Title</label>
-            <input id="ann-title-in" v-model="newAnnTitle" type="text" placeholder="e.g. Call Time for Town Procession" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+            <label for="ann-title-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Title</label>
+            <input id="ann-title-in" v-model="newAnnTitle" type="text" placeholder="e.g. Call Time for Town Procession" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]">
           </div>
           <div>
-            <label for="ann-content-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Content</label>
-            <textarea id="ann-content-in" v-model="newAnnContent" rows="3" placeholder="Write full call-time details..." class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"></textarea>
+            <label for="ann-content-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Content</label>
+            <textarea id="ann-content-in" v-model="newAnnContent" rows="3" placeholder="Write full call-time details..." class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] focus:outline-none focus:border-[var(--md-outline)]"></textarea>
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showAnnouncementModal = false" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="handleCreateAnnouncement" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">
+          <button @click="showAnnouncementModal = false" type="button" class="m3-btn-outlined flex-1 min-h-[48px]">Cancel</button>
+          <button @click="handleCreateAnnouncement" :disabled="isSubmitting" type="button" class="m3-btn-filled flex-1 min-h-[48px]">
             {{ isSubmitting ? 'Posting...' : 'Post Notice' }}
           </button>
         </div>
@@ -1735,42 +1757,43 @@ onUnmounted(() => {
     </div>
 
     <!-- CREATE EVENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showEventModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
-          <h3 class="font-bold text-base text-slate-900 dark:text-white">Schedule Event</h3>
-          <button @click="showEventModal = false" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+    <div v-if="showEventModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
+          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Schedule Event</h3>
+          <button @click="showEventModal = false" type="button" aria-label="Close modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
+            <X class="w-4 h-4" />
+          </button>
         </div>
         <div class="space-y-3">
           <div>
-            <label for="ev-title-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Event Title</label>
-            <input id="ev-title-in" v-model="newEvTitle" type="text" placeholder="e.g. Town Fiesta Parade" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+            <label for="ev-title-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Event Title</label>
+            <input id="ev-title-in" v-model="newEvTitle" type="text" placeholder="e.g. Town Fiesta Parade" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]">
           </div>
           <div>
-            <label for="ev-type-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Event Type</label>
-            <select id="ev-type-in" v-model="newEvType" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+            <label for="ev-type-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Event Type</label>
+            <select id="ev-type-in" v-model="newEvType" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer">
               <option v-for="opt in eventTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label for="ev-date-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Date</label>
-              <!-- IT Expert Recommendation (P[1133] & P[1148]): Past Date Prevention min bound -->
-              <input id="ev-date-in" v-model="newEvDate" type="date" :min="minDateToday" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+              <label for="ev-date-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Date</label>
+              <input id="ev-date-in" v-model="newEvDate" type="date" :min="minDateToday" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]">
             </div>
             <div>
-              <label for="ev-time-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Time</label>
-              <input id="ev-time-in" v-model="newEvTime" type="time" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+              <label for="ev-time-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Time</label>
+              <input id="ev-time-in" v-model="newEvTime" type="time" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]">
             </div>
           </div>
           <div>
-            <label for="ev-loc-in" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Location</label>
-            <input id="ev-loc-in" v-model="newEvLocation" type="text" placeholder="e.g. Town Plaza / Band Hall" class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600">
+            <label for="ev-loc-in" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Location</label>
+            <input id="ev-loc-in" v-model="newEvLocation" type="text" placeholder="e.g. Town Plaza / Band Hall" class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]">
           </div>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showEventModal = false" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="handleCreateEvent" :disabled="isSubmitting" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer">
+          <button @click="showEventModal = false" type="button" class="m3-btn-outlined flex-1 min-h-[48px]">Cancel</button>
+          <button @click="handleCreateEvent" :disabled="isSubmitting" type="button" class="m3-btn-filled flex-1 min-h-[48px]">
             {{ isSubmitting ? 'Scheduling...' : 'Schedule' }}
           </button>
         </div>
@@ -1778,33 +1801,35 @@ onUnmounted(() => {
     </div>
 
     <!-- EXCUSE JUSTIFICATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showExcuseModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
+    <div v-if="showExcuseModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
           <div>
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Submit Absence Excuse</h3>
-            <p class="text-[11px] text-slate-500 dark:text-neutral-400">Required for official band attendance log</p>
+            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Submit Absence Excuse</h3>
+            <p class="text-[11px] text-[var(--md-on-surface-variant)]">Required for official band attendance log</p>
           </div>
-          <button @click="showExcuseModal = false" aria-label="Close excuse modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
+          <button @click="showExcuseModal = false" type="button" aria-label="Close excuse modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
+            <X class="w-4 h-4" />
+          </button>
         </div>
         
         <div class="space-y-3">
-          <p class="text-xs text-slate-600 dark:text-neutral-300">
-            Declining call-time for: <strong class="text-slate-900 dark:text-white">{{ eventForExcuse?.title }}</strong>
+          <p class="text-xs text-[var(--md-on-surface-variant)]">
+            Declining call-time for: <strong class="text-[var(--md-on-surface)]">{{ eventForExcuse?.title }}</strong>
           </p>
 
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1.5">Primary Reason</label>
+            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1.5">Primary Reason</label>
             <div class="flex flex-wrap gap-1.5">
               <button 
                 v-for="pill in excusePills" 
                 :key="pill"
                 type="button"
                 @click="selectedExcusePill = pill"
-                class="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer"
+                class="px-3 py-2 rounded-full text-xs font-medium transition-all cursor-pointer min-h-[40px]"
                 :class="selectedExcusePill === pill 
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold' 
-                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700'"
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold' 
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)]'"
               >
                 {{ pill }}
               </button>
@@ -1812,20 +1837,20 @@ onUnmounted(() => {
           </div>
 
           <div>
-            <label for="excuse-note" class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1">Additional Explanation (Optional)</label>
+            <label for="excuse-note" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1">Additional Explanation (Optional)</label>
             <textarea 
               id="excuse-note" 
               v-model="customExcuseNote" 
               rows="3" 
               placeholder="e.g. Scheduled college midterm exam until 6:00 PM..." 
-              class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+              class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] focus:outline-none focus:border-[var(--md-outline)]"
             ></textarea>
           </div>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="showExcuseModal = false" type="button" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="confirmDeclineWithExcuse" :disabled="isSubmittingExcuse" type="button" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer">
+          <button @click="showExcuseModal = false" type="button" class="m3-btn-outlined flex-1 min-h-[48px]">Cancel</button>
+          <button @click="confirmDeclineWithExcuse" :disabled="isSubmittingExcuse" type="button" class="m3-btn-filled flex-1 min-h-[48px] bg-rose-600 hover:bg-rose-700 text-white">
             {{ isSubmittingExcuse ? 'Submitting...' : 'Confirm Excuse' }}
           </button>
         </div>
@@ -1833,20 +1858,20 @@ onUnmounted(() => {
     </div>
 
     <!-- CONFIRM MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
-          <AlertCircle class="w-5 h-5" />
+    <div v-if="showConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <AlertCircle class="w-6 h-6" />
         </div>
         <div>
-          <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">Confirm Action?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
+          <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Confirm Action?</h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 leading-relaxed">
             Are you sure you want to proceed?
           </p>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button @click="showConfirmModal = false; confirmTargetId = null" type="button" class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 font-medium text-xs hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full min-h-[40px] cursor-pointer">Cancel</button>
-          <button @click="executeConfirmedAction" type="button" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer">Proceed</button>
+          <button @click="showConfirmModal = false; confirmTargetId = null" type="button" class="m3-btn-outlined flex-1 min-h-[48px]">Cancel</button>
+          <button @click="executeConfirmedAction" type="button" class="m3-btn-filled flex-1 min-h-[48px] bg-rose-600 hover:bg-rose-700 text-white">Proceed</button>
         </div>
       </div>
     </div>

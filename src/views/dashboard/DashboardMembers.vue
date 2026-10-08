@@ -494,23 +494,23 @@ onUnmounted(() => {
   <div class="space-y-6 max-w-7xl mx-auto">
     
     <!-- Top Header -->
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-neutral-800">
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[var(--md-outline-variant)]/40">
       <div>
         <div class="flex items-center space-x-2">
-          <span class="text-xs font-medium text-slate-500 dark:text-neutral-400">
+          <span class="text-xs font-medium text-[var(--md-on-surface-variant)]">
             {{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}
           </span>
-          <span v-if="store.isSuperAdmin" class="text-[10px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 px-2.5 py-0.5 rounded-full border border-rose-200/60 dark:border-rose-900/40">
+          <span v-if="store.isSuperAdmin" class="m3-chip m3-chip-urgent h-5 px-2 text-[10px] rounded-md font-semibold">
             Admin
           </span>
-          <span v-else-if="store.isOfficerOrAdmin" class="text-[10px] font-medium bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 px-2.5 py-0.5 rounded-full">
+          <span v-else-if="store.isOfficerOrAdmin" class="m3-chip m3-chip-rsvp h-5 px-2 text-[10px] rounded-md font-semibold">
             Officer
           </span>
         </div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <h1 class="text-2xl font-bold text-[var(--md-on-surface)] tracking-tight">
           Musician Registry
         </h1>
-        <p v-if="!store.isOfficerOrAdmin" class="text-xs text-slate-500 dark:text-neutral-400 font-normal">
+        <p v-if="!store.isOfficerOrAdmin" class="text-xs text-[var(--md-on-surface-variant)] font-normal">
           Official roster of band members and instrument sections.
         </p>
       </div>
@@ -518,12 +518,12 @@ onUnmounted(() => {
       <div class="flex items-center space-x-2">
         <RouterLink 
           to="/dashboard/leaderboard"
-          class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] hover:bg-slate-50 dark:hover:bg-[#282a2c] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-neutral-800 shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer min-h-[36px]"
+          class="m3-btn-outlined min-h-[44px] text-xs font-semibold px-4 flex items-center space-x-1.5 cursor-pointer"
         >
-          <Award class="w-3.5 h-3.5 text-amber-500" />
+          <Award class="w-4 h-4 text-amber-500" />
           <span>Reliability &amp; Ranks</span>
         </RouterLink>
-        <span class="text-xs font-medium text-slate-600 dark:text-neutral-400 bg-white dark:bg-[#202124] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-neutral-800 shadow-xs">
+        <span class="m3-chip m3-chip-assist h-11 text-xs px-3.5 font-semibold rounded-full">
           {{ members.length }} Musicians
         </span>
       </div>
@@ -534,11 +534,11 @@ onUnmounted(() => {
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
           <ShieldCheck class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-          <h2 class="text-xs font-semibold text-slate-700 dark:text-neutral-300">
+          <h2 class="text-xs font-semibold text-[var(--md-on-surface)]">
             Band Officers
           </h2>
         </div>
-        <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500">
+        <span class="text-[11px] font-medium text-[var(--md-on-surface-variant)]">
           {{ pinnedLeadership.length }} Active {{ pinnedLeadership.length === 1 ? 'Officer' : 'Officers' }}
         </span>
       </div>
@@ -548,40 +548,40 @@ onUnmounted(() => {
         <div 
           v-for="pos in pinnedLeadership" 
           :key="pos.key"
-          class="bg-white dark:bg-[#202124] rounded-3xl p-4 border border-slate-200/90 dark:border-neutral-800 shadow-xs flex flex-col justify-between"
+          class="m3-card-elevated p-4 border border-[var(--md-outline-variant)]/40 shadow-xs flex flex-col justify-between"
         >
           <div>
             <!-- Officer Title Badge (Subtle M3 Tonal Chip) -->
             <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 flex items-center">
-                <ShieldCheck class="w-3 h-3 mr-1 text-amber-600 dark:text-amber-400" />
+              <span class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 rounded-md">
+                <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-amber-400" />
                 {{ pos.title }}
               </span>
-              <span class="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+              <span class="m3-chip m3-chip-info h-5 text-[10px] px-2 rounded-md font-semibold">
                 Active
               </span>
             </div>
 
             <!-- Officer Profile Details -->
             <div class="flex items-start space-x-3">
-              <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-sm">
+              <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm">
                 <img v-if="pos.officer.profile_picture" :src="pos.officer.profile_picture" :alt="pos.officer.name" class="w-full h-full object-cover" />
                 <span v-else>{{ pos.officer.avatar }}</span>
               </div>
               <div class="min-w-0 flex-1">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white truncate leading-tight">
+                <h3 class="font-bold text-sm text-[var(--md-on-surface)] truncate leading-tight">
                   {{ pos.officer.name }}
                 </h3>
-                <p class="text-xs text-slate-500 dark:text-neutral-400 flex items-center mt-1 truncate capitalize font-medium">
-                  <Music class="w-3 h-3 mr-1 text-slate-400 shrink-0" />
+                <p class="text-xs text-[var(--md-on-surface-variant)] flex items-center mt-1 truncate capitalize font-medium">
+                  <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)] shrink-0" />
                   {{ pos.officer.instrument }}
                 </p>
                 <!-- Only visible to Officers & Admins -->
                 <div v-if="store.isOfficerOrAdmin" class="flex items-center space-x-1.5 mt-2">
-                  <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300">
+                  <span class="m3-chip m3-chip-neutral h-5 text-[10px] px-2 rounded-md">
                     {{ pos.officer.rank }}
                   </span>
-                  <span class="text-[10px] font-medium text-slate-500 dark:text-neutral-400">
+                  <span class="text-[10px] font-semibold text-[var(--md-on-surface-variant)]">
                     {{ pos.officer.reliability }}% Score
                   </span>
                 </div>
@@ -590,22 +590,22 @@ onUnmounted(() => {
           </div>
 
           <!-- Bottom Actions (Only for Officers & Admins) -->
-          <div v-if="store.isOfficerOrAdmin" class="pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800/80 flex items-center justify-between">
+          <div v-if="store.isOfficerOrAdmin" class="pt-3 mt-3 border-t border-[var(--md-outline-variant)]/30 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(pos.officer)"
               type="button"
-              class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[30px]"
+              class="m3-btn-text text-xs font-semibold px-2.5 min-h-[44px] flex items-center text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]"
             >
-              <Calendar class="w-3 h-3 mr-1" /> Availability
+              <Calendar class="w-3.5 h-3.5 mr-1" /> Availability
             </button>
 
             <button 
               v-if="store.isSuperAdmin"
               @click="openManageModal(pos.officer)"
               type="button"
-              class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[30px]"
+              class="m3-btn-text text-xs font-semibold px-2.5 min-h-[44px] flex items-center text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]"
             >
-              <Settings class="w-3 h-3 mr-1" /> Manage
+              <Settings class="w-3.5 h-3.5 mr-1" /> Manage
             </button>
           </div>
         </div>
@@ -613,13 +613,13 @@ onUnmounted(() => {
     </section>
 
     <!-- 2. ATTENDANCE BEHAVIOR REVIEW (< 85%) -->
-    <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/40 rounded-3xl p-4 sm:p-5 space-y-3">
+    <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-[var(--md-surface-container)] border border-rose-500/30 rounded-3xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2 text-rose-700 dark:text-rose-400">
+        <div class="flex items-center space-x-2 text-rose-600 dark:text-rose-400">
           <UserX class="w-4 h-4" />
           <h2 class="font-semibold text-xs sm:text-sm">Attendance Review (Frequent Absences)</h2>
         </div>
-        <span class="text-xs font-medium bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 px-2.5 py-0.5 rounded-full">
+        <span class="m3-chip m3-chip-urgent h-6 text-xs px-2.5 rounded-md font-semibold">
           {{ paImportanteList.length }} Below 85%
         </span>
       </div>
@@ -628,22 +628,22 @@ onUnmounted(() => {
         <div 
           v-for="item in paImportanteList" 
           :key="item.id" 
-          class="bg-white dark:bg-[#202124] p-3 rounded-2xl border border-slate-200/80 dark:border-neutral-800 flex items-center justify-between shadow-xs"
+          class="bg-[var(--md-surface)] p-3 rounded-2xl border border-[var(--md-outline-variant)]/60 flex items-center justify-between shadow-xs"
         >
           <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-            <div class="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center shrink-0">
+            <div class="w-8 h-8 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center shrink-0">
               {{ item.avatar }}
             </div>
             <div class="min-w-0">
-              <p class="font-semibold text-xs text-slate-900 dark:text-white truncate">{{ item.name }}</p>
-              <p class="text-[10px] text-rose-600 dark:text-rose-400 font-medium">{{ item.reliability }}% • {{ item.instrument }}</p>
+              <p class="font-semibold text-xs text-[var(--md-on-surface)] truncate">{{ item.name }}</p>
+              <p class="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">{{ item.reliability }}% • {{ item.instrument }}</p>
             </div>
           </div>
           <button 
             v-if="store.isSuperAdmin"
             @click="openManageModal(item)"
             type="button"
-            class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full shrink-0 cursor-pointer min-h-[30px]"
+            class="m3-btn-tonal text-xs min-h-[44px] px-4 font-semibold shrink-0"
           >
             Manage
           </button>
@@ -651,18 +651,18 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 3. SEARCH & DYNAMIC FILTER BAR -->
+    <!-- 3. SEARCH & DYNAMIC FILTER BAR (Material 3 Search Bar) -->
     <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
       <!-- Search Input -->
       <div class="relative flex-1 max-w-md">
-        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--md-outline)]">
           <Search class="w-4 h-4" />
         </div>
         <input 
           v-model="searchQuery"
           type="text" 
           placeholder="Search by name or instrument..."
-          class="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-full text-slate-900 dark:text-white placeholder-slate-400 text-xs font-normal shadow-xs min-h-[38px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+          class="w-full pl-10 pr-4 py-2 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-full text-[var(--md-on-surface)] placeholder-[var(--md-outline)] text-xs font-normal shadow-xs min-h-[48px] focus:outline-none focus:border-[var(--md-outline)]"
         />
       </div>
 
@@ -671,43 +671,43 @@ onUnmounted(() => {
         <!-- Instrument Section Dropdown -->
         <select 
           v-model="activeSectionFilter" 
-          class="bg-white dark:bg-[#202124] text-slate-800 dark:text-white font-medium text-xs rounded-full px-3.5 py-1.5 border border-slate-200 dark:border-neutral-800 shadow-xs min-h-[38px] cursor-pointer shrink-0 focus:outline-none"
+          class="bg-[var(--md-surface-container)] text-[var(--md-on-surface)] font-medium text-xs rounded-full px-4 py-2 border border-[var(--md-outline-variant)] shadow-xs min-h-[48px] cursor-pointer shrink-0 focus:outline-none"
         >
           <option value="All">All Sections</option>
           <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
         </select>
 
         <!-- Tier Filter Buttons (Senior/Junior filtered for officers only) -->
-        <div v-if="store.isOfficerOrAdmin" class="flex rounded-full bg-slate-100 dark:bg-[#18191a] p-1 text-xs font-medium border border-slate-200/60 dark:border-neutral-800 shrink-0">
+        <div v-if="store.isOfficerOrAdmin" class="flex rounded-full bg-[var(--md-surface-container)] p-1 text-xs font-medium border border-[var(--md-outline-variant)]/60 shrink-0">
           <button 
             type="button" 
             @click="activeTierFilter = 'all'"
-            class="px-3 py-1 rounded-full transition-all cursor-pointer"
-            :class="activeTierFilter === 'all' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[40px]"
+            :class="activeTierFilter === 'all' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             All
           </button>
           <button 
             type="button" 
             @click="activeTierFilter = 'officers'"
-            class="px-3 py-1 rounded-full transition-all cursor-pointer"
-            :class="activeTierFilter === 'officers' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[40px]"
+            :class="activeTierFilter === 'officers' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Officers
           </button>
           <button 
             type="button" 
             @click="activeTierFilter = 'senior'"
-            class="px-3 py-1 rounded-full transition-all cursor-pointer"
-            :class="activeTierFilter === 'senior' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[40px]"
+            :class="activeTierFilter === 'senior' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Senior
           </button>
           <button 
             type="button" 
             @click="activeTierFilter = 'junior'"
-            class="px-3 py-1 rounded-full transition-all cursor-pointer"
-            :class="activeTierFilter === 'junior' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3.5 py-1.5 rounded-full transition-all cursor-pointer min-h-[40px]"
+            :class="activeTierFilter === 'junior' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Junior
           </button>
@@ -718,22 +718,22 @@ onUnmounted(() => {
     <!-- 4. CLEAN, HIGH-CONTRAST MUSICIAN DIRECTORY (DESKTOP / TABLET TABLE) -->
     <section class="space-y-3" aria-label="Musician Directory Roster">
       <div class="flex items-center justify-between px-1">
-        <span class="text-xs font-semibold text-slate-700 dark:text-neutral-300">
+        <span class="text-xs font-semibold text-[var(--md-on-surface)]">
           Master Directory ({{ sortedRoster.length }})
         </span>
-        <span v-if="sortedRoster.length > 10" class="text-[10px] text-slate-400 dark:text-neutral-500">
+        <span v-if="sortedRoster.length > 10" class="text-[10px] text-[var(--md-outline)]">
           Scrollable table enabled
         </span>
       </div>
 
       <!-- DESKTOP / TABLET VIEW (TABLE WITH HORIZONTAL OVERFLOW SCROLLING) -->
       <div 
-        class="hidden md:block bg-white dark:bg-[#202124] rounded-3xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto"
+        class="hidden md:block m3-card-outlined overflow-hidden border border-[var(--md-outline-variant)]/60 rounded-3xl"
         :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
       >
         <table class="w-full text-left border-collapse text-xs">
           <!-- Sticky Header (Table 4: 48px Header Height) -->
-          <thead class="sticky top-0 bg-slate-50 dark:bg-[#1e1f20] border-b border-slate-200 dark:border-[#2d3035] z-10 font-semibold text-slate-500 dark:text-neutral-400 text-xs h-12">
+          <thead class="sticky top-0 bg-[var(--md-surface-container)] border-b border-[var(--md-outline-variant)]/40 z-10 font-semibold text-[var(--md-on-surface-variant)] text-xs h-12">
             <tr>
               <th scope="col" class="py-3 px-4">Musician</th>
               <th scope="col" class="py-3 px-4">Section / Instrument</th>
@@ -743,27 +743,27 @@ onUnmounted(() => {
               <th v-if="store.isOfficerOrAdmin" scope="col" class="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
+          <tbody class="divide-y divide-[var(--md-outline-variant)]/30">
             <tr 
               v-for="member in sortedRoster" 
               :key="member.id"
-              class="transition-colors hover:bg-slate-50/70 dark:hover:bg-[#282a2c]/60 min-h-[48px]"
+              class="transition-colors hover:bg-[var(--md-surface-container)]/50 min-h-[48px]"
             >
               <!-- Musician Name & Avatar -->
               <td class="py-3.5 px-4">
                 <div class="flex items-center space-x-3">
-                  <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-[#2d3035] bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
+                  <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs">
                     <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                     <span v-else>{{ member.avatar }}</span>
                   </div>
                   <div class="min-w-0">
-                    <span class="font-semibold text-slate-900 dark:text-white text-xs truncate block">
+                    <span class="font-semibold text-[var(--md-on-surface)] text-xs truncate block">
                       {{ member.name }}
                     </span>
-                    <span v-if="store.isOfficerOrAdmin" class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
+                    <span v-if="store.isOfficerOrAdmin" class="text-[11px] text-[var(--md-on-surface-variant)] truncate block">
                       {{ member.contact || 'Registered Member' }}
                     </span>
-                    <span v-else class="text-[11px] text-slate-400 dark:text-neutral-500 truncate block">
+                    <span v-else class="text-[11px] text-[var(--md-on-surface-variant)] truncate block">
                       Verified Member
                     </span>
                   </div>
@@ -772,8 +772,8 @@ onUnmounted(() => {
 
               <!-- Section / Instrument -->
               <td class="py-3.5 px-4">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 font-medium text-xs capitalize">
-                  <Music class="w-3.5 h-3.5 mr-1 text-slate-400" />
+                <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md inline-flex items-center capitalize">
+                  <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" />
                   {{ member.instrument }}
                 </span>
               </td>
@@ -782,19 +782,19 @@ onUnmounted(() => {
               <td class="py-3.5 px-4">
                 <span 
                   v-if="getMemberPositionId(member) === 'super_admin'" 
-                  class="inline-flex items-center text-[10px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 px-2.5 py-0.5 rounded-full border border-rose-200/60 dark:border-rose-900/40"
+                  class="m3-chip m3-chip-urgent h-6 text-xs px-2.5 rounded-md inline-flex items-center font-semibold"
                 >
                   <ShieldCheck class="w-3.5 h-3.5 mr-1" /> Super Admin
                 </span>
                 <span 
                   v-else-if="getMemberPositionId(member) !== 'member'" 
-                  class="inline-flex items-center text-[10px] font-medium border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-2.5 py-0.5 rounded-full"
+                  class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 rounded-md inline-flex items-center font-semibold"
                 >
                   <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-amber-400" /> {{ getMemberPosition(member).badge }}
                 </span>
                 <span 
                   v-else 
-                  class="inline-flex items-center text-[10px] font-normal text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#2d3035] px-2.5 py-0.5 rounded-full border border-slate-200/50 dark:border-neutral-700/50"
+                  class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md inline-flex items-center font-normal"
                 >
                   Musician
                 </span>
@@ -803,12 +803,9 @@ onUnmounted(() => {
               <!-- Rank (Officers & Admins Only) -->
               <td v-if="store.isOfficerOrAdmin" class="py-3.5 px-4">
                 <span 
-                  class="text-[10px] font-medium px-2 py-0.5 rounded-full inline-flex items-center"
-                  :class="member.rank === 'Senior' 
-                    ? 'bg-slate-100 dark:bg-[#2d3035] text-slate-800 dark:text-neutral-200' 
-                    : 'bg-slate-50 dark:bg-[#18191a] text-slate-500 dark:text-neutral-400'"
+                  class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md inline-flex items-center"
                 >
-                  <Award class="w-3.5 h-3.5 mr-1 text-slate-400" /> {{ member.rank }}
+                  <Award class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" /> {{ member.rank }}
                 </span>
               </td>
 
@@ -819,7 +816,7 @@ onUnmounted(() => {
                     class="w-2 h-2 rounded-full flex-shrink-0"
                     :class="member.reliability >= 90 ? 'bg-emerald-500' : member.reliability >= 80 ? 'bg-blue-500' : 'bg-rose-500'"
                   ></span>
-                  <span class="font-medium text-xs text-slate-900 dark:text-white">
+                  <span class="font-semibold text-xs text-[var(--md-on-surface)]">
                     {{ member.reliability }}%
                   </span>
                 </div>
@@ -832,7 +829,7 @@ onUnmounted(() => {
                   <button 
                     @click="openAvailabilityView(member)"
                     type="button"
-                    class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2d3035] rounded-full transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center"
+                    class="p-2 text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)] hover:bg-[var(--md-surface-container)] rounded-full transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                     title="View Weekly Availability"
                   >
                     <Calendar class="w-4 h-4" />
@@ -843,7 +840,7 @@ onUnmounted(() => {
                     v-if="store.isSuperAdmin"
                     @click="openManageModal(member)"
                     type="button"
-                    class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center transition-all cursor-pointer min-h-[36px]"
+                    class="m3-btn-filled text-xs min-h-[44px] px-4 font-semibold"
                   >
                     <Settings class="w-3.5 h-3.5 mr-1" /> Manage
                   </button>
@@ -852,7 +849,7 @@ onUnmounted(() => {
             </tr>
 
             <tr v-if="sortedRoster.length === 0">
-              <td :colspan="store.isOfficerOrAdmin ? 6 : 3" class="py-10 text-center text-slate-400 font-medium">
+              <td :colspan="store.isOfficerOrAdmin ? 6 : 3" class="py-10 text-center text-[var(--md-outline)] font-medium">
                 No musicians match your search or filter.
               </td>
             </tr>
@@ -868,28 +865,28 @@ onUnmounted(() => {
         <div 
           v-for="member in sortedRoster" 
           :key="member.id"
-          class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
+          class="m3-card-elevated p-4 border border-[var(--md-outline-variant)]/40 rounded-3xl space-y-3"
         >
           <!-- Top Row: Musician Identity -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-[#2d3035] bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
+              <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs">
                 <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white truncate">
+                <h3 class="font-bold text-sm text-[var(--md-on-surface)] truncate">
                   {{ member.name }}
                 </h3>
                 <div class="flex items-center space-x-1.5 mt-0.5 flex-wrap">
                   <span 
                     v-if="getMemberPositionId(member) !== 'member'" 
-                    class="text-[9px] font-medium border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full inline-flex items-center"
+                    class="m3-chip m3-chip-rsvp h-5 text-[10px] px-2 rounded-md font-semibold inline-flex items-center"
                   >
                     <ShieldCheck class="w-3 h-3 mr-1 text-amber-600 dark:text-amber-400" />
                     {{ getMemberPosition(member).badge }}
                   </span>
-                  <span class="text-xs text-slate-500 dark:text-neutral-400 capitalize">
+                  <span class="text-xs text-[var(--md-on-surface-variant)] capitalize font-medium">
                     {{ member.instrument }}
                   </span>
                 </div>
@@ -898,19 +895,19 @@ onUnmounted(() => {
 
             <!-- Rank & Reliability: Officers & Admins Only -->
             <div v-if="store.isOfficerOrAdmin" class="text-right shrink-0">
-              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-600 dark:text-neutral-400">
+              <span class="m3-chip m3-chip-neutral h-5 text-[10px] px-2 rounded-md">
                 {{ member.rank }}
               </span>
-              <p class="text-[11px] font-medium text-slate-700 dark:text-neutral-300 mt-1">{{ member.reliability }}%</p>
+              <p class="text-[11px] font-semibold text-[var(--md-on-surface)] mt-1">{{ member.reliability }}%</p>
             </div>
           </div>
 
           <!-- Bottom Actions Bar (Officers & Admins Only) -->
-          <div v-if="store.isOfficerOrAdmin" class="pt-2.5 border-t border-slate-100 dark:border-[#2d3035] flex items-center justify-between">
+          <div v-if="store.isOfficerOrAdmin" class="pt-2.5 border-t border-[var(--md-outline-variant)]/30 flex items-center justify-between">
             <button 
               @click="openAvailabilityView(member)"
               type="button"
-              class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[44px] px-2"
+              class="m3-btn-tonal text-xs font-semibold min-h-[44px] px-3.5 flex items-center"
             >
               <Calendar class="w-4 h-4 mr-1.5" /> Availability
             </button>
@@ -919,37 +916,37 @@ onUnmounted(() => {
               v-if="store.isSuperAdmin"
               @click="openManageModal(member)"
               type="button"
-              class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center cursor-pointer min-h-[44px]"
+              class="m3-btn-filled text-xs font-semibold min-h-[44px] px-4 flex items-center"
             >
               <Settings class="w-3.5 h-3.5 mr-1.5" /> Manage
             </button>
           </div>
         </div>
 
-        <div v-if="sortedRoster.length === 0" class="bg-white dark:bg-[#1e1f20] rounded-3xl p-8 text-center border border-slate-200 dark:border-[#2d3035]">
-          <Users class="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
-          <p class="text-xs font-medium text-slate-500">No musicians match your search or filter.</p>
+        <div v-if="sortedRoster.length === 0" class="m3-card-outlined p-8 text-center">
+          <Users class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2 opacity-60" />
+          <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">No musicians match your search or filter.</p>
         </div>
       </div>
     </section>
 
     <!-- 5. ALL-IN-ONE MUSICIAN MANAGEMENT MODAL (SUPER ADMIN ONLY) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showManageModal && editingMember" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <div v-if="showManageModal && editingMember" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header with Musician Info -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="flex items-center space-x-3 min-w-0 pr-2">
-            <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-sm shrink-0">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm shrink-0 border border-[var(--md-outline-variant)]">
               <img v-if="editingMember.profile_picture" :src="editingMember.profile_picture" :alt="editingMember.name" class="w-full h-full object-cover" />
               <span v-else>{{ editingMember.avatar }}</span>
             </div>
             <div class="min-w-0">
-              <span class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Manage Musician</span>
-              <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">{{ editingMember.name }}</h3>
+              <span class="text-[10px] text-[var(--md-outline)] uppercase tracking-wider font-semibold">Manage Musician</span>
+              <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ editingMember.name }}</h3>
             </div>
           </div>
-          <button @click="showManageModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d3035]" aria-label="Close modal">
+          <button @click="showManageModal = false" type="button" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]" aria-label="Close modal">
             <X class="w-5 h-5" />
           </button>
         </div>
@@ -959,12 +956,12 @@ onUnmounted(() => {
           
           <!-- UNIFIED ROLE & OFFICER POSITION SELECTOR -->
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1 flex items-center">
+            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
               <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-500" /> Position &amp; Officer Role
             </label>
             <select 
               v-model="managePositionId"
-              class="w-full p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 cursor-pointer"
+              class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer"
             >
               <option v-for="pos in POSITIONS" :key="pos.id" :value="pos.id">
                 {{ pos.label }}{{ getOfficerHolderText(pos.id) }}
@@ -974,19 +971,19 @@ onUnmounted(() => {
               <AlertCircle class="w-3 h-3 mr-1 shrink-0" />
               {{ currentHolderWarning }}
             </p>
-            <p v-else class="text-[11px] text-slate-400 dark:text-neutral-500 mt-1">
+            <p v-else class="text-[11px] text-[var(--md-on-surface-variant)] mt-1">
               Officer posts are single-officer appointments. Assigning a post automatically moves any previous holder back to Musician.
             </p>
           </div>
 
           <!-- INSTRUMENT SECTION -->
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1 flex items-center">
-              <Music class="w-3.5 h-3.5 mr-1 text-slate-400" /> Instrument Section
+            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
+              <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" /> Instrument Section
             </label>
             <select 
               v-model="manageInstrument"
-              class="w-full p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 cursor-pointer"
+              class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer"
             >
               <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
             </select>
@@ -994,27 +991,27 @@ onUnmounted(() => {
 
           <!-- MUSICIAN RANK TOGGLE -->
           <div>
-            <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1 flex items-center">
-              <Award class="w-3.5 h-3.5 mr-1 text-slate-400" /> Musician Rank
+            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
+              <Award class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" /> Musician Rank
             </label>
             <div class="grid grid-cols-2 gap-2">
               <button 
                 type="button" 
                 @click="manageRank = 'Junior'"
-                class="py-2.5 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
+                class="py-2.5 px-3 rounded-full border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
                 :class="manageRank === 'Junior' 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs' 
-                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-[#2d3035]'"
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] border-[var(--md-outline-variant)]'"
               >
                 Junior Rank
               </button>
               <button 
                 type="button" 
                 @click="manageRank = 'Senior'"
-                class="py-2.5 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
+                class="py-2.5 px-3 rounded-full border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
                 :class="manageRank === 'Senior' 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs' 
-                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-[#2d3035]'"
+                  : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] border-[var(--md-outline-variant)]'"
               >
                 Senior Rank
               </button>
@@ -1022,16 +1019,16 @@ onUnmounted(() => {
           </div>
 
           <!-- DANGER ZONE: DELETE ACCOUNT -->
-          <div v-if="editingMember.role !== 'super_admin' && editingMember.id !== store.user?.id" class="pt-3 border-t border-slate-100 dark:border-[#2d3035]">
+          <div v-if="editingMember.role !== 'super_admin' && editingMember.id !== store.user?.id" class="pt-3 border-t border-[var(--md-outline-variant)]/40">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-medium text-rose-600 dark:text-rose-400">Account Deletion</p>
-                <p class="text-[11px] text-slate-400">Permanently remove this musician from registry</p>
+                <p class="text-xs font-semibold text-rose-600 dark:text-rose-400">Account Deletion</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]">Permanently remove this musician from registry</p>
               </div>
               <button 
                 @click="promptDeleteMember(editingMember)"
                 type="button"
-                class="px-4 py-2 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-medium text-xs rounded-full cursor-pointer min-h-[40px]"
+                class="m3-btn-outlined text-xs min-h-[44px] px-4 font-semibold text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/20"
               >
                 Delete Account
               </button>
@@ -1041,11 +1038,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-[#2d3035]">
+        <div class="flex space-x-2 pt-3 border-t border-[var(--md-outline-variant)]/40">
           <button 
             @click="showManageModal = false" 
             type="button" 
-            class="flex-1 py-2.5 border border-slate-200 dark:border-[#2d3035] font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-[#2d3035] min-h-[48px] cursor-pointer"
+            class="m3-btn-outlined flex-1 min-h-[48px]"
           >
             Cancel
           </button>
@@ -1053,7 +1050,7 @@ onUnmounted(() => {
             @click="saveMemberManagement" 
             :disabled="isSavingManage"
             type="button" 
-            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[48px] cursor-pointer disabled:opacity-50"
+            class="m3-btn-filled flex-1 min-h-[48px] disabled:opacity-50"
           >
             {{ isSavingManage ? 'Saving...' : 'Save Changes' }}
           </button>
@@ -1063,24 +1060,24 @@ onUnmounted(() => {
     </div>
 
     <!-- 6. MEMBER AVAILABILITY MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAvailabilityModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
+    <div v-if="showAvailabilityModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div>
-            <span class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Availability Overview</span>
-            <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">{{ selectedMemberForAvailability?.name }}</h3>
+            <span class="text-[10px] text-[var(--md-outline)] uppercase tracking-wider font-semibold">Availability Overview</span>
+            <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ selectedMemberForAvailability?.name }}</h3>
           </div>
-          <button @click="showAvailabilityModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d3035]" aria-label="Close modal">
+          <button @click="showAvailabilityModal = false" type="button" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]" aria-label="Close modal">
             <X class="w-5 h-5" />
           </button>
         </div>
 
         <div class="space-y-3">
-          <p class="text-xs text-slate-500 dark:text-neutral-400">
+          <p class="text-xs text-[var(--md-on-surface-variant)]">
             Active weekly free slots registered by this musician:
           </p>
 
-          <div v-if="isLoadingAvailability" class="py-6 text-center text-xs font-medium text-slate-400">
+          <div v-if="isLoadingAvailability" class="py-6 text-center text-xs font-medium text-[var(--md-outline)]">
             Checking schedule...
           </div>
 
@@ -1088,15 +1085,15 @@ onUnmounted(() => {
             <span 
               v-for="slot in memberAvailabilitySlots" 
               :key="slot" 
-              class="text-xs font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40"
+              class="m3-chip m3-chip-info h-8 text-xs px-3 rounded-full font-medium"
             >
               ✓ {{ slot }}
             </span>
           </div>
 
-          <div v-else class="p-4 bg-slate-50 dark:bg-[#18191a] rounded-2xl text-center text-xs text-slate-400 font-medium space-y-1">
+          <div v-else class="p-4 bg-[var(--md-surface-container)] rounded-2xl text-center text-xs text-[var(--md-on-surface-variant)] font-medium space-y-1">
             <p>No active free slots registered for this week yet.</p>
-            <p v-if="selectedMemberForAvailability?.id === store.user?.id" class="text-[11px] text-slate-500 dark:text-neutral-400">
+            <p v-if="selectedMemberForAvailability?.id === store.user?.id" class="text-[11px] text-[var(--md-outline)]">
               You can set your weekly slots in Profile Settings.
             </p>
           </div>
@@ -1106,7 +1103,7 @@ onUnmounted(() => {
           <button 
             @click="showAvailabilityModal = false" 
             type="button" 
-            class="w-full py-2.5 bg-slate-100 dark:bg-[#2d3035] hover:bg-slate-200 dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 cursor-pointer min-h-[48px]"
+            class="m3-btn-filled w-full min-h-[48px] text-xs font-semibold"
           >
             Close
           </button>
@@ -1115,16 +1112,16 @@ onUnmounted(() => {
     </div>
 
     <!-- 7. SUPER ADMIN DELETE CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+    <div v-if="showDeleteModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         
         <div>
-          <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">Delete Musician Account?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
-            Are you sure you want to permanently delete <strong class="text-slate-900 dark:text-white">{{ confirmDeleteTarget?.name }}</strong>? This action cannot be undone.
+          <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Delete Musician Account?</h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] mt-1.5 leading-relaxed">
+            Are you sure you want to permanently delete <strong class="text-[var(--md-on-surface)]">{{ confirmDeleteTarget?.name }}</strong>? This action cannot be undone.
           </p>
         </div>
 
@@ -1132,14 +1129,14 @@ onUnmounted(() => {
           <button 
             @click="showDeleteModal = false; confirmDeleteTarget = null" 
             type="button" 
-            class="flex-1 py-2.5 border border-slate-200 dark:border-[#2d3035] font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-[#2d3035] min-h-[48px] cursor-pointer"
+            class="m3-btn-outlined flex-1 min-h-[48px]"
           >
             Cancel
           </button>
           <button 
             @click="executeDeleteMember" 
             type="button" 
-            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[48px] cursor-pointer"
+            class="m3-btn-filled flex-1 min-h-[48px] bg-rose-600 hover:bg-rose-700 text-white"
           >
             Delete
           </button>
