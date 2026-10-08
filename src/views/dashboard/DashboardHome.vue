@@ -1397,9 +1397,9 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
@@ -1620,9 +1620,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- CREATE ANNOUNCEMENT MODAL (Google Material Dialog - ISO/IEC 25010 & TC-04) -->
-    <div v-if="showAnnouncementModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+    <!-- CREATE ANNOUNCEMENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showAnnouncementModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <div>
             <h3 class="font-bold text-base text-slate-900 dark:text-white">Post Announcement</h3>
@@ -1667,9 +1667,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- CREATE EVENT MODAL (Google Material Dialog - IT Expert Past Date Validation) -->
-    <div v-if="showEventModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+    <!-- CREATE EVENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showEventModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <h3 class="font-bold text-base text-slate-900 dark:text-white">Schedule Event</h3>
           <button @click="showEventModal = false" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"><X class="w-4 h-4" /></button>
@@ -1710,9 +1710,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- EXCUSE JUSTIFICATION MODAL (Table 19 tbl_event_rsvps) -->
-    <div v-if="showExcuseModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+    <!-- EXCUSE JUSTIFICATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showExcuseModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2">
           <div>
             <h3 class="font-bold text-base text-slate-900 dark:text-white">Submit Absence Excuse</h3>
@@ -1765,9 +1765,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- CONFIRM MODAL -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+    <!-- CONFIRM MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-5 h-5" />
         </div>

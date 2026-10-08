@@ -492,44 +492,44 @@ const handleFileUpload = async (event) => {
       </div>
     </section>
 
-    <!-- COMPLETE POP-UP SETTINGS MODAL (Profile, Phone, Instruments, Password, Availability Grid) -->
-    <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl text-left max-h-[88vh] flex flex-col">
+    <!-- COMPLETE POP-UP SETTINGS MODAL (Profile, Phone, Instruments, Password, Availability Grid) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[88vh] flex flex-col">
         
         <!-- Modal Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
           <div class="flex items-center space-x-2">
-            <Settings class="w-4 h-4 text-slate-600 dark:text-neutral-400" />
+            <Settings class="w-5 h-5 text-slate-600 dark:text-neutral-400" />
             <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Profile & Settings</h3>
           </div>
-          <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d2f31]">
-            <X class="w-4 h-4" />
+          <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d2f31]" aria-label="Close modal">
+            <X class="w-5 h-5" />
           </button>
         </div>
 
         <!-- Setting Navigation Tabs (Segmented Pill Switcher) -->
-        <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 gap-1">
+        <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 gap-1 border border-slate-200/60 dark:border-[#2d3035]">
           <button 
             type="button" 
             @click="activeSettingsTab = 'profile'"
-            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
+            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
             Profile
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'availability'"
-            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
+            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
             Availability
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'security'"
-            class="flex-1 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer text-center"
-            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
+            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
           >
             Password
           </button>
@@ -546,7 +546,7 @@ const handleFileUpload = async (event) => {
               <input 
                 v-model="editFullName" 
                 type="text" 
-                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
               >
             </div>
 
@@ -555,7 +555,7 @@ const handleFileUpload = async (event) => {
               <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Primary Instrument</label>
               <select 
                 v-model="editPrimaryInstrument" 
-                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
               </select>
@@ -566,7 +566,7 @@ const handleFileUpload = async (event) => {
               <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Secondary Instrument (Optional)</label>
               <select 
                 v-model="editSecondaryInstrument" 
-                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="None / N/A">None / N/A</option>
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
@@ -587,42 +587,42 @@ const handleFileUpload = async (event) => {
                 type="tel" 
                 maxlength="11"
                 placeholder="09123456789"
-                class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] border rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
-                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-neutral-700'"
+                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
+                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-[#2d3035]'"
               >
             </div>
           </div>
 
           <!-- TAB 2: AVAILABILITY GRID (Settings Pop-up integration) -->
           <div v-else-if="activeSettingsTab === 'availability'" class="space-y-3">
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-[#282a2c] border border-slate-200/80 dark:border-neutral-700/80 text-xs text-slate-600 dark:text-neutral-400">
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-[#2d3035] text-xs text-slate-600 dark:text-neutral-400">
               <p class="font-medium text-slate-900 dark:text-neutral-200">Weekly Schedule Availability</p>
               <p class="text-[11px] mt-0.5">Toggle slots between FREE and busy. The Band Secretary uses this grid to schedule gigs and check musician availability.</p>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-neutral-800 overflow-x-auto">
+            <div class="rounded-2xl border border-slate-200 dark:border-[#2d3035] overflow-x-auto">
               <table class="w-full text-center border-collapse text-xs">
-                <thead class="bg-slate-50 dark:bg-[#2d2f31]">
+                <thead class="bg-slate-50 dark:bg-[#18191a] border-b border-slate-200 dark:border-[#2d3035]">
                   <tr>
-                    <th class="p-2 text-left text-[10px] font-semibold text-slate-400 uppercase">Slot</th>
-                    <th v-for="d in weekDays" :key="d.key" class="p-2 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
+                    <th class="p-2.5 text-left text-[10px] font-semibold text-slate-400 uppercase">Slot</th>
+                    <th v-for="d in weekDays" :key="d.key" class="p-2.5 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
                       {{ d.name }}
                     </th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
+                <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
                   <tr v-for="slot in timeSlots" :key="slot">
-                    <td class="p-2 text-left font-medium text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
+                    <td class="p-2.5 text-left font-medium text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
                       {{ slot.split(' ')[0] }}
                     </td>
                     <td v-for="d in weekDays" :key="d.key" class="p-1">
                       <button 
                         @click="toggleSlot(d.key, slot)"
                         type="button"
-                        class="w-full py-1.5 rounded-full font-medium text-[10px] transition-colors cursor-pointer min-h-[32px] flex items-center justify-center"
+                        class="w-full py-2 rounded-full font-medium text-[10px] transition-colors cursor-pointer min-h-[36px] flex items-center justify-center"
                         :class="isSlotFree(d.key, slot) 
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
-                          : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 hover:bg-slate-200'"
+                          : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 hover:bg-slate-200 dark:hover:bg-[#383a3d]'"
                       >
                         {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
                       </button>
@@ -636,9 +636,9 @@ const handleFileUpload = async (event) => {
               @click="saveAvailability" 
               :disabled="isSaving"
               type="button" 
-              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs transition-colors flex items-center justify-center min-h-[40px] cursor-pointer"
+              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs transition-colors flex items-center justify-center min-h-[48px] cursor-pointer"
             >
-              <CheckCircle2 v-if="saveSuccess" class="w-3.5 h-3.5 mr-1" />
+              <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1.5" />
               {{ isSaving ? 'Saving Grid...' : saveSuccess ? 'Saved' : 'Save Availability Grid' }}
             </button>
           </div>
@@ -652,9 +652,9 @@ const handleFileUpload = async (event) => {
                   v-model="newPassword" 
                   :type="showNewPass ? 'text' : 'password'" 
                   placeholder="Min. 8 characters"
-                  class="w-full px-3.5 py-2.5 pr-10 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                  class="w-full px-3.5 py-3 pr-10 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
                 >
-                <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
+                <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[48px] justify-center cursor-pointer">
                   <Eye v-if="!showNewPass" class="w-4 h-4" />
                   <EyeOff v-else class="w-4 h-4" />
                 </button>
@@ -668,9 +668,9 @@ const handleFileUpload = async (event) => {
                   v-model="confirmPassword" 
                   :type="showConfirmPass ? 'text' : 'password'" 
                   placeholder="Re-type new password"
-                  class="w-full px-3.5 py-2.5 pr-10 bg-slate-50 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[40px] focus:outline-none focus:border-slate-400"
+                  class="w-full px-3.5 py-3 pr-10 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
                 >
-                <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[40px] justify-center">
+                <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[48px] justify-center cursor-pointer">
                   <Eye v-if="!showConfirmPass" class="w-4 h-4" />
                   <EyeOff v-else class="w-4 h-4" />
                 </button>
@@ -688,11 +688,11 @@ const handleFileUpload = async (event) => {
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
+        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-[#2d3035]">
           <button 
             @click="showEditProfileModal = false" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-100 dark:bg-[#2d2f31] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-300 min-h-[40px] cursor-pointer hover:bg-slate-200 dark:hover:bg-[#383a3d] transition-colors"
+            class="flex-1 py-2.5 bg-slate-100 dark:bg-[#2d2f31] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-300 min-h-[48px] cursor-pointer hover:bg-slate-200 dark:hover:bg-[#383a3d] transition-colors"
           >
             Close
           </button>
@@ -700,7 +700,7 @@ const handleFileUpload = async (event) => {
             @click="handleUpdateProfile" 
             :disabled="isUpdatingProfile" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 font-medium text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors"
+            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 font-medium text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
           >
             {{ isUpdatingProfile ? 'Saving...' : 'Save Settings' }}
           </button>
@@ -709,9 +709,9 @@ const handleFileUpload = async (event) => {
       </div>
     </div>
 
-    <!-- SIGN OUT CONFIRMATION MODAL -->
-    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+    <!-- SIGN OUT CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] flex items-center justify-center mx-auto text-slate-700 dark:text-neutral-300">
           <LogOut class="w-5 h-5" />
         </div>
@@ -723,14 +723,14 @@ const handleFileUpload = async (event) => {
           <button 
             @click="showSignOutModal = false" 
             type="button" 
-            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[40px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[48px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
           <button 
             @click="handleSignOut" 
             type="button" 
-            class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs rounded-full shadow-xs min-h-[40px] cursor-pointer transition-colors"
+            class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
           >
             Sign Out
           </button>

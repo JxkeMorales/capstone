@@ -639,16 +639,16 @@ const handleResetPassword = async () => {
 
     </div>
 
-    <!-- TERMS & CONDITIONS MODAL -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[85vh] flex flex-col">
+    <!-- TERMS & CONDITIONS MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showTermsModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[85vh] flex flex-col">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
           <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
             <FileText class="w-4 h-4" />
             <h3 class="font-bold text-base text-slate-900 dark:text-white">Municipal Band Terms &amp; Conditions</h3>
           </div>
-          <button @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+          <button @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800" aria-label="Close Terms">
             <X class="w-4 h-4" />
           </button>
         </div>
@@ -680,11 +680,11 @@ const handleResetPassword = async () => {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-end">
+        <div class="pt-3 border-t border-slate-100 dark:border-[#2d3035] flex justify-end">
           <button 
             @click="showTermsModal = false; termsAccepted = true" 
             type="button" 
-            class="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[40px] cursor-pointer"
+            class="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[44px] cursor-pointer"
           >
             I Accept Terms
           </button>
@@ -693,13 +693,13 @@ const handleResetPassword = async () => {
       </div>
     </div>
 
-    <!-- FORGOT PASSWORD MODAL -->
-    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+    <!-- FORGOT PASSWORD MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showForgotPasswordModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
           <h3 class="font-bold text-sm text-slate-900 dark:text-white">Reset Password</h3>
-          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
+          <button @click="showForgotPasswordModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800" aria-label="Close Reset Dialog">
             <X class="w-4 h-4" />
           </button>
         </div>
@@ -714,13 +714,13 @@ const handleResetPassword = async () => {
             v-model="resetEmail" 
             type="email" 
             placeholder="you@example.com" 
-            class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+            class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
           >
           <button 
             @click="handleResetPassword" 
             :disabled="resetLoading" 
             type="button" 
-            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[42px] cursor-pointer"
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-semibold text-xs rounded-full shadow-xs min-h-[44px] cursor-pointer"
           >
             {{ resetLoading ? 'Sending...' : 'Send Reset Link' }}
           </button>

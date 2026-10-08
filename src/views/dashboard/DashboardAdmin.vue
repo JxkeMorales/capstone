@@ -1099,28 +1099,28 @@ onUnmounted(() => {
       </div>
 
       <!-- Tab Switcher: Operations vs Reports (Segmented Pill Switcher) -->
-      <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 text-xs font-medium border border-slate-200/80 dark:border-neutral-700 w-full sm:w-auto gap-1 self-start sm:self-auto">
+      <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 text-xs font-medium border border-slate-200/80 dark:border-[#2d3035] w-full sm:w-auto gap-1 self-start sm:self-auto">
         <button 
           type="button" 
           @click="activeTab = 'operations'"
-          class="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-full transition-all cursor-pointer min-h-[36px]"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-full transition-all cursor-pointer min-h-[44px]"
           :class="activeTab === 'operations' 
-            ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' 
+            ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <Activity class="w-3.5 h-3.5" />
+          <Activity class="w-4 h-4" />
           <span>Operations Hub</span>
         </button>
 
         <button 
           type="button" 
           @click="activeTab = 'reports'"
-          class="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-full transition-all cursor-pointer min-h-[36px]"
+          class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-full transition-all cursor-pointer min-h-[44px]"
           :class="activeTab === 'reports' 
-            ? 'bg-white dark:bg-[#202124] text-slate-900 dark:text-white shadow-xs font-semibold' 
+            ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' 
             : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
         >
-          <BarChart3 class="w-3.5 h-3.5" />
+          <BarChart3 class="w-4 h-4" />
           <span>Reports & Analytics</span>
         </button>
       </div>
@@ -1131,13 +1131,13 @@ onUnmounted(() => {
 
       <!-- 1. ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER -->
       <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
-        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-4">
+        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <Calendar class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
               <h2 class="font-bold text-base text-slate-900 dark:text-neutral-100">Check Member Availability</h2>
             </div>
-            <span class="text-[11px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-600 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-3 py-0.5 rounded-full">
+            <span class="text-[11px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-600 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-3 py-1 rounded-full">
               Operations Tool
             </span>
           </div>
@@ -1152,7 +1152,7 @@ onUnmounted(() => {
               <select 
                 id="day-select" 
                 v-model="selectedDayNeeded" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] cursor-pointer focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium min-h-[48px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option 
                   v-for="d in weekDaysOptions" 
@@ -1167,13 +1167,13 @@ onUnmounted(() => {
             </div>
             <div>
               <label for="slot-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">Time Slot</label>
-              <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] focus:outline-none focus:border-slate-400">
+              <select id="slot-select" v-model="selectedSlotNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer">
                 <option v-for="s in timeSlots" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
             <div>
               <label for="inst-select" class="block text-[11px] font-medium text-slate-500 dark:text-neutral-400 mb-1.5">Instrument Section</label>
-              <select id="inst-select" v-model="selectedInstrumentNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium min-h-[40px] focus:outline-none focus:border-slate-400">
+              <select id="inst-select" v-model="selectedInstrumentNeeded" class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer">
                 <option value="All">All Instruments</option>
                 <option value="Clarinet">Clarinet</option>
                 <option value="Flute">Flute / Piccolo</option>
@@ -1192,29 +1192,29 @@ onUnmounted(() => {
           </p>
 
           <button 
-            @click="runAvailabilityCheck"
-            type="button"
+            @click="runAvailabilityCheck" 
+            type="button" 
             :disabled="isSelectedDayPast"
-            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs active:scale-95 cursor-pointer min-h-[40px]"
+            class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs active:scale-95 cursor-pointer min-h-[48px]"
           >
             <Cpu class="w-4 h-4 mr-2" /> Check Available Musicians
           </button>
         </div>
 
         <!-- MATCHED AVAILABILITY DISPLAY -->
-        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 space-y-3">
+        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 shadow-xs border border-slate-200 dark:border-[#2d3035] space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Roster for {{ selectedDayNeeded }} ({{ selectedSlotNeeded.split(' ')[0] }})</h3>
-            <span class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-slate-100 dark:bg-[#2d2f31] border border-slate-200 dark:border-neutral-700 px-3 py-0.5 rounded-full">
+            <span class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-slate-100 dark:bg-[#2d2f31] border border-slate-200 dark:border-[#2d3035] px-3 py-1 rounded-full">
               {{ availableUserIds.size }} Available
             </span>
           </div>
 
-          <div class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 divide-y divide-slate-100 dark:divide-neutral-800">
+          <div class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 divide-y divide-slate-100 dark:divide-[#2d3035]">
             <div v-for="m in matchedDispatchRoster" :key="m.id" class="py-2.5 flex items-center justify-between text-xs">
               <div class="flex items-center space-x-2">
                 <span class="font-medium text-slate-900 dark:text-neutral-100">{{ m.full_name }} ({{ m.instrument }})</span>
-                <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-2 py-0.2 rounded-full">
+                <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-2 py-0.5 rounded-full">
                   Free
                 </span>
                 <span v-else class="text-[10px] font-normal text-slate-400">Unavailable</span>
@@ -1225,19 +1225,19 @@ onUnmounted(() => {
         </div>
 
         <!-- 2. RSVP RE-NOTIFICATIONS -->
-        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200 dark:border-[#2d3035] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">RSVP Reminders</h3>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Send a notification reminder to musicians who have unconfirmed attendance status.</p>
           </div>
           <button 
-            @click="triggerReNotifications"
-            :disabled="isAlertingUnconfirmed"
-            type="button"
-            class="py-2 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[40px] shrink-0 transition-colors"
+            @click="triggerReNotifications" 
+            :disabled="isAlertingUnconfirmed" 
+            type="button" 
+            class="py-2 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 disabled:opacity-50 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center shadow-xs active:scale-95 cursor-pointer min-h-[48px] shrink-0 transition-colors"
           >
-            <Loader2 v-if="isAlertingUnconfirmed" class="w-3.5 h-3.5 mr-2 animate-spin" />
-            <Send v-else class="w-3.5 h-3.5 mr-2" />
+            <Loader2 v-if="isAlertingUnconfirmed" class="w-4 h-4 mr-2 animate-spin" />
+            <Send v-else class="w-4 h-4 mr-2" />
             {{ isAlertingUnconfirmed ? 'Dispatching...' : 'Alert Unconfirmed' }}
           </button>
         </div>
@@ -1260,8 +1260,8 @@ onUnmounted(() => {
         <div :class="pendingAccounts.length > 3 ? 'max-h-[400px] overflow-y-auto pr-1 space-y-3' : 'space-y-3'">
           <div 
             v-for="user in pendingAccounts" 
-            :key="user.id"
-            class="bg-white dark:bg-[#202124] rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+            :key="user.id" 
+            class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
           >
             <div class="flex justify-between items-start">
               <div>
@@ -1273,30 +1273,30 @@ onUnmounted(() => {
               </span>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-[#2d2f31] p-3 rounded-xl text-slate-600 dark:text-neutral-300 border border-slate-100 dark:border-neutral-700">
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl text-slate-600 dark:text-neutral-300 border border-slate-100 dark:border-[#2d3035]">
               <div><span class="text-slate-400">Section:</span> {{ user.instrument || 'None' }}</div>
               <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
             </div>
 
             <div class="flex space-x-2 pt-1">
               <button 
-                @click="approveUser(user)"
-                type="button"
-                class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 active:scale-95 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs cursor-pointer min-h-[38px]"
+                @click="approveUser(user)" 
+                type="button" 
+                class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 active:scale-95 text-white dark:text-slate-900 font-medium text-xs rounded-full flex items-center justify-center transition-colors shadow-xs cursor-pointer min-h-[44px]"
               >
-                <UserCheck class="w-3.5 h-3.5 mr-1.5" /> Approve & Verify
+                <UserCheck class="w-4 h-4 mr-1.5" /> Approve & Verify
               </button>
               <button 
-                @click="promptDeleteUser(user)"
-                type="button"
-                class="py-2 px-4 bg-white dark:bg-[#202124] hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-medium text-xs rounded-full flex items-center justify-center transition-colors border border-slate-200 dark:border-neutral-700 cursor-pointer min-h-[38px]"
+                @click="promptDeleteUser(user)" 
+                type="button" 
+                class="py-2 px-4 bg-white dark:bg-[#1e1f20] hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-medium text-xs rounded-full flex items-center justify-center transition-colors border border-slate-200 dark:border-[#2d3035] cursor-pointer min-h-[44px]"
               >
-                <Trash2 class="w-3.5 h-3.5 mr-1" /> Decline
+                <Trash2 class="w-4 h-4 mr-1.5" /> Decline
               </button>
             </div>
           </div>
 
-          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#202124] rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#1e1f20] rounded-3xl border border-slate-200/80 dark:border-[#2d3035]">
             <CheckCircle2 class="w-6 h-6 text-slate-400 mx-auto mb-2" />
             <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
           </div>
@@ -1362,7 +1362,7 @@ onUnmounted(() => {
         <!-- 4 KPI Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- KPI 1: Band Reliability Score -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Avg Reliability</span>
               <Award class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1374,7 +1374,7 @@ onUnmounted(() => {
               <span class="text-[10px] font-normal text-slate-400">Roster Avg</span>
             </div>
             <!-- Progress Bar -->
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div 
                 class="h-full rounded-full transition-all duration-500 bg-slate-900 dark:bg-white" 
                 :style="{ width: `${analyticsSummary.avgReliability}%` }"
@@ -1383,7 +1383,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 2: Total Unexcused No-Shows -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Unexcused No-Shows</span>
               <AlertTriangle class="w-4 h-4 text-rose-500" />
@@ -1400,7 +1400,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 3: Follow-Through Rate -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Commitment Rate</span>
               <TrendingUp class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1411,7 +1411,7 @@ onUnmounted(() => {
               </span>
               <span class="text-[10px] font-normal text-slate-400">Turnout</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div 
                 class="bg-slate-900 dark:bg-white h-full rounded-full transition-all duration-500" 
                 :style="{ width: `${analyticsSummary.avgFollowThrough}%` }"
@@ -1420,7 +1420,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 4: High No-Show Risk Members -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Attendance Risk</span>
               <ShieldAlert class="w-4 h-4 text-amber-500" />
@@ -1440,10 +1440,10 @@ onUnmounted(() => {
         <!-- Section Turnout Breakdown Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- Woodwinds -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Woodwinds</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
                 {{ sectionStats.woodwinds.count }} Members
               </span>
             </div>
@@ -1451,7 +1451,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.woodwinds.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1463,10 +1463,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Brass -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Brass</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
                 {{ sectionStats.brass.count }} Members
               </span>
             </div>
@@ -1474,7 +1474,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.brass.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1486,10 +1486,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Percussion -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Percussion</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
                 {{ sectionStats.percussion.count }} Members
               </span>
             </div>
@@ -1497,7 +1497,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.percussion.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1509,10 +1509,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Majorette & Color Guard (Auxiliary) -->
-          <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Majorette & Guard</span>
-              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700 px-2 py-0.5 rounded-full">
+              <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3035] px-2 py-0.5 rounded-full">
                 {{ sectionStats.auxiliary.count }} Members
               </span>
             </div>
@@ -1520,7 +1520,7 @@ onUnmounted(() => {
               <span class="text-slate-500 dark:text-neutral-400">Turnout Rate</span>
               <span class="font-bold text-slate-900 dark:text-neutral-100">{{ sectionStats.auxiliary.displayRate }}</span>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-[#2d2f31] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -1533,7 +1533,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Interactive Excel-Style Attendance Matrix Table -->
-        <div class="bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Musician Attendance & Commitment Matrix</h3>
@@ -1546,19 +1546,19 @@ onUnmounted(() => {
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full pt-1">
               <!-- Search -->
               <div class="relative w-full">
-                <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   v-model="analyticsSearchQuery" 
                   type="text" 
                   placeholder="Search musician..."
-                  class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full text-xs border border-slate-200 dark:border-neutral-700 font-medium focus:outline-none focus:border-slate-400 min-h-[38px]"
+                  class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full text-xs border border-slate-200 dark:border-[#2d3035] font-medium focus:outline-none focus:border-slate-400 min-h-[44px]"
                 />
               </div>
 
               <!-- Section Filter -->
               <select 
                 v-model="analyticsSectionFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-medium min-h-[38px] cursor-pointer focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3035] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
               </select>
@@ -1566,7 +1566,7 @@ onUnmounted(() => {
               <!-- Sort Order -->
               <select 
                 v-model="analyticsSortBy" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 font-medium min-h-[38px] cursor-pointer focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3035] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
               >
                 <option value="flakes_desc">Sort: Most No-Shows First</option>
                 <option value="reliability_asc">Sort: Lowest Reliability First</option>
@@ -1577,9 +1577,9 @@ onUnmounted(() => {
           </div>
 
           <!-- Table -->
-          <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-neutral-800">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3035]">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-[#2d2f31] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-neutral-800">
+              <thead class="bg-slate-50 dark:bg-[#2d2f31] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-[#2d3035] h-12">
                 <tr>
                   <th class="px-3 py-2.5 w-10 text-center">#</th>
                   <th class="px-4 py-2.5">Musician</th>
@@ -1592,7 +1592,7 @@ onUnmounted(() => {
                   <th class="px-3 py-2.5 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-neutral-800">
+              <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
                 <tr 
                   v-for="(member, idx) in filteredAnalyticsMatrix" 
                   :key="member.id"
@@ -1697,10 +1697,10 @@ onUnmounted(() => {
       </section>
 
       <!-- 2. OFFICIAL PDF REPORTS GENERATOR (DEDICATED TO SUPER ADMIN) -->
-      <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-neutral-800">
+      <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-[#2d3035]">
         
         <!-- Controls & Header (Hidden when printing) -->
-        <div class="no-print bg-white dark:bg-[#202124] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-neutral-800 shadow-xs space-y-4">
+        <div class="no-print bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3035] shadow-xs space-y-4">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             <div>
               <div class="flex items-center space-x-2">
@@ -1718,19 +1718,19 @@ onUnmounted(() => {
                 @click="downloadPdfReport" 
                 :disabled="isGeneratingPdf"
                 type="button" 
-                class="flex-1 sm:flex-none px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 transition-colors active:scale-95 cursor-pointer min-h-[38px] disabled:opacity-50"
+                class="flex-1 sm:flex-none px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-2 transition-colors active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[48px] disabled:opacity-50"
               >
-                <Download class="w-3.5 h-3.5" />
+                <Download class="w-4 h-4" />
                 <span>{{ isGeneratingPdf ? 'Downloading...' : 'Download PDF' }}</span>
               </button>
 
               <button 
                 @click="printReport" 
                 type="button" 
-                class="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full border border-slate-200 dark:border-neutral-700 flex items-center justify-center space-x-1.5 transition-colors active:scale-95 cursor-pointer min-h-[38px]"
+                class="flex-1 sm:flex-none px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full border border-slate-200 dark:border-[#2d3035] flex items-center justify-center space-x-2 transition-colors active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[48px]"
                 title="Open browser print dialog"
               >
-                <Printer class="w-3.5 h-3.5" />
+                <Printer class="w-4 h-4" />
                 <span>Print Dialog</span>
               </button>
             </div>
@@ -1746,7 +1746,7 @@ onUnmounted(() => {
               <select 
                 id="report-type-select"
                 v-model="selectedReportType" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option v-for="opt in reportTypeOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
               </select>
@@ -1760,7 +1760,7 @@ onUnmounted(() => {
               <select 
                 id="role-filter-select"
                 v-model="selectedRoleFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="member">Regular Musicians</option>
                 <option value="executive">Executive Officers</option>
@@ -1777,7 +1777,7 @@ onUnmounted(() => {
               <select 
                 id="event-filter-select"
                 v-model="selectedEventTypeFilter" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option v-for="t in eventTypeOptions" :key="t" :value="t">{{ t }}</option>
               </select>
@@ -1791,7 +1791,7 @@ onUnmounted(() => {
               <select 
                 id="event-specific-select"
                 v-model="selectedSpecificEventId" 
-                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs min-h-[40px] focus:outline-none focus:border-slate-400"
+                class="w-full bg-slate-50 dark:bg-[#2d2f31] text-slate-900 dark:text-white rounded-xl px-3.5 py-3 border border-slate-200 dark:border-[#2d3035] font-medium text-xs min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="">-- Latest / Select Event --</option>
                 <option v-for="ev in allEvents" :key="ev.id" :value="ev.id">
@@ -1928,11 +1928,11 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- CUSTOM CONFIRMATION MODAL -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+    <!-- CUSTOM CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex items-center justify-center mx-auto">
-          <AlertCircle class="w-5 h-5" />
+          <AlertCircle class="w-6 h-6" />
         </div>
         
         <div>
@@ -1946,14 +1946,14 @@ onUnmounted(() => {
           <button 
             @click="showConfirmModal = false; confirmUserTarget = null" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 active:scale-95 min-h-[40px] cursor-pointer transition-colors"
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 min-h-[48px] cursor-pointer transition-colors"
           >
             Cancel
           </button>
           <button 
             @click="executeRejectAndDeleteUser" 
             type="button" 
-            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 font-medium text-xs text-white rounded-full shadow-xs active:scale-95 min-h-[40px] cursor-pointer transition-colors"
+            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 font-medium text-xs text-white rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
           >
             Decline
           </button>

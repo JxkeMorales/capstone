@@ -37,9 +37,9 @@ const getIconColor = (type) => {
       <div 
         v-for="toast in uiStore.toasts" 
         :key="toast.id"
-        class="w-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md text-slate-900 dark:text-white rounded-2xl shadow-xl border border-slate-200/80 dark:border-neutral-800/80 px-3.5 py-2.5 flex items-center space-x-3 pointer-events-auto"
+        class="w-full bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-neutral-100 rounded-2xl shadow-md border border-slate-200 dark:border-[#2d3035] px-3.5 py-2.5 flex items-center space-x-3 pointer-events-auto"
       >
-        <!-- Icon -->
+        <!-- Icon (Dual-Coding Sensory Independence Table 6) -->
         <div class="flex-shrink-0">
           <component :is="getIcon(toast.type)" class="w-4 h-4" :class="getIconColor(toast.type)" />
         </div>
@@ -54,13 +54,13 @@ const getIconColor = (type) => {
           </p>
         </div>
 
-        <!-- Close Button -->
+        <!-- Close Button (Min 40x40px hit area) -->
         <button 
           @click="uiStore.removeToast(toast.id)"
-          class="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition-colors cursor-pointer p-1 rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"
+          class="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"
           aria-label="Dismiss Notification"
         >
-          <X class="w-3.5 h-3.5" />
+          <X class="w-4 h-4" />
         </button>
       </div>
     </TransitionGroup>

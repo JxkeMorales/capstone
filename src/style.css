@@ -4,42 +4,83 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --m3-surface-0: #f8fafc;
+    --m3-surface-1: #ffffff;
+    --m3-surface-2: #f1f5f9;
+    --m3-border-1: #e2e8f0;
+    --m3-border-2: #cbd5e1;
+    --m3-on-surface: #0f172a;
+    --m3-on-surface-variant: #64748b;
+    --m3-primary: #0f172a;
+    --m3-on-primary: #ffffff;
+    --m3-primary-tonal: #e2e8f0;
+    --m3-on-primary-tonal: #0f172a;
+  }
+
+  .dark {
+    --m3-surface-0: #121214;
+    --m3-surface-1: #1e1f20;
+    --m3-surface-2: #282a2c;
+    --m3-border-1: #2d3035;
+    --m3-border-2: #383b40;
+    --m3-on-surface: #f8fafc;
+    --m3-on-surface-variant: #94a3b8;
+    --m3-primary: #f8fafc;
+    --m3-on-primary: #0f172a;
+    --m3-primary-tonal: #282a2c;
+    --m3-on-primary-tonal: #f8fafc;
+  }
+
   html, body {
     overflow-x: hidden;
     touch-action: manipulation;
+    min-height: 100dvh;
   }
 
   body {
-    @apply bg-[#edf1f5] text-slate-800 dark:bg-[#121214] dark:text-neutral-100 transition-colors duration-300;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--m3-surface-0);
+    color: var(--m3-on-surface);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
     scrollbar-width: thin;
-    scrollbar-color: theme('colors.slate.300') transparent;
+    scrollbar-color: #cbd5e1 transparent;
   }
 
   .dark body {
-    scrollbar-color: theme('colors.neutral.700') transparent;
+    scrollbar-color: #383b40 transparent;
   }
 
-  /* Sleek Scrollbar Styling */
+  /* Zero-lag scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-neutral-700 rounded-full;
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #383b40;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400 dark:bg-neutral-600;
+    background: #94a3b8;
   }
 
-  /* WCAG 2.1 Level AA: High-Visibility Keyboard Focus Indicators */
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+
+  /* WCAG 2.2 Level AA / Level AAA High-Visibility Keyboard Focus Indicator (2px solid ring) */
   :focus-visible {
     outline: 2px solid #2563eb !important;
     outline-offset: 2px !important;
@@ -48,5 +89,380 @@
   .dark :focus-visible {
     outline: 2px solid #60a5fa !important;
     outline-offset: 2px !important;
+  }
+}
+
+/* ==========================================================================
+   MATERIAL 3 TYPOGRAPHY SCALE (Table 2 - Native System Typography)
+   ========================================================================== */
+.m3-display-large {
+  font-size: 40px;
+  line-height: 1.12;
+  font-weight: 400;
+  letter-spacing: -0.25px;
+}
+@media (min-width: 768px) {
+  .m3-display-large {
+    font-size: 57px;
+  }
+}
+
+.m3-display-medium {
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-display-medium {
+    font-size: 45px;
+  }
+}
+
+.m3-display-small {
+  font-size: 32px;
+  line-height: 1.22;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-display-small {
+    font-size: 36px;
+  }
+}
+
+.m3-headline-large {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-headline-large {
+    font-size: 32px;
+  }
+}
+
+.m3-headline-medium {
+  font-size: 24px;
+  line-height: 1.28;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-headline-medium {
+    font-size: 28px;
+  }
+}
+
+.m3-headline-small {
+  font-size: 22px;
+  line-height: 1.33;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-headline-small {
+    font-size: 24px;
+  }
+}
+
+.m3-title-large {
+  font-size: 20px;
+  line-height: 1.27;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+@media (min-width: 768px) {
+  .m3-title-large {
+    font-size: 22px;
+  }
+}
+
+.m3-title-medium {
+  font-size: 16px;
+  line-height: 1.50;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+}
+
+.m3-title-small {
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 500;
+  letter-spacing: 0.10px;
+}
+
+.m3-body-large {
+  font-size: 16px;
+  line-height: 1.50;
+  font-weight: 400;
+  letter-spacing: 0.50px;
+}
+
+.m3-body-medium {
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 400;
+  letter-spacing: 0.25px;
+}
+
+.m3-body-small {
+  font-size: 12px;
+  line-height: 1.33;
+  font-weight: 400;
+  letter-spacing: 0.40px;
+}
+
+.m3-label-large {
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 500;
+  letter-spacing: 0.10px;
+}
+
+.m3-label-medium {
+  font-size: 12px;
+  line-height: 1.33;
+  font-weight: 500;
+  letter-spacing: 0.50px;
+}
+
+.m3-label-small {
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: 0.50px;
+}
+
+/* ==========================================================================
+   MATERIAL 3 BUTTON ANATOMY & TOUCH TARGETS (Table 3 & Table 6)
+   ========================================================================== */
+.m3-btn-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.m3-btn-filled:has(svg) {
+  padding: 0 16px;
+}
+.m3-btn-filled:hover {
+  background-color: #1e293b;
+}
+.m3-btn-filled:active {
+  transform: scale(0.98);
+}
+.dark .m3-btn-filled {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+.dark .m3-btn-filled:hover {
+  background-color: #e2e8f0;
+}
+
+.m3-btn-tonal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  background-color: #e2e8f0;
+  color: #0f172a;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.m3-btn-tonal:has(svg) {
+  padding: 0 16px;
+}
+.m3-btn-tonal:hover {
+  background-color: #cbd5e1;
+}
+.m3-btn-tonal:active {
+  transform: scale(0.98);
+}
+.dark .m3-btn-tonal {
+  background-color: #282a2c;
+  color: #f8fafc;
+}
+.dark .m3-btn-tonal:hover {
+  background-color: #383b40;
+}
+
+.m3-btn-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  background-color: transparent;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.m3-btn-outlined:has(svg) {
+  padding: 0 16px;
+}
+.m3-btn-outlined:hover {
+  background-color: rgba(15, 23, 42, 0.05);
+}
+.m3-btn-outlined:active {
+  transform: scale(0.98);
+}
+.dark .m3-btn-outlined {
+  color: #f8fafc;
+  border-color: #383b40;
+}
+.dark .m3-btn-outlined:hover {
+  background-color: rgba(248, 250, 252, 0.06);
+}
+
+.m3-btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  background-color: transparent;
+  color: #0f172a;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.m3-btn-text:hover {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+.dark .m3-btn-text {
+  color: #f8fafc;
+}
+.dark .m3-btn-text:hover {
+  background-color: rgba(248, 250, 252, 0.06);
+}
+
+/* FAB - Floating Action Button (Table 3) */
+.m3-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 16px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.m3-fab:hover {
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.m3-fab:active {
+  transform: scale(0.96);
+}
+.dark .m3-fab {
+  background-color: #f8fafc;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.dark .m3-fab:hover {
+  background-color: #e2e8f0;
+}
+
+/* Touch Target Minimum (48x48px WCAG 2.5.5 Level AAA & M3 Standard) */
+.m3-touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   SURFACE CARDS & ELEVATIONS (Table 7 - Zero-Lag GPU Rasterization)
+   ========================================================================== */
+.m3-surface-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+}
+.dark .m3-surface-card {
+  background-color: #1e1f20;
+  border-color: #2d3035;
+}
+
+.m3-surface-modal {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 28px;
+}
+.dark .m3-surface-modal {
+  background-color: #1e1f20;
+  border-color: #383b40;
+}
+
+/* Scrim overlay: strictly flat with zero backdrop-filter blur */
+.m3-scrim-overlay {
+  background-color: rgba(0, 0, 0, 0.38);
+}
+
+/* Safe area padding utilities */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION (Table 6 WCAG 2.3.3)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

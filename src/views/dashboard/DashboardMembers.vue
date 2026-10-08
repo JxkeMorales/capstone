@@ -710,8 +710,8 @@ onUnmounted(() => {
         :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
       >
         <table class="w-full text-left border-collapse text-xs">
-          <!-- Sticky Header -->
-          <thead class="sticky top-0 bg-slate-50 dark:bg-[#1e1f20] border-b border-slate-200 dark:border-neutral-800 z-10 font-semibold text-slate-500 dark:text-neutral-400 text-xs">
+          <!-- Sticky Header (Table 4: 48px Header Height) -->
+          <thead class="sticky top-0 bg-slate-50 dark:bg-[#1e1f20] border-b border-slate-200 dark:border-[#2d3035] z-10 font-semibold text-slate-500 dark:text-neutral-400 text-xs h-12">
             <tr>
               <th scope="col" class="py-3 px-4">Musician</th>
               <th scope="col" class="py-3 px-4">Section / Instrument</th>
@@ -721,16 +721,16 @@ onUnmounted(() => {
               <th v-if="store.isOfficerOrAdmin" scope="col" class="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/80">
+          <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
             <tr 
               v-for="member in sortedRoster" 
               :key="member.id"
-              class="transition-colors hover:bg-slate-50/70 dark:hover:bg-neutral-800/40"
+              class="transition-colors hover:bg-slate-50/70 dark:hover:bg-[#282a2c]/60 min-h-[48px]"
             >
               <!-- Musician Name & Avatar -->
-              <td class="py-3 px-4">
+              <td class="py-3.5 px-4">
                 <div class="flex items-center space-x-3">
-                  <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
+                  <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-[#2d3035] bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
                     <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                     <span v-else>{{ member.avatar }}</span>
                   </div>
@@ -749,49 +749,49 @@ onUnmounted(() => {
               </td>
 
               <!-- Section / Instrument -->
-              <td class="py-3 px-4">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium text-xs capitalize">
-                  <Music class="w-3 h-3 mr-1 text-slate-400" />
+              <td class="py-3.5 px-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 font-medium text-xs capitalize">
+                  <Music class="w-3.5 h-3.5 mr-1 text-slate-400" />
                   {{ member.instrument }}
                 </span>
               </td>
 
               <!-- Unified Position / Leadership Role Badge -->
-              <td class="py-3 px-4">
+              <td class="py-3.5 px-4">
                 <span 
                   v-if="getMemberPositionId(member) === 'super_admin'" 
                   class="inline-flex items-center text-[10px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 px-2.5 py-0.5 rounded-full border border-rose-200/60 dark:border-rose-900/40"
                 >
-                  <ShieldCheck class="w-3 h-3 mr-1" /> Super Admin
+                  <ShieldCheck class="w-3.5 h-3.5 mr-1" /> Super Admin
                 </span>
                 <span 
                   v-else-if="getMemberPositionId(member) !== 'member'" 
                   class="inline-flex items-center text-[10px] font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2.5 py-0.5 rounded-full shadow-xs"
                 >
-                  <Crown class="w-3 h-3 mr-1 text-amber-300" /> {{ getMemberPosition(member).badge }}
+                  <Crown class="w-3.5 h-3.5 mr-1 text-amber-300" /> {{ getMemberPosition(member).badge }}
                 </span>
                 <span 
                   v-else 
-                  class="inline-flex items-center text-[10px] font-normal text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full"
+                  class="inline-flex items-center text-[10px] font-normal text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#2d3035] px-2.5 py-0.5 rounded-full"
                 >
                   Musician
                 </span>
               </td>
 
               <!-- Rank (Officers & Admins Only) -->
-              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4">
+              <td v-if="store.isOfficerOrAdmin" class="py-3.5 px-4">
                 <span 
                   class="text-[10px] font-medium px-2 py-0.5 rounded-full inline-flex items-center"
                   :class="member.rank === 'Senior' 
-                    ? 'bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200' 
+                    ? 'bg-slate-100 dark:bg-[#2d3035] text-slate-800 dark:text-neutral-200' 
                     : 'bg-slate-50 dark:bg-[#18191a] text-slate-500 dark:text-neutral-400'"
                 >
-                  <Award class="w-3 h-3 mr-1 text-slate-400" /> {{ member.rank }}
+                  <Award class="w-3.5 h-3.5 mr-1 text-slate-400" /> {{ member.rank }}
                 </span>
               </td>
 
               <!-- Reliability (Officers & Admins Only) -->
-              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4">
+              <td v-if="store.isOfficerOrAdmin" class="py-3.5 px-4">
                 <div class="flex items-center space-x-1.5">
                   <span 
                     class="w-2 h-2 rounded-full flex-shrink-0"
@@ -804,13 +804,13 @@ onUnmounted(() => {
               </td>
 
               <!-- Actions (Officers & Admins Only) -->
-              <td v-if="store.isOfficerOrAdmin" class="py-3 px-4 text-right">
+              <td v-if="store.isOfficerOrAdmin" class="py-3.5 px-4 text-right">
                 <div class="flex items-center justify-end space-x-1.5">
                   <!-- View Availability -->
                   <button 
                     @click="openAvailabilityView(member)"
                     type="button"
-                    class="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
+                    class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2d3035] rounded-full transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center"
                     title="View Weekly Availability"
                   >
                     <Calendar class="w-4 h-4" />
@@ -821,9 +821,9 @@ onUnmounted(() => {
                     v-if="store.isSuperAdmin"
                     @click="openManageModal(member)"
                     type="button"
-                    class="px-3 py-1 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center transition-all cursor-pointer min-h-[30px]"
+                    class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center transition-all cursor-pointer min-h-[36px]"
                   >
-                    <Settings class="w-3 h-3 mr-1" /> Manage
+                    <Settings class="w-3.5 h-3.5 mr-1" /> Manage
                   </button>
                 </div>
               </td>
@@ -846,12 +846,12 @@ onUnmounted(() => {
         <div 
           v-for="member in sortedRoster" 
           :key="member.id"
-          class="bg-white dark:bg-[#202124] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 space-y-3"
+          class="bg-white dark:bg-[#1e1f20] rounded-3xl p-4 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
         >
           <!-- Top Row: Musician Identity -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
+              <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-[#2d3035] bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs">
                 <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
@@ -875,7 +875,7 @@ onUnmounted(() => {
 
             <!-- Rank & Reliability: Officers & Admins Only -->
             <div v-if="store.isOfficerOrAdmin" class="text-right shrink-0">
-              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400">
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-600 dark:text-neutral-400">
                 {{ member.rank }}
               </span>
               <p class="text-[11px] font-medium text-slate-700 dark:text-neutral-300 mt-1">{{ member.reliability }}%</p>
@@ -883,41 +883,41 @@ onUnmounted(() => {
           </div>
 
           <!-- Bottom Actions Bar (Officers & Admins Only) -->
-          <div v-if="store.isOfficerOrAdmin" class="pt-2.5 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between">
+          <div v-if="store.isOfficerOrAdmin" class="pt-2.5 border-t border-slate-100 dark:border-[#2d3035] flex items-center justify-between">
             <button 
               @click="openAvailabilityView(member)"
               type="button"
-              class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[32px]"
+              class="text-xs font-medium text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white flex items-center cursor-pointer min-h-[44px] px-2"
             >
-              <Calendar class="w-3.5 h-3.5 mr-1" /> Availability
+              <Calendar class="w-4 h-4 mr-1.5" /> Availability
             </button>
 
             <button 
               v-if="store.isSuperAdmin"
               @click="openManageModal(member)"
               type="button"
-              class="px-3 py-1 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center cursor-pointer min-h-[30px]"
+              class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs flex items-center cursor-pointer min-h-[44px]"
             >
-              <Settings class="w-3 h-3 mr-1" /> Manage
+              <Settings class="w-3.5 h-3.5 mr-1.5" /> Manage
             </button>
           </div>
         </div>
 
-        <div v-if="sortedRoster.length === 0" class="bg-white dark:bg-[#202124] rounded-3xl p-8 text-center border border-slate-200 dark:border-neutral-800">
+        <div v-if="sortedRoster.length === 0" class="bg-white dark:bg-[#1e1f20] rounded-3xl p-8 text-center border border-slate-200 dark:border-[#2d3035]">
           <Users class="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
           <p class="text-xs font-medium text-slate-500">No musicians match your search or filter.</p>
         </div>
       </div>
     </section>
 
-    <!-- 5. ALL-IN-ONE MUSICIAN MANAGEMENT MODAL (SUPER ADMIN ONLY) -->
-    <div v-if="showManageModal && editingMember" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <!-- 5. ALL-IN-ONE MUSICIAN MANAGEMENT MODAL (SUPER ADMIN ONLY) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showManageModal && editingMember" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header with Musician Info -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
           <div class="flex items-center space-x-3 min-w-0 pr-2">
-            <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-sm shrink-0">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300 flex items-center justify-center font-bold text-sm shrink-0">
               <img v-if="editingMember.profile_picture" :src="editingMember.profile_picture" :alt="editingMember.name" class="w-full h-full object-cover" />
               <span v-else>{{ editingMember.avatar }}</span>
             </div>
@@ -926,8 +926,8 @@ onUnmounted(() => {
               <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">{{ editingMember.name }}</h3>
             </div>
           </div>
-          <button @click="showManageModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
-            <X class="w-4 h-4" />
+          <button @click="showManageModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d3035]" aria-label="Close modal">
+            <X class="w-5 h-5" />
           </button>
         </div>
 
@@ -941,7 +941,7 @@ onUnmounted(() => {
             </label>
             <select 
               v-model="managePositionId"
-              class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+              class="w-full p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 cursor-pointer"
             >
               <option v-for="pos in POSITIONS" :key="pos.id" :value="pos.id">
                 {{ pos.label }}
@@ -959,7 +959,7 @@ onUnmounted(() => {
             </label>
             <select 
               v-model="manageInstrument"
-              class="w-full p-2.5 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-neutral-800 rounded-xl text-xs text-slate-900 dark:text-white min-h-[42px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600"
+              class="w-full p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 cursor-pointer"
             >
               <option v-for="sec in instrumentList" :key="sec" :value="sec">{{ sec }}</option>
             </select>
@@ -974,20 +974,20 @@ onUnmounted(() => {
               <button 
                 type="button" 
                 @click="manageRank = 'Junior'"
-                class="py-2 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[38px]"
+                class="py-2.5 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
                 :class="manageRank === 'Junior' 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs' 
-                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-800'"
+                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-[#2d3035]'"
               >
                 Junior Rank
               </button>
               <button 
                 type="button" 
                 @click="manageRank = 'Senior'"
-                class="py-2 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[38px]"
+                class="py-2.5 px-3 rounded-full border text-xs font-medium transition-all flex items-center justify-center cursor-pointer min-h-[44px]"
                 :class="manageRank === 'Senior' 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs' 
-                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-800'"
+                  : 'bg-slate-50 dark:bg-[#18191a] text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-[#2d3035]'"
               >
                 Senior Rank
               </button>
@@ -995,7 +995,7 @@ onUnmounted(() => {
           </div>
 
           <!-- DANGER ZONE: DELETE ACCOUNT -->
-          <div v-if="editingMember.role !== 'super_admin' && editingMember.id !== store.user?.id" class="pt-3 border-t border-slate-100 dark:border-neutral-800">
+          <div v-if="editingMember.role !== 'super_admin' && editingMember.id !== store.user?.id" class="pt-3 border-t border-slate-100 dark:border-[#2d3035]">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-medium text-rose-600 dark:text-rose-400">Account Deletion</p>
@@ -1004,7 +1004,7 @@ onUnmounted(() => {
               <button 
                 @click="promptDeleteMember(editingMember)"
                 type="button"
-                class="px-3 py-1.5 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-medium text-xs rounded-full cursor-pointer min-h-[34px]"
+                class="px-4 py-2 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-medium text-xs rounded-full cursor-pointer min-h-[40px]"
               >
                 Delete Account
               </button>
@@ -1014,11 +1014,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
+        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-[#2d3035]">
           <button 
             @click="showManageModal = false" 
             type="button" 
-            class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 min-h-[40px] cursor-pointer"
+            class="flex-1 py-2.5 border border-slate-200 dark:border-[#2d3035] font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-[#2d3035] min-h-[48px] cursor-pointer"
           >
             Cancel
           </button>
@@ -1026,7 +1026,7 @@ onUnmounted(() => {
             @click="saveMemberManagement" 
             :disabled="isSavingManage"
             type="button" 
-            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[40px] cursor-pointer disabled:opacity-50"
+            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 font-semibold text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[48px] cursor-pointer disabled:opacity-50"
           >
             {{ isSavingManage ? 'Saving...' : 'Save Changes' }}
           </button>
@@ -1035,16 +1035,16 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 6. MEMBER AVAILABILITY MODAL -->
-    <div v-if="showAvailabilityModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
+    <!-- 6. MEMBER AVAILABILITY MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showAvailabilityModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
           <div>
             <span class="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Availability Overview</span>
             <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">{{ selectedMemberForAvailability?.name }}</h3>
           </div>
-          <button @click="showAvailabilityModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800">
-            <X class="w-4 h-4" />
+          <button @click="showAvailabilityModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d3035]" aria-label="Close modal">
+            <X class="w-5 h-5" />
           </button>
         </div>
 
@@ -1061,7 +1061,7 @@ onUnmounted(() => {
             <span 
               v-for="slot in memberAvailabilitySlots" 
               :key="slot" 
-              class="text-xs font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/40"
+              class="text-xs font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40"
             >
               ✓ {{ slot }}
             </span>
@@ -1079,7 +1079,7 @@ onUnmounted(() => {
           <button 
             @click="showAvailabilityModal = false" 
             type="button" 
-            class="w-full py-2.5 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 font-medium text-xs rounded-full text-slate-700 dark:text-neutral-300 cursor-pointer min-h-[40px]"
+            class="w-full py-2.5 bg-slate-100 dark:bg-[#2d3035] hover:bg-slate-200 dark:hover:bg-[#383a3d] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-200 cursor-pointer min-h-[48px]"
           >
             Close
           </button>
@@ -1087,11 +1087,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 7. SUPER ADMIN DELETE CONFIRMATION MODAL -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
-          <AlertCircle class="w-5 h-5" />
+    <!-- 7. SUPER ADMIN DELETE CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <AlertCircle class="w-6 h-6" />
         </div>
         
         <div>
@@ -1105,14 +1105,14 @@ onUnmounted(() => {
           <button 
             @click="showDeleteModal = false; confirmDeleteTarget = null" 
             type="button" 
-            class="flex-1 py-2.5 border border-slate-200 dark:border-neutral-700 font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 min-h-[40px] cursor-pointer"
+            class="flex-1 py-2.5 border border-slate-200 dark:border-[#2d3035] font-medium text-xs rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-[#2d3035] min-h-[48px] cursor-pointer"
           >
             Cancel
           </button>
           <button 
             @click="executeDeleteMember" 
             type="button" 
-            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[40px] cursor-pointer"
+            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 font-semibold text-xs text-white rounded-full shadow-xs min-h-[48px] cursor-pointer"
           >
             Delete
           </button>

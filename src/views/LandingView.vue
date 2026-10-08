@@ -303,8 +303,8 @@ const handleTouchEnd = (e) => {
 <template>
   <div class="min-h-screen bg-[#f8f9fa] dark:bg-[#18191a] text-slate-900 dark:text-neutral-100 selection:bg-slate-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-slate-900 font-sans overflow-x-hidden transition-colors duration-300">
     
-    <!-- Navigation Bar (Clean Minimal Google Workspace Style) -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#f8f9fa]/90 dark:bg-[#18191a]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-neutral-800/80 transition-colors duration-300">
+    <!-- Navigation Bar (Clean M3 Top App Bar, Flat Surface) -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-200 dark:border-[#2d3035] transition-colors">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">
@@ -315,20 +315,21 @@ const handleTouchEnd = (e) => {
             <span class="text-[10px] text-slate-500 dark:text-neutral-400 font-medium">Municipal Band 1870</span>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1 sm:space-x-2">
           <button 
             @click="toggleTheme" 
             title="Toggle theme"
             type="button"
-            class="p-2 rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
+            class="min-w-[48px] min-h-[48px] rounded-full text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center"
+            :aria-label="!isDark ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
           >
-            <Sun v-if="!isDark" class="w-4 h-4 text-slate-700" />
-            <Moon v-else class="w-4 h-4 text-neutral-300" />
+            <Sun v-if="!isDark" class="w-5 h-5 text-slate-700" />
+            <Moon v-else class="w-5 h-5 text-neutral-300" />
           </button>
           <button 
             @click="goToLogin" 
             type="button"
-            class="text-xs sm:text-sm font-medium bg-slate-900 hover:bg-slate-800 dark:bg-neutral-100 dark:hover:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-full transition-all cursor-pointer shadow-xs min-h-[38px] flex items-center"
+            class="m3-btn-filled"
           >
             Member Login
           </button>
@@ -338,20 +339,20 @@ const handleTouchEnd = (e) => {
 
     <!-- Hero Section -->
     <main class="relative pt-28 pb-16 sm:pt-36 sm:pb-20 overflow-hidden flex items-center">
-      <!-- Background Image with Soft Dimmed Overlays -->
+      <!-- Background Image with Soft Flat Overlays -->
       <div class="absolute inset-0 z-0">
         <img 
           src="/hero-band.jpg" 
           alt="Municipal Band Performance" 
           class="w-full h-full object-cover object-center opacity-15 dark:opacity-20" 
         />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#f8f9fa] via-[#f8f9fa]/90 dark:from-[#18191a] dark:via-[#18191a]/90 to-transparent transition-colors duration-300"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-[#f8f9fa] via-[#f8f9fa]/80 dark:from-[#18191a] dark:via-[#18191a]/80 to-transparent transition-colors duration-300"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 dark:from-[#121214] dark:via-[#121214]/90 to-transparent transition-colors"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 dark:from-[#121214] dark:via-[#121214]/80 to-transparent transition-colors"></div>
       </div>
 
       <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 w-full">
         <div class="max-w-2xl">
-          <div class="inline-flex items-center space-x-2 bg-slate-200/70 dark:bg-neutral-800/80 border border-slate-300/60 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 px-3 py-1 rounded-full text-xs font-medium mb-4">
+          <div class="inline-flex items-center space-x-2 bg-slate-200/70 dark:bg-neutral-800/80 border border-slate-300/60 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 px-3.5 py-1 rounded-full text-xs font-medium mb-4">
             <span class="w-1.5 h-1.5 rounded-full bg-slate-500 dark:bg-neutral-400"></span>
             <span>Band 1870 Portal</span>
           </div>
@@ -360,7 +361,7 @@ const handleTouchEnd = (e) => {
             Peñaranda marching band 1870.
           </h1>
           
-          <p class="text-sm sm:text-base text-slate-600 dark:text-neutral-400 leading-relaxed font-normal mb-6 max-w-xl">
+          <p class="m3-body-large text-slate-600 dark:text-neutral-400 leading-relaxed font-normal mb-6 max-w-xl">
             The official portal for municipal band musicians. Synchronize rehearsal schedules, gig call-times, and performance reliability scores across the entire ensemble.
           </p>
 
@@ -368,13 +369,13 @@ const handleTouchEnd = (e) => {
             <button 
               @click="goToLogin" 
               type="button"
-              class="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-neutral-100 text-sm font-medium transition-all shadow-xs cursor-pointer min-h-[42px] flex items-center"
+              class="m3-btn-filled text-sm"
             >
               Sign In to Portal
             </button>
             <a 
               href="#officers" 
-              class="px-5 py-2.5 rounded-full bg-transparent hover:bg-slate-200/60 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-300 dark:border-neutral-700 text-sm font-medium transition-all cursor-pointer min-h-[42px] flex items-center"
+              class="m3-btn-outlined text-sm"
             >
               View Officers
             </a>
@@ -384,7 +385,7 @@ const handleTouchEnd = (e) => {
     </main>
 
     <!-- Officers Section (Clean Material 3 Card Showcase) -->
-    <section id="officers" class="scroll-mt-20 py-12 sm:py-16 relative z-10 border-t border-slate-200 dark:border-neutral-800/80 transition-colors duration-300">
+    <section id="officers" class="scroll-mt-20 py-12 sm:py-16 relative z-10 border-t border-slate-200 dark:border-[#2d3035] transition-colors">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         
         <!-- Clean Section Header -->
@@ -392,7 +393,7 @@ const handleTouchEnd = (e) => {
           <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             Band Officers
           </h2>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-1">
+          <p class="m3-body-small text-slate-500 dark:text-neutral-400 mt-1">
             Executive leadership and section coordinators of Peñaranda Band 1870.
           </p>
         </div>
@@ -409,13 +410,13 @@ const handleTouchEnd = (e) => {
               class="relative w-full flex items-center justify-center min-h-[380px] sm:min-h-[420px] overflow-hidden py-2 select-none"
             >
               
-              <!-- Previous Button -->
+              <!-- Previous Button (Min 48x48px hit target) -->
               <button 
                 @click="prevOfficer"
                 type="button"
                 title="Previous Officer"
                 aria-label="Previous Officer"
-                class="absolute left-1 sm:left-2 z-30 w-10 h-10 rounded-full bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-200 flex items-center justify-center shadow-md hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all cursor-pointer"
+                class="absolute left-1 sm:left-2 z-30 min-w-[48px] min-h-[48px] rounded-full bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-200 flex items-center justify-center shadow-md hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all cursor-pointer"
               >
                 <ChevronLeft class="w-5 h-5" />
               </button>
@@ -446,7 +447,7 @@ const handleTouchEnd = (e) => {
 
                 <!-- ACTIVE SELECTED CARD -->
                 <div 
-                  class="relative w-64 sm:w-72 md:w-80 h-[380px] sm:h-[400px] md:h-[420px] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 transform scale-100 z-20 border border-slate-300/80 dark:border-neutral-700 bg-slate-900 group"
+                  class="relative w-64 sm:w-72 md:w-80 h-[380px] sm:h-[400px] md:h-[420px] rounded-3xl overflow-hidden shadow-lg transition-all duration-300 transform scale-100 z-20 border border-slate-300/80 dark:border-neutral-700 bg-slate-900 group"
                 >
                   <img 
                     v-if="currentOfficer.image"
@@ -462,9 +463,9 @@ const handleTouchEnd = (e) => {
                   
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent pointer-events-none"></div>
 
-                  <!-- Role Pill on Image -->
+                  <!-- Role Pill on Image (Zero Blur Flat Surface) -->
                   <div class="absolute top-3 left-3 z-10">
-                    <span class="px-2.5 py-1 text-[11px] font-semibold tracking-wide bg-slate-900/80 backdrop-blur-md text-white rounded-lg border border-white/10">
+                    <span class="px-2.5 py-1 text-[11px] font-semibold tracking-wide bg-slate-900/90 text-white rounded-lg border border-white/10">
                       {{ currentOfficer.role }}
                     </span>
                   </div>
@@ -504,19 +505,19 @@ const handleTouchEnd = (e) => {
 
               </div>
 
-              <!-- Next Button -->
+              <!-- Next Button (Min 48x48px hit target) -->
               <button 
                 @click="nextOfficer"
                 type="button"
                 title="Next Officer"
                 aria-label="Next Officer"
-                class="absolute right-1 sm:right-2 z-30 w-10 h-10 rounded-full bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-200 flex items-center justify-center shadow-md hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all cursor-pointer"
+                class="absolute right-1 sm:right-2 z-30 min-w-[48px] min-h-[48px] rounded-full bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-200 flex items-center justify-center shadow-md hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all cursor-pointer"
               >
                 <ChevronRight class="w-5 h-5" />
               </button>
             </div>
 
-            <!-- CLEAN AVATAR SELECTOR STRIP (No arrows, clean Google-style rounded pills) -->
+            <!-- CLEAN AVATAR SELECTOR STRIP -->
             <div class="w-full max-w-xl mt-4 bg-white dark:bg-[#1f2023] p-2 sm:p-2.5 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-xs">
               <div 
                 ref="avatarScrollContainer"
@@ -529,7 +530,7 @@ const handleTouchEnd = (e) => {
                   :ref="el => setAvatarRef(el, idx)"
                   @click="selectOfficer(idx)"
                   type="button"
-                  class="group flex flex-col items-center shrink-0 snap-center transition-all duration-200 cursor-pointer focus:outline-none min-w-[56px] sm:min-w-0 sm:flex-1 py-1 rounded-xl"
+                  class="group flex flex-col items-center shrink-0 snap-center transition-all duration-200 cursor-pointer focus:outline-none min-w-[56px] min-h-[48px] sm:min-w-0 sm:flex-1 py-1 rounded-xl"
                   :class="selectedIndex === idx ? 'bg-slate-100 dark:bg-neutral-800' : 'opacity-70 hover:opacity-100'"
                 >
                   <div class="relative w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center">
@@ -569,7 +570,7 @@ const handleTouchEnd = (e) => {
 
           <!-- RIGHT: Officer Details Card (Google Material 3 Info Surface) -->
           <div class="lg:col-span-6 xl:col-span-5 w-full">
-            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1f2023] border border-slate-200 dark:border-neutral-800 shadow-xs relative transition-all duration-300">
+            <div class="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#1f2023] border border-slate-200 dark:border-neutral-800 shadow-xs relative transition-all duration-300">
               
               <!-- Clean Position Badge -->
               <div class="mb-4">
@@ -591,7 +592,7 @@ const handleTouchEnd = (e) => {
               <div v-else class="mb-5"></div>
 
               <!-- Official Duty Box -->
-              <div class="p-4 rounded-xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/70 dark:border-neutral-800 text-xs sm:text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-normal">
+              <div class="p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/70 dark:border-neutral-800 text-xs sm:text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-normal">
                 <p class="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 mb-1 uppercase tracking-wider">Duties & Responsibilities</p>
                 <p v-if="currentOfficer.responsibility" class="text-slate-800 dark:text-neutral-200">{{ currentOfficer.responsibility }}</p>
                 <p v-else class="text-slate-400 dark:text-neutral-500 italic">No specific operational duties assigned yet.</p>
