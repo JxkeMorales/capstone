@@ -1339,59 +1339,61 @@ onUnmounted(() => {
     </Transition>
 
     <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSettingsDrawer" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left">
+    <div v-if="showSettingsDrawer" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left">
         
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
-          <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
-            <Bell class="w-4 h-4" />
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Settings & Notifications</h3>
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
+          <div class="flex items-center space-x-2">
+            <Bell class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
+            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Settings &amp; Notifications</h3>
           </div>
-          <button @click="showSettingsDrawer = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer" aria-label="Close Settings"><X class="w-4 h-4" /></button>
+          <button @click="showSettingsDrawer = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close Settings">
+            <X class="w-5 h-5" />
+          </button>
         </div>
 
         <div class="space-y-2.5">
           <!-- Network Sync Badge -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035]">
-            <div class="flex items-center space-x-2">
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40">
+            <div class="flex items-center space-x-2.5">
               <Wifi v-if="isOnline" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <WifiOff v-else class="w-4 h-4 text-rose-500" />
-              <span class="text-xs font-medium text-slate-800 dark:text-neutral-200">{{ isOnline ? 'Online Sync Active' : 'Offline Mode' }}</span>
+              <WifiOff v-else class="w-4 h-4 text-[var(--md-error)]" />
+              <span class="text-xs font-semibold text-[var(--md-on-surface)]">{{ isOnline ? 'Online Sync Active' : 'Offline Mode' }}</span>
             </div>
-            <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+            <span class="w-2.5 h-2.5 rounded-full" :class="isOnline ? 'bg-emerald-500' : 'bg-[var(--md-error)]'"></span>
           </div>
 
           <!-- Device Push Notifications Row -->
-          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035] space-y-2">
-            <div class="flex items-center justify-between">
+          <div class="p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
               <div>
-                <p class="font-semibold text-xs text-slate-900 dark:text-white">Device Push Notifications</p>
-                <p class="text-[10px] text-slate-500 dark:text-neutral-400">
+                <p class="font-bold text-xs text-[var(--md-on-surface)]">Device Push Notifications</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]">
                   Alerts when app is closed (Phone / PC)
                 </p>
               </div>
-              <div v-if="notificationPermission === 'granted'" class="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-medium text-[11px]">
-                <Check class="w-3 h-3" />
+              <div v-if="notificationPermission === 'granted'" class="m3-chip m3-chip-info h-7 px-3 text-[11px] font-semibold shrink-0">
+                <Check class="w-3.5 h-3.5" />
                 <span>Active</span>
               </div>
               <button 
                 v-else
-                @click="requestNotificationPermission"
-                type="button"
-                class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full cursor-pointer min-h-[36px]"
+                @click="requestNotificationPermission" 
+                type="button" 
+                class="m3-btn-filled min-h-[44px] text-xs font-semibold px-4 cursor-pointer shrink-0"
               >
                 Turn On
               </button>
             </div>
             
             <!-- Test Push Button when permission is granted -->
-            <div v-if="notificationPermission === 'granted'" class="pt-1.5 border-t border-slate-200/60 dark:border-[#2d3035] flex items-center justify-between">
-              <span class="text-[10px] text-slate-500 dark:text-neutral-400">Test background delivery:</span>
+            <div v-if="notificationPermission === 'granted'" class="pt-2 border-t border-[var(--md-outline-variant)]/20 flex items-center justify-between">
+              <span class="text-[11px] text-[var(--md-on-surface-variant)]">Test background delivery:</span>
               <button 
                 @click="testBackgroundPush" 
-                :disabled="isTestingPush"
-                type="button"
-                class="px-2.5 py-1 text-[11px] bg-slate-200/80 hover:bg-slate-300 dark:bg-[#282a2c] dark:hover:bg-[#383b40] text-slate-800 dark:text-neutral-200 rounded-lg cursor-pointer font-medium disabled:opacity-50 min-h-[32px]"
+                :disabled="isTestingPush" 
+                type="button" 
+                class="m3-btn-tonal min-h-[38px] text-xs font-medium px-3.5 cursor-pointer disabled:opacity-50"
               >
                 {{ isTestingPush ? 'Sending...' : 'Send Test Push' }}
               </button>
@@ -1399,26 +1401,26 @@ onUnmounted(() => {
           </div>
 
           <!-- Audible Alarms Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035]">
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40">
             <div>
-              <p class="font-semibold text-xs text-slate-900 dark:text-white">Call-Time Alarm</p>
-              <p class="text-[10px] text-slate-500 dark:text-neutral-400">Audible call-time alert</p>
+              <p class="font-bold text-xs text-[var(--md-on-surface)]">Call-Time Alarm</p>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">Audible call-time reminder</p>
             </div>
-            <div class="flex items-center space-x-1.5">
+            <div class="flex items-center space-x-2 shrink-0">
               <button 
                 @click="testAlarmTone" 
-                type="button"
-                class="p-2 bg-slate-200/80 dark:bg-[#282a2c] hover:bg-slate-300 dark:hover:bg-[#383b40] text-slate-700 dark:text-neutral-300 rounded-full cursor-pointer transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-                title="Test Alarm"
+                type="button" 
+                class="min-w-[44px] min-h-[44px] rounded-full bg-[var(--md-surface-container-high)] hover:bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/40 transition-colors flex items-center justify-center cursor-pointer"
+                title="Test Alarm Chime"
                 aria-label="Test Alarm Chime"
               >
-                <Volume2 class="w-3.5 h-3.5" />
+                <Volume2 class="w-4 h-4" />
               </button>
               <button 
                 @click="toggleAlarms" 
-                type="button"
-                class="px-3 py-1.5 font-medium text-xs rounded-full cursor-pointer min-h-[36px] transition-colors"
-                :class="enableAlarms ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300'"
+                type="button" 
+                class="min-h-[44px] px-4 font-semibold text-xs rounded-full cursor-pointer transition-colors"
+                :class="enableAlarms ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)] shadow-xs' : 'bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface-variant)]'"
               >
                 {{ enableAlarms ? 'Enabled' : 'Disabled' }}
               </button>
@@ -1426,15 +1428,15 @@ onUnmounted(() => {
           </div>
 
           <!-- PWA Install Status in Drawer -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035]">
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40">
             <div>
-              <p class="font-semibold text-xs text-slate-900 dark:text-white">App Installation</p>
-              <p class="text-[10px] text-slate-500 dark:text-neutral-400">
+              <p class="font-bold text-xs text-[var(--md-on-surface)]">App Installation</p>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">
                 {{ isAppInstalled ? 'Installed on device' : 'Install for offline launch' }}
               </p>
             </div>
             
-            <div v-if="isAppInstalled" class="flex items-center space-x-1 px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-medium text-xs">
+            <div v-if="isAppInstalled" class="m3-chip m3-chip-info h-7 px-3 text-[11px] font-semibold shrink-0">
               <Check class="w-3.5 h-3.5" />
               <span>Installed</span>
             </div>
@@ -1442,58 +1444,58 @@ onUnmounted(() => {
             <button 
               v-else
               @click="handleInstallPWA" 
-              type="button"
-              class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full cursor-pointer min-h-[36px]"
+              type="button" 
+              class="m3-btn-filled min-h-[44px] text-xs font-semibold px-4 cursor-pointer shrink-0"
             >
               Install
             </button>
           </div>
 
           <!-- In-App Banners Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035]">
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40">
             <div>
-              <p class="font-semibold text-xs text-slate-900 dark:text-white">In-App Banners</p>
-              <p class="text-[10px] text-slate-500 dark:text-neutral-400">Visual reminders & chimes</p>
+              <p class="font-bold text-xs text-[var(--md-on-surface)]">In-App Banners</p>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">Visual reminders &amp; chimes</p>
             </div>
             <button 
               @click="toggleBanners" 
-              type="button"
-              class="px-3 py-1.5 font-medium text-xs rounded-full cursor-pointer min-h-[36px] transition-colors"
-              :class="enableBanners ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-200 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300'"
+              type="button" 
+              class="min-h-[44px] px-4 font-semibold text-xs rounded-full cursor-pointer transition-colors shrink-0"
+              :class="enableBanners ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)] shadow-xs' : 'bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface-variant)]'"
             >
               {{ enableBanners ? 'Enabled' : 'Disabled' }}
             </button>
           </div>
 
           <!-- Theme Mode Toggle -->
-          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035]">
-            <div class="flex items-center space-x-1.5">
-              <Sun v-if="isDark" class="w-4 h-4 text-slate-400" />
-              <Moon v-else class="w-4 h-4 text-slate-700" />
-              <span class="text-xs font-medium text-slate-800 dark:text-neutral-200">Theme</span>
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40">
+            <div class="flex items-center space-x-2">
+              <Sun v-if="isDark" class="w-4 h-4 text-[var(--md-tertiary)]" />
+              <Moon v-else class="w-4 h-4 text-[var(--md-on-surface)]" />
+              <span class="text-xs font-semibold text-[var(--md-on-surface)]">Theme Mode</span>
             </div>
             <button 
               @click="toggleTheme" 
-              type="button"
-              class="px-3 py-1.5 bg-slate-200 dark:bg-[#282a2c] text-slate-800 dark:text-neutral-200 font-medium text-xs rounded-full cursor-pointer min-h-[36px]"
+              type="button" 
+              class="min-h-[44px] px-4 font-semibold text-xs rounded-full cursor-pointer transition-colors bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface)] hover:bg-[var(--md-outline-variant)]/30 shrink-0"
             >
-              {{ isDark ? 'Dark' : 'Light' }}
+              {{ isDark ? 'Dark Theme' : 'Light Theme' }}
             </button>
           </div>
 
           <!-- View Terms & Conditions -->
           <button 
             @click="showTermsModal = true" 
-            type="button"
-            class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#282a2c]/60 border border-slate-200/60 dark:border-[#2d3035] text-xs font-medium text-slate-700 dark:text-neutral-300 min-h-[44px] cursor-pointer"
+            type="button" 
+            class="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[var(--md-surface-container)] hover:bg-[var(--md-surface-container-highest)] border border-[var(--md-outline-variant)]/40 text-xs font-semibold text-[var(--md-on-surface)] min-h-[48px] cursor-pointer transition-colors"
           >
-            <span class="flex items-center"><FileText class="w-4 h-4 mr-2 text-slate-500" /> View Terms & Conditions</span>
-            <span class="text-slate-400">→</span>
+            <span class="flex items-center"><FileText class="w-4 h-4 mr-2 text-[var(--md-outline)]" /> View Terms &amp; Conditions</span>
+            <span class="text-[var(--md-on-surface-variant)] font-bold">→</span>
           </button>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-[#2d3035] pb-1 flex justify-end">
-          <button @click="showSettingsDrawer = false" type="button" class="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full min-h-[44px] cursor-pointer">
+        <div class="pt-3 border-t border-[var(--md-outline-variant)]/30 pb-1 flex justify-end">
+          <button @click="showSettingsDrawer = false" type="button" class="m3-btn-tonal min-h-[48px] text-xs font-semibold px-6 w-full sm:w-auto cursor-pointer">
             Close
           </button>
         </div>
@@ -1502,45 +1504,47 @@ onUnmounted(() => {
     </div>
 
     <!-- TERMS & CONDITIONS MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showTermsModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-left max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
-          <div class="flex items-center space-x-2 text-slate-800 dark:text-neutral-200">
-            <FileText class="w-4 h-4" />
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Terms & Conditions</h3>
+    <div v-if="showTermsModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
+          <div class="flex items-center space-x-2">
+            <FileText class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
+            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Terms &amp; Conditions</h3>
           </div>
-          <button @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer" aria-label="Close Terms"><X class="w-4 h-4" /></button>
+          <button @click="showTermsModal = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close Terms">
+            <X class="w-5 h-5" />
+          </button>
         </div>
 
-        <div class="overflow-y-auto flex-1 text-xs text-slate-600 dark:text-neutral-300 space-y-3.5 pr-2 leading-relaxed font-normal">
+        <div class="overflow-y-auto flex-1 text-xs text-[var(--md-on-surface-variant)] space-y-3.5 pr-2 leading-relaxed font-normal">
           <div>
-            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 1: Master List Verification Requirement</h4>
+            <h4 class="font-bold text-[var(--md-on-surface)] text-xs mb-1">Article 1: Master List Verification Requirement</h4>
             <p>All sign-ups are provisional until physically verified by the IT Super Admin against the official municipal band registry.</p>
           </div>
 
           <div>
-            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 2: Attendance & RSVP Reliability Scoring</h4>
-            <p>RSVPing "I Will Attend" creates an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%).</p>
+            <h4 class="font-bold text-[var(--md-on-surface)] text-xs mb-1">Article 2: Attendance Confirmation Reliability Scoring</h4>
+            <p>Confirming attendance creates an operational commitment for gig planning. Unexcused absences or sudden cancellations directly impact your personal Reliability Score (%).</p>
           </div>
 
           <div>
-            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 3: Call-Time Punctuality & Alert Protocols</h4>
-            <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and concerts. The in-app 10–15m call-time alarms serve as operational notifications.</p>
+            <h4 class="font-bold text-[var(--md-on-surface)] text-xs mb-1">Article 3: Call-Time Punctuality &amp; Alert Protocols</h4>
+            <p>Musicians must adhere to designated call times for rehearsals, parades, funeral services, and concerts. The in-app call-time alarms serve as operational notifications.</p>
           </div>
 
           <div>
-            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 4: Band Property & Instrument Care</h4>
+            <h4 class="font-bold text-[var(--md-on-surface)] text-xs mb-1">Article 4: Band Property &amp; Instrument Care</h4>
             <p>Members issued municipal band instruments, uniforms, or sheet music folios are strictly responsible for their maintenance, safekeeping, and prompt return upon request.</p>
           </div>
 
           <div>
-            <h4 class="font-semibold text-slate-900 dark:text-white text-xs">Article 5: Data Privacy & Security</h4>
+            <h4 class="font-bold text-[var(--md-on-surface)] text-xs mb-1">Article 5: Data Privacy &amp; Security</h4>
             <p>Member contact numbers and personal birth dates are protected under Row Level Security (RLS) and will never be exposed to public directory views.</p>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 dark:border-[#2d3035]">
-          <button @click="showTermsModal = false" type="button" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full shadow-xs min-h-[44px] cursor-pointer transition-colors">
+        <div class="pt-3 border-t border-[var(--md-outline-variant)]/30">
+          <button @click="showTermsModal = false" type="button" class="m3-btn-tonal w-full min-h-[48px] text-xs font-semibold cursor-pointer">
             Close
           </button>
         </div>
@@ -1548,170 +1552,170 @@ onUnmounted(() => {
     </div>
 
     <!-- COMPREHENSIVE ROLE & OPERATIONAL USER GUIDE MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showRoleGuideModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <div v-if="showRoleGuideModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
           <div class="flex items-center space-x-2.5">
-            <div class="p-2 rounded-full bg-slate-100 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300">
+            <div class="p-2 rounded-full bg-[var(--md-surface-container)] text-[var(--md-on-surface)]">
               <BookOpen class="w-4 h-4" />
             </div>
             <div>
-              <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">SmartBand User & Role Guide</h3>
-              <p class="text-[11px] text-slate-500 dark:text-neutral-400">Operational responsibilities, turnout rules, and quick manuals</p>
+              <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">SmartBand User &amp; Role Guide</h3>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">Operational responsibilities, turnout rules, and quick manuals</p>
             </div>
           </div>
-          <button @click="showRoleGuideModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer" aria-label="Close Guide">
+          <button @click="showRoleGuideModal = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close Guide">
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <!-- Navigation Tabs -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#282a2c] rounded-full text-xs font-medium shrink-0">
+        <!-- Navigation Tabs (M3 Segmented Button) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 text-xs font-medium shrink-0">
           <button 
             @click="activeGuideTab = 'roles'"
             type="button"
-            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'roles' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+            :class="activeGuideTab === 'roles' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Role Powers
           </button>
           <button 
             @click="activeGuideTab = 'attendance'"
             type="button"
-            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'attendance' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+            :class="activeGuideTab === 'attendance' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Turnout Math
           </button>
           <button 
             @click="activeGuideTab = 'availability'"
             type="button"
-            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'availability' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+            :class="activeGuideTab === 'availability' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Availability
           </button>
           <button 
             @click="activeGuideTab = 'pwa'"
             type="button"
-            class="py-1.5 px-2 rounded-full text-center transition-all cursor-pointer min-h-[36px]"
-            :class="activeGuideTab === 'pwa' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'"
+            class="py-2 px-2 rounded-xl text-center transition-all cursor-pointer min-h-[40px] flex items-center justify-center"
+            :class="activeGuideTab === 'pwa' ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
-            PWA & Offline
+            PWA &amp; Offline
           </button>
         </div>
 
         <!-- Tab Body (Scrollable) -->
-        <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-600 dark:text-neutral-300 leading-relaxed">
+        <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-[var(--md-on-surface-variant)] leading-relaxed">
           
           <!-- TAB 1: ROLES & RESPONSIBILITIES -->
           <div v-if="activeGuideTab === 'roles'" class="space-y-3">
-            <div class="p-3.5 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-1.5">
+            <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold text-[10px] uppercase">Musician</span>
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">Regular Band Member</h4>
+                <span class="m3-chip m3-chip-info h-5 text-[10px] px-2 rounded-md font-semibold">Musician</span>
+                <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Regular Band Member</h4>
               </div>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
-                <li>RSVP to upcoming gigs and rehearsals (Attending or Declined).</li>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
+                <li>Confirm attendance to upcoming gigs and rehearsals (Attending or Not Attending).</li>
                 <li>Maintain your 7-day recurring weekly availability in <strong>My Profile</strong>.</li>
-                <li>Receive automated call-time alarms 10–15 minutes before rehearsals.</li>
+                <li>Receive automated call-time alarms before gigs and rehearsals.</li>
                 <li>Maintain a high Reliability Score (100% baseline).</li>
               </ul>
             </div>
 
-            <div class="p-3.5 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-1.5">
+            <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-bold text-[10px] uppercase">Secretary</span>
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">Band Secretary</h4>
+                <span class="m3-chip m3-chip-rsvp h-5 text-[10px] px-2 rounded-md font-semibold">Secretary</span>
+                <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Band Secretary</h4>
               </div>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
                 <li>Schedule and announce new band rehearsals, civic parades, and feast processions.</li>
-                <li>Conduct live roll-calls with the <strong>Roll Call Log</strong> (mark Present, Absent, or Excused).</li>
+                <li>Conduct attendance checks with the <strong>Attendance Log</strong> (mark Present, Absent, or Excused).</li>
                 <li>Use <strong>Check Member Availability</strong> to see who is free for upcoming days and sections.</li>
-                <li>Broadcast urgent RSVP reminder alerts to unconfirmed musicians.</li>
+                <li>Broadcast urgent attendance reminder alerts to pending musicians.</li>
               </ul>
             </div>
 
-            <div class="p-3.5 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-1.5">
+            <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 font-bold text-[10px] uppercase">Executive</span>
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">President, Conductor & Board</h4>
+                <span class="m3-chip m3-chip-assist h-5 text-[10px] px-2 rounded-md font-semibold">Executive</span>
+                <h4 class="font-bold text-[var(--md-on-surface)] text-sm">President, Conductor &amp; Board</h4>
               </div>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
                 <li>Inspect roster-wide turnout analytics and section performance (Woodwinds, Brass, Percussion).</li>
-                <li>Review the <strong>Musician Commitment Matrix</strong> to identify high flake risk members.</li>
-                <li>Sort members by most no-shows or lowest reliability to resolve lineup bottlenecks.</li>
+                <li>Review the <strong>Musician Reliability Matrix</strong> to identify attendance trends.</li>
+                <li>Sort members by attendance reliability to resolve lineup bottlenecks.</li>
               </ul>
             </div>
 
-            <div class="p-3.5 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-1.5">
+            <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-bold text-[10px] uppercase">Super Admin</span>
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">IT Super Admin</h4>
+                <span class="m3-chip m3-chip-urgent h-5 text-[10px] px-2 rounded-md font-semibold">Super Admin</span>
+                <h4 class="font-bold text-[var(--md-on-surface)] text-sm">IT Super Admin</h4>
               </div>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400">
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
                 <li>Approve or decline new member account registrations and verify identity.</li>
                 <li>Moderate profile avatar photo uploads.</li>
                 <li>Promote musicians to appointed officer posts (Band Secretary, Conductor, etc.).</li>
-                <li>Generate and directly download official standardized PDF reports for municipal review.</li>
+                <li>Generate and download official standardized PDF reports for municipal review.</li>
               </ul>
             </div>
           </div>
 
-          <!-- TAB 2: TURNOUT MATH & FLAKE DETECTION -->
+          <!-- TAB 2: TURNOUT MATH & RELIABILITY -->
           <div v-else-if="activeGuideTab === 'attendance'" class="space-y-3">
-            <div class="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-200/80 dark:border-blue-900/40 space-y-2">
-              <h4 class="font-bold text-slate-900 dark:text-white text-sm">How Attendance Scoring Works</h4>
+            <div class="p-4 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-2">
+              <h4 class="font-bold text-[var(--md-on-surface)] text-sm">How Attendance Scoring Works</h4>
               <p class="text-[11px]">
                 Every member begins with a <strong>100% Reliability Score</strong>. Reliability reflects follow-through on commitments.
               </p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div class="p-3 bg-slate-50 dark:bg-[#282a2c]/60 rounded-xl border border-slate-200 dark:border-[#2d3035] space-y-1">
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
                 <div class="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                   <CheckCircle class="w-4 h-4" />
                   <span>Present</span>
                 </div>
-                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Musician confirmed attending and showed up to perform. Positive follow-through recorded.</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]">Musician confirmed attending and showed up to perform. Positive follow-through recorded.</p>
               </div>
 
-              <div class="p-3 bg-slate-50 dark:bg-[#282a2c]/60 rounded-xl border border-slate-200 dark:border-[#2d3035] space-y-1">
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
                 <div class="flex items-center space-x-1.5 text-blue-600 dark:text-blue-400 font-bold text-xs">
                   <Check class="w-4 h-4" />
                   <span>Declined in Advance</span>
                 </div>
-                <p class="text-[11px] text-slate-500 dark:text-neutral-400"><strong>0% penalty!</strong> Declining early allows section leaders to find instrument substitutes in time.</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]"><strong>0% penalty!</strong> Declining early allows section leaders to find instrument substitutes in time.</p>
               </div>
 
-              <div class="p-3 bg-slate-50 dark:bg-[#282a2c]/60 rounded-xl border border-slate-200 dark:border-[#2d3035] space-y-1">
-                <div class="flex items-center space-x-1.5 text-rose-600 dark:text-rose-400 font-bold text-xs">
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
+                <div class="flex items-center space-x-1.5 text-[var(--md-error)] font-bold text-xs">
                   <AlertCircle class="w-4 h-4" />
-                  <span>Unexcused No-Show (Flake)</span>
+                  <span>Unexcused No-Show</span>
                 </div>
-                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Musician RSVP'd "Attending" but failed to show up without prior notice. Applies a <strong>-10% Reliability penalty</strong>.</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]">Musician confirmed "Attending" but failed to show up without prior notice. Applies a <strong>-10% Reliability penalty</strong>.</p>
               </div>
 
-              <div class="p-3 bg-slate-50 dark:bg-[#282a2c]/60 rounded-xl border border-slate-200 dark:border-[#2d3035] space-y-1">
-                <div class="flex items-center space-x-1.5 text-slate-600 dark:text-neutral-300 font-bold text-xs">
-                  <ShieldCheck class="w-4 h-4 text-purple-500" />
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
+                <div class="flex items-center space-x-1.5 text-[var(--md-on-surface)] font-bold text-xs">
+                  <ShieldCheck class="w-4 h-4 text-[var(--md-tertiary)]" />
                   <span>Excused Absence</span>
                 </div>
-                <p class="text-[11px] text-slate-500 dark:text-neutral-400">Valid medical emergency or documented prior notice granted by Band Secretary. <strong>0% penalty</strong>.</p>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)]">Valid medical or documented prior notice granted by Band Secretary. <strong>0% penalty</strong>.</p>
               </div>
             </div>
           </div>
 
           <!-- TAB 3: AVAILABILITY RULES -->
           <div v-else-if="activeGuideTab === 'availability'" class="space-y-3">
-            <div class="p-4 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-2">
-              <h4 class="font-bold text-slate-900 dark:text-white text-sm">Weekly Recurring Grid vs Events</h4>
-              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
-                In <strong>My Profile > Availability Grid</strong>, musicians configure their regular 7-day routine (Monday–Sunday, with Morning, Afternoon, and Evening slots).
+            <div class="p-4 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-2">
+              <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Weekly Recurring Grid vs Events</h4>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">
+                In <strong>My Profile &gt; Availability Grid</strong>, musicians configure their regular 7-day routine (Monday–Sunday, with Morning, Afternoon, and Evening slots).
               </p>
-              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">
                 When Secretary or Admin creates a new gig, the system cross-references this routine and notifies available musicians automatically!
               </p>
             </div>
@@ -1728,14 +1732,14 @@ onUnmounted(() => {
 
           <!-- TAB 4: PWA & OFFLINE -->
           <div v-else-if="activeGuideTab === 'pwa'" class="space-y-3">
-            <div class="p-4 bg-slate-50 dark:bg-[#282a2c]/60 rounded-2xl border border-slate-200 dark:border-[#2d3035] space-y-2">
-              <h4 class="font-bold text-slate-900 dark:text-white text-sm">Install as a Native App</h4>
-              <p class="text-[11px] text-slate-500 dark:text-neutral-400">
+            <div class="p-4 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-2">
+              <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Install as a Native App</h4>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)]">
                 SmartBand is a certified Progressive Web App (PWA). You can install it on your Android phone, iPhone, iPad, Windows PC, or Mac.
               </p>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-500 dark:text-neutral-400 pt-1">
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)] pt-1">
                 <li><strong>Chrome / Edge (PC/Mac/Android):</strong> Tap "Install App" in the top bar or click the install icon in your address bar.</li>
-                <li><strong>Safari (iOS / iPhone):</strong> Tap the <em>Share</em> button (square with arrow) → tap <em>Add to Home Screen</em>.</li>
+                <li><strong>Safari (iOS / iPhone):</strong> Tap the <em>Share</em> button (square with arrow) &rarr; tap <em>Add to Home Screen</em>.</li>
               </ul>
             </div>
 
@@ -1752,8 +1756,8 @@ onUnmounted(() => {
         </div>
 
         <!-- Footer -->
-        <div class="pt-3 border-t border-slate-100 dark:border-[#2d3035]">
-          <button @click="showRoleGuideModal = false" type="button" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 font-medium text-xs text-white rounded-full shadow-xs min-h-[44px] cursor-pointer transition-colors">
+        <div class="pt-3 border-t border-[var(--md-outline-variant)]/30">
+          <button @click="showRoleGuideModal = false" type="button" class="m3-btn-tonal w-full min-h-[48px] text-xs font-semibold cursor-pointer">
             Close Guide
           </button>
         </div>
@@ -1762,27 +1766,27 @@ onUnmounted(() => {
     </div>
 
     <!-- SIGN OUT CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#282a2c] flex items-center justify-center mx-auto text-slate-700 dark:text-neutral-300">
-          <LogOut class="w-5 h-5" />
+    <div v-if="showSignOutModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-on-surface)]">
+          <LogOut class="w-5 h-5 text-[var(--md-error)]" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-bold text-base text-slate-900 dark:text-white">Sign Out of SmartBand?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
         <div class="grid grid-cols-2 gap-2.5 pt-2">
           <button 
             @click="showSignOutModal = false" 
             type="button" 
-            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-[#282a2c] dark:hover:bg-[#383b40] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[44px] cursor-pointer transition-colors"
+            class="m3-btn-tonal min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             Cancel
           </button>
           <button 
             @click="handleSignOut" 
             type="button" 
-            class="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-medium text-xs rounded-full shadow-xs min-h-[44px] cursor-pointer transition-colors"
+            class="m3-btn-filled bg-[var(--md-error)] text-white hover:bg-rose-700 min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             Sign Out
           </button>

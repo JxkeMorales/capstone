@@ -349,50 +349,52 @@ const handleFileUpload = async (event) => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
+  <div class="p-3.5 sm:p-6 space-y-6 max-w-5xl mx-auto">
     
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
+    <!-- Top Header (M3 Headline & Action Buttons) -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-[var(--md-outline-variant)]/30 pb-4">
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">Account Management</p>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-neutral-100">My Profile</h1>
+        <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">Account Management</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-[var(--md-on-surface)] tracking-tight">My Profile</h1>
       </div>
       <div class="flex items-center space-x-2 self-start sm:self-auto">
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-700 px-4 py-2 rounded-full flex items-center hover:bg-slate-50 dark:hover:bg-[#2d2f31] transition-colors min-h-[40px] cursor-pointer shadow-xs"
+          class="m3-btn-tonal min-h-[44px] text-xs font-semibold px-4 cursor-pointer"
         >
-          <Settings class="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-neutral-400" /> Profile Settings
+          <Settings class="w-4 h-4 mr-1.5 text-[var(--md-on-surface-variant)]" /> Profile Settings
         </button>
         <button 
           @click="triggerSignOut"
           type="button"
-          class="text-xs font-medium text-rose-600 dark:text-rose-400 bg-white dark:bg-[#202124] border border-slate-200 dark:border-neutral-700 px-4 py-2 rounded-full flex items-center hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors min-h-[40px] cursor-pointer shadow-xs"
+          class="m3-btn-outlined border-[var(--md-error)]/40 text-[var(--md-error)] hover:bg-[var(--md-error-container)]/20 min-h-[44px] text-xs font-semibold px-4 cursor-pointer"
           aria-label="Sign Out of Account"
         >
-          <LogOut class="w-3.5 h-3.5 mr-1.5" /> Sign Out
+          <LogOut class="w-4 h-4 mr-1.5" /> Sign Out
         </button>
       </div>
     </header>
 
-    <!-- Profile Info Card with Edit Trigger -->
-    <section class="bg-white dark:bg-[#202124] rounded-2xl p-6 shadow-xs border border-slate-200/80 dark:border-neutral-800">
-      <div class="flex items-center justify-between mb-5">
+    <!-- Profile Info Card (Official M3 Elevated Card) -->
+    <section class="m3-card-elevated p-5 sm:p-6 border border-[var(--md-outline-variant)]/40 rounded-3xl space-y-5">
+      <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
           
-          <div class="relative w-16 h-16 flex-shrink-0 group cursor-pointer" @click="triggerFileUpload">
+          <!-- Avatar with Upload Indicator -->
+          <div class="relative w-16 h-16 sm:w-18 sm:h-18 flex-shrink-0 group cursor-pointer" @click="triggerFileUpload">
             <input type="file" accept="image/jpeg, image/png, image/webp" @change="handleFileUpload" class="hidden" ref="fileInput" />
             
             <template v-if="store.profile?.profile_picture && !imgLoadError">
-              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-full border border-slate-200 dark:border-neutral-700 shadow-xs" />
-              <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full border-2 border-white dark:border-[#202124] uppercase">Pending</div>
-              <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full border-2 border-white dark:border-[#202124] uppercase">Declined</div>
-              <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-0.5 rounded-full border-2 border-white dark:border-[#202124]" title="Approved">
-                <Check class="w-3 h-3 stroke-[2.5]" />
+              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-full border-2 border-[var(--md-outline-variant)] shadow-xs" />
+              <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[var(--md-surface)] uppercase">Pending</div>
+              <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[var(--md-surface)] uppercase">Declined</div>
+              <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-0.5 rounded-full border-2 border-[var(--md-surface)]" title="Approved">
+                <Check class="w-3.5 h-3.5 stroke-[2.5]" />
               </div>
             </template>
             <template v-else>
-              <div class="w-full h-full rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-lg font-bold">
+              <div class="w-full h-full rounded-full bg-[var(--md-primary)] text-[var(--md-on-primary)] flex items-center justify-center text-lg sm:text-xl font-bold shadow-xs">
                 {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
               </div>
             </template>
@@ -405,11 +407,23 @@ const handleFileUpload = async (event) => {
           </div>
 
           <div class="min-w-0">
-            <h2 class="text-lg font-bold text-slate-900 dark:text-neutral-100 truncate">
-              {{ store.profile?.full_name || 'Member' }}
-            </h2>
-            <p class="text-xs font-medium text-slate-500 dark:text-neutral-400 mt-0.5 capitalize">
-              {{ store.profile?.instrument || 'Musician' }} • {{ store.profile?.rank || 'Junior' }} Rank
+            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+              <h2 class="text-lg sm:text-xl font-bold text-[var(--md-on-surface)] truncate leading-tight">
+                {{ store.profile?.full_name || 'Member' }}
+              </h2>
+              <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-6 px-2.5 text-[11px] rounded-md font-semibold">
+                Verified Musician
+              </span>
+              <span v-else class="m3-chip m3-chip-rsvp h-6 px-2.5 text-[11px] rounded-md font-semibold">
+                Pending Verification
+              </span>
+            </div>
+
+            <p class="text-xs font-medium text-[var(--md-on-surface-variant)] mt-1.5 flex items-center gap-1.5 capitalize">
+              <Music class="w-3.5 h-3.5 text-[var(--md-outline)] shrink-0" />
+              <span>{{ store.profile?.instrument || 'Musician' }}</span>
+              <span>•</span>
+              <span class="m3-chip m3-chip-assist h-5 px-2 text-[10px] rounded-md">{{ store.profile?.rank || 'Junior' }} Rank</span>
             </p>
           </div>
         </div>
@@ -417,7 +431,7 @@ const handleFileUpload = async (event) => {
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="p-2.5 bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-[#383a3d] rounded-full transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer border border-slate-200 dark:border-neutral-700"
+          class="min-w-[44px] min-h-[44px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)] border border-[var(--md-outline-variant)]/40 transition-colors flex items-center justify-center cursor-pointer shrink-0"
           aria-label="Edit Profile Details"
           title="Edit Profile Settings"
         >
@@ -425,52 +439,53 @@ const handleFileUpload = async (event) => {
         </button>
       </div>
 
-      <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
-        <div class="flex items-center text-xs text-slate-600 dark:text-neutral-400 font-medium">
-          <Phone class="w-3.5 h-3.5 mr-2.5 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
+      <!-- Quick Metadata Grid (WCAG High-Contrast Surface) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-[var(--md-outline-variant)]/30">
+        <div class="flex items-center text-xs text-[var(--md-on-surface-variant)] bg-[var(--md-surface-container-low)] p-3 rounded-2xl border border-[var(--md-outline-variant)]/30 font-medium">
+          <Phone class="w-4 h-4 mr-2.5 text-[var(--md-outline)] flex-shrink-0" />
           <span>{{ store.profile?.contact_number || store.profile?.email || 'No contact specified' }}</span>
         </div>
-        <div class="flex items-center text-xs text-slate-600 dark:text-neutral-400 font-medium">
-          <Activity class="w-3.5 h-3.5 mr-2.5 text-slate-400 dark:text-neutral-500 flex-shrink-0" />
-          <span>Verification Status: {{ store.profile?.is_verified ? 'Verified Member' : 'Pending Verification' }}</span>
+        <div class="flex items-center text-xs text-[var(--md-on-surface-variant)] bg-[var(--md-surface-container-low)] p-3 rounded-2xl border border-[var(--md-outline-variant)]/30 font-medium">
+          <Activity class="w-4 h-4 mr-2.5 text-[var(--md-outline)] flex-shrink-0" />
+          <span>Reliability: <strong class="text-[var(--md-on-surface)]">{{ store.profile?.reliability_score || 100 }}%</strong></span>
         </div>
       </div>
     </section>
 
-    <!-- Dynamic Weekly Availability Grid with Exact Dates -->
+    <!-- Dynamic Weekly Availability Grid with Exact Dates (M3 Outlined Card) -->
     <section class="space-y-3">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 px-1">
         <div>
-          <h2 class="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wider flex items-center">
-            <Calendar class="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-neutral-400" /> Weekly Availability Grid
+          <h2 class="text-xs font-semibold text-[var(--md-on-surface-variant)] uppercase tracking-wider flex items-center">
+            <Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> Weekly Schedule Availability
           </h2>
-          <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Toggle slots when you are available. Saved directly to the roster.</p>
+          <p class="text-[11px] text-[var(--md-on-surface-variant)] mt-0.5">Toggle slots when you are available for band rehearsals, parades, and gigs.</p>
         </div>
         <button 
           @click="saveAvailability" 
           :disabled="isSaving"
-          class="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs active:scale-95 transition-all flex items-center min-h-[38px] cursor-pointer"
+          class="m3-btn-filled min-h-[44px] px-5 text-xs font-semibold cursor-pointer shrink-0"
         >
-          <CheckCircle2 v-if="saveSuccess" class="w-3.5 h-3.5 mr-1" />
-          {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved' : 'Save Availability' }}
+          <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1.5" />
+          {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved ✓' : 'Save Availability' }}
         </button>
       </div>
 
-      <div class="bg-white dark:bg-[#202124] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-x-auto">
+      <div class="m3-card-outlined rounded-3xl p-3 sm:p-5 border border-[var(--md-outline-variant)]/40 overflow-x-auto">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>
-              <th class="p-2 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Slot</th>
-              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-semibold text-slate-700 dark:text-neutral-200">
+              <th class="p-2.5 text-left text-[11px] font-semibold text-[var(--md-on-surface-variant)] uppercase tracking-wider">Time Slot</th>
+              <th v-for="d in weekDays" :key="d.key" class="p-2 text-[11px] font-semibold text-[var(--md-on-surface)]">
                 <div class="uppercase">{{ d.name }}</div>
-                <div class="text-[9px] font-normal text-slate-400 lowercase">{{ d.dateLabel }}</div>
+                <div class="text-[9px] font-normal text-[var(--md-on-surface-variant)] lowercase">{{ d.dateLabel }}</div>
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-neutral-800/60">
+          <tbody class="divide-y divide-[var(--md-outline-variant)]/20">
             <tr v-for="slot in timeSlots" :key="slot">
-              <td class="p-2 text-left text-xs font-medium text-slate-600 dark:text-neutral-400 whitespace-nowrap">
-                <Clock class="w-3 h-3 inline mr-1 text-slate-400" />
+              <td class="p-2.5 text-left text-xs font-medium text-[var(--md-on-surface-variant)] whitespace-nowrap">
+                <Clock class="w-3.5 h-3.5 inline mr-1 text-[var(--md-outline)]" />
                 {{ slot.split(' ')[0] }}
               </td>
               <td v-for="d in weekDays" :key="d.key" class="p-1">
@@ -478,12 +493,13 @@ const handleFileUpload = async (event) => {
                   @click="toggleSlot(d.key, slot)"
                   type="button"
                   :aria-label="`Toggle ${d.name} ${slot}`"
-                  class="w-full py-2 rounded-full font-medium text-xs transition-colors cursor-pointer min-h-[36px] flex items-center justify-center"
+                  class="w-full py-2.5 rounded-full font-semibold text-xs transition-colors cursor-pointer min-h-[44px] flex items-center justify-center gap-1 border"
                   :class="isSlotFree(d.key, slot) 
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
-                    : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 dark:text-neutral-500 hover:bg-slate-200 dark:hover:bg-[#383a3d]'"
+                    ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)] border-transparent shadow-2xs' 
+                    : 'bg-[var(--md-surface-container)] text-[var(--md-on-surface-variant)] border-transparent hover:bg-[var(--md-surface-container-high)]'"
                 >
-                  {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
+                  <Check v-if="isSlotFree(d.key, slot)" class="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}</span>
                 </button>
               </td>
             </tr>
@@ -492,44 +508,50 @@ const handleFileUpload = async (event) => {
       </div>
     </section>
 
-    <!-- COMPLETE POP-UP SETTINGS MODAL (Profile, Phone, Instruments, Password, Availability Grid) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showEditProfileModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[88vh] flex flex-col">
+    <!-- COMPLETE POP-UP SETTINGS MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <div v-if="showEditProfileModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[88vh] flex flex-col">
         
         <!-- Modal Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2d3035] pb-3">
+        <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
           <div class="flex items-center space-x-2">
-            <Settings class="w-5 h-5 text-slate-600 dark:text-neutral-400" />
-            <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Profile & Settings</h3>
+            <Settings class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
+            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Profile & Settings</h3>
           </div>
-          <button @click="showEditProfileModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100 dark:hover:bg-[#2d2f31]" aria-label="Close modal">
+          <button @click="showEditProfileModal = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close modal">
             <X class="w-5 h-5" />
           </button>
         </div>
 
-        <!-- Setting Navigation Tabs (Segmented Pill Switcher) -->
-        <div class="flex rounded-full bg-slate-100 dark:bg-[#2d2f31] p-1 gap-1 border border-slate-200/60 dark:border-[#2d3035]">
+        <!-- Setting Navigation Tabs (Official M3 Segmented Button - Non-Wrapping Grid) -->
+        <div class="grid grid-cols-3 p-1 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 text-xs font-medium w-full">
           <button 
             type="button" 
             @click="activeSettingsTab = 'profile'"
-            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
-            :class="activeSettingsTab === 'profile' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="py-2.5 px-1 rounded-xl transition-all cursor-pointer text-center min-h-[40px] flex items-center justify-center"
+            :class="activeSettingsTab === 'profile' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Profile
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'availability'"
-            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
-            :class="activeSettingsTab === 'availability' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="py-2.5 px-1 rounded-xl transition-all cursor-pointer text-center min-h-[40px] flex items-center justify-center"
+            :class="activeSettingsTab === 'availability' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Availability
           </button>
           <button 
             type="button" 
             @click="activeSettingsTab = 'security'"
-            class="flex-1 py-2 rounded-full text-xs font-medium transition-all cursor-pointer text-center min-h-[40px]"
-            :class="activeSettingsTab === 'security' ? 'bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 dark:text-neutral-400'"
+            class="py-2.5 px-1 rounded-xl transition-all cursor-pointer text-center min-h-[40px] flex items-center justify-center"
+            :class="activeSettingsTab === 'security' 
+              ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+              : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Password
           </button>
@@ -542,20 +564,20 @@ const handleFileUpload = async (event) => {
           <div v-if="activeSettingsTab === 'profile'" class="space-y-4">
             <!-- Full Name -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Full Name</label>
+              <label class="text-xs font-medium text-[var(--md-on-surface)]">Full Name</label>
               <input 
                 v-model="editFullName" 
                 type="text" 
-                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
+                class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)]"
               >
             </div>
 
             <!-- Primary Instrument -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Primary Instrument</label>
+              <label class="text-xs font-medium text-[var(--md-on-surface)]">Primary Instrument</label>
               <select 
                 v-model="editPrimaryInstrument" 
-                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)] cursor-pointer"
               >
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
               </select>
@@ -563,10 +585,10 @@ const handleFileUpload = async (event) => {
 
             <!-- Secondary Instrument -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Secondary Instrument (Optional)</label>
+              <label class="text-xs font-medium text-[var(--md-on-surface)]">Secondary Instrument (Optional)</label>
               <select 
                 v-model="editSecondaryInstrument" 
-                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 cursor-pointer"
+                class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)] cursor-pointer"
               >
                 <option value="None / N/A">None / N/A</option>
                 <option v-for="inst in instrumentList" :key="inst" :value="inst">{{ inst }}</option>
@@ -576,9 +598,9 @@ const handleFileUpload = async (event) => {
             <!-- Philippine Mobile Phone Number -->
             <div class="space-y-1.5 text-left">
               <div class="flex justify-between items-center">
-                <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Phone Number (11 digits)</label>
-                <span class="text-[10px] font-medium" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
-                  {{ editContactNumber.length }}/11
+                <label class="text-xs font-medium text-[var(--md-on-surface)]">Mobile Phone Number</label>
+                <span class="text-[10px] font-medium" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--md-on-surface-variant)]'">
+                  {{ editContactNumber.length }}/11 digits
                 </span>
               </div>
               <input 
@@ -586,45 +608,47 @@ const handleFileUpload = async (event) => {
                 @input="handlePhoneEditInput" 
                 type="tel" 
                 maxlength="11"
-                placeholder="09123456789"
-                class="w-full px-3.5 py-3 bg-slate-50 dark:bg-[#18191a] border rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
-                :class="!isEditPhoneValid ? 'border-rose-500' : 'border-slate-200 dark:border-[#2d3035]'"
+                placeholder="09XXXXXXXXX"
+                class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)]"
+                :class="!isEditPhoneValid ? 'border-[var(--md-error)]' : 'border-[var(--md-outline-variant)]'"
               >
+              <p class="text-[10px] text-[var(--md-on-surface-variant)]">Format: 11-digit Philippine mobile number starting with 09.</p>
             </div>
           </div>
 
           <!-- TAB 2: AVAILABILITY GRID (Settings Pop-up integration) -->
           <div v-else-if="activeSettingsTab === 'availability'" class="space-y-3">
-            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#18191a] border border-slate-200/80 dark:border-[#2d3035] text-xs text-slate-600 dark:text-neutral-400">
-              <p class="font-medium text-slate-900 dark:text-neutral-200">Weekly Schedule Availability</p>
+            <div class="p-3.5 rounded-2xl bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/30 text-xs text-[var(--md-on-surface-variant)]">
+              <p class="font-semibold text-[var(--md-on-surface)]">Weekly Schedule Availability</p>
               <p class="text-[11px] mt-0.5">Toggle slots between FREE and busy. The Band Secretary uses this grid to schedule gigs and check musician availability.</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 dark:border-[#2d3035] overflow-x-auto">
+            <div class="rounded-2xl border border-[var(--md-outline-variant)]/40 overflow-x-auto bg-[var(--md-surface-container-low)]">
               <table class="w-full text-center border-collapse text-xs">
-                <thead class="bg-slate-50 dark:bg-[#18191a] border-b border-slate-200 dark:border-[#2d3035]">
+                <thead class="bg-[var(--md-surface-container)] border-b border-[var(--md-outline-variant)]/30">
                   <tr>
-                    <th class="p-2.5 text-left text-[10px] font-semibold text-slate-400 uppercase">Slot</th>
-                    <th v-for="d in weekDays" :key="d.key" class="p-2.5 text-[10px] font-semibold text-slate-700 dark:text-neutral-200">
+                    <th class="p-2.5 text-left text-[10px] font-semibold text-[var(--md-on-surface-variant)] uppercase">Slot</th>
+                    <th v-for="d in weekDays" :key="d.key" class="p-2.5 text-[10px] font-semibold text-[var(--md-on-surface)]">
                       {{ d.name }}
                     </th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-[#2d3035]">
+                <tbody class="divide-y divide-[var(--md-outline-variant)]/20">
                   <tr v-for="slot in timeSlots" :key="slot">
-                    <td class="p-2.5 text-left font-medium text-slate-600 dark:text-neutral-400 text-[11px] whitespace-nowrap">
+                    <td class="p-2.5 text-left font-medium text-[var(--md-on-surface-variant)] text-[11px] whitespace-nowrap">
                       {{ slot.split(' ')[0] }}
                     </td>
                     <td v-for="d in weekDays" :key="d.key" class="p-1">
                       <button 
                         @click="toggleSlot(d.key, slot)"
                         type="button"
-                        class="w-full py-2 rounded-full font-medium text-[10px] transition-colors cursor-pointer min-h-[36px] flex items-center justify-center"
+                        class="w-full py-2.5 rounded-full font-semibold text-[11px] transition-colors cursor-pointer min-h-[40px] flex items-center justify-center gap-0.5"
                         :class="isSlotFree(d.key, slot) 
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
-                          : 'bg-slate-100 dark:bg-[#2d2f31] text-slate-400 hover:bg-slate-200 dark:hover:bg-[#383a3d]'"
+                          ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)] shadow-2xs' 
+                          : 'bg-[var(--md-surface-container-high)] text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-highest)]'"
                       >
-                        {{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}
+                        <Check v-if="isSlotFree(d.key, slot)" class="w-3 h-3 stroke-[3]" />
+                        <span>{{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}</span>
                       </button>
                     </td>
                   </tr>
@@ -636,25 +660,25 @@ const handleFileUpload = async (event) => {
               @click="saveAvailability" 
               :disabled="isSaving"
               type="button" 
-              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-slate-900 font-medium text-xs rounded-full shadow-xs transition-colors flex items-center justify-center min-h-[48px] cursor-pointer"
+              class="m3-btn-filled w-full min-h-[48px] text-xs font-semibold cursor-pointer"
             >
               <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1.5" />
-              {{ isSaving ? 'Saving Grid...' : saveSuccess ? 'Saved' : 'Save Availability Grid' }}
+              {{ isSaving ? 'Saving Grid...' : saveSuccess ? 'Saved ✓' : 'Save Availability Grid' }}
             </button>
           </div>
 
           <!-- TAB 3: PASSWORD CHANGE -->
           <div v-else-if="activeSettingsTab === 'security'" class="space-y-4">
             <div class="space-y-1.5">
-              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">New Password</label>
+              <label class="text-xs font-medium text-[var(--md-on-surface)]">New Password</label>
               <div class="relative">
                 <input 
                   v-model="newPassword" 
                   :type="showNewPass ? 'text' : 'password'" 
-                  placeholder="Min. 8 characters"
-                  class="w-full px-3.5 py-3 pr-10 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
+                  placeholder="At least 8 characters"
+                  class="w-full px-4 py-3 pr-12 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)]"
                 >
-                <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[48px] justify-center cursor-pointer">
+                <button type="button" @click="showNewPass = !showNewPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--md-on-surface-variant)] min-w-[48px] justify-center cursor-pointer">
                   <Eye v-if="!showNewPass" class="w-4 h-4" />
                   <EyeOff v-else class="w-4 h-4" />
                 </button>
@@ -662,15 +686,15 @@ const handleFileUpload = async (event) => {
             </div>
 
             <div class="space-y-1.5">
-              <label class="text-xs font-medium text-slate-700 dark:text-neutral-300">Confirm New Password</label>
+              <label class="text-xs font-medium text-[var(--md-on-surface)]">Confirm New Password</label>
               <div class="relative">
                 <input 
                   v-model="confirmPassword" 
                   :type="showConfirmPass ? 'text' : 'password'" 
                   placeholder="Re-type new password"
-                  class="w-full px-3.5 py-3 pr-10 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs font-medium text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400"
+                  class="w-full px-4 py-3 pr-12 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)]"
                 >
-                <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 min-w-[48px] justify-center cursor-pointer">
+                <button type="button" @click="showConfirmPass = !showConfirmPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--md-on-surface-variant)] min-w-[48px] justify-center cursor-pointer">
                   <Eye v-if="!showConfirmPass" class="w-4 h-4" />
                   <EyeOff v-else class="w-4 h-4" />
                 </button>
@@ -680,7 +704,7 @@ const handleFileUpload = async (event) => {
             <p v-if="newPassword && newPassword === confirmPassword" class="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               ✓ Passwords match
             </p>
-            <p v-if="passwordChangeError" class="text-xs font-medium text-rose-500">
+            <p v-if="passwordChangeError" class="text-xs font-medium text-[var(--md-error)]">
               {{ passwordChangeError }}
             </p>
           </div>
@@ -688,11 +712,11 @@ const handleFileUpload = async (event) => {
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex space-x-2 pt-3 border-t border-slate-100 dark:border-[#2d3035]">
+        <div class="flex space-x-2 pt-3 border-t border-[var(--md-outline-variant)]/30">
           <button 
             @click="showEditProfileModal = false" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-100 dark:bg-[#2d2f31] font-medium text-xs rounded-full text-slate-700 dark:text-neutral-300 min-h-[48px] cursor-pointer hover:bg-slate-200 dark:hover:bg-[#383a3d] transition-colors"
+            class="m3-btn-tonal flex-1 min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             Close
           </button>
@@ -700,7 +724,7 @@ const handleFileUpload = async (event) => {
             @click="handleUpdateProfile" 
             :disabled="isUpdatingProfile" 
             type="button" 
-            class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 font-medium text-xs text-white dark:text-slate-900 rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
+            class="m3-btn-filled flex-1 min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             {{ isUpdatingProfile ? 'Saving...' : 'Save Settings' }}
           </button>
@@ -710,27 +734,27 @@ const handleFileUpload = async (event) => {
     </div>
 
     <!-- SIGN OUT CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSignOutModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
-        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#2d2f31] flex items-center justify-center mx-auto text-slate-700 dark:text-neutral-300">
-          <LogOut class="w-5 h-5" />
+    <div v-if="showSignOutModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+        <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-on-surface)]">
+          <LogOut class="w-5 h-5 text-[var(--md-error)]" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Sign Out of SmartBand?</h3>
-          <p class="text-xs text-slate-500 dark:text-neutral-400 font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
+          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
         <div class="grid grid-cols-2 gap-3 pt-2">
           <button 
             @click="showSignOutModal = false" 
             type="button" 
-            class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-[#2d2f31] dark:hover:bg-[#383a3d] text-slate-700 dark:text-neutral-200 font-medium text-xs rounded-full min-h-[48px] cursor-pointer transition-colors"
+            class="m3-btn-tonal min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             Cancel
           </button>
           <button 
             @click="handleSignOut" 
             type="button" 
-            class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs rounded-full shadow-xs min-h-[48px] cursor-pointer transition-colors"
+            class="m3-btn-filled bg-[var(--md-error)] text-white hover:bg-rose-700 min-h-[48px] text-xs font-semibold cursor-pointer"
           >
             Sign Out
           </button>
