@@ -1084,7 +1084,7 @@ onUnmounted(() => {
                   
                   <div class="flex items-center space-x-1.5 shrink-0">
                     <button v-if="store.canConductRollCall || store.canManageEvents" @click="openAttendanceTracker(ev)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[32px] transition-colors">
-                      <Users class="w-3.5 h-3.5 mr-1" /> Roll Call
+                      <Users class="w-3.5 h-3.5 mr-1" /> Attendance Check
                     </button>
                     <button v-if="store.canManageEvents" @click="promptDeleteEvent(ev.id)" aria-label="Delete Event" class="p-1.5 rounded-full text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors" title="Delete Event">
                       <Trash2 class="w-3.5 h-3.5" />
@@ -1105,7 +1105,7 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <!-- RSVP Action Buttons (Official M3 Filled & Outlined Buttons) -->
+                <!-- Attendance Action Buttons (Official M3 Filled & Outlined Buttons) -->
                 <div v-if="!ev.rsvpStatus" class="grid grid-cols-2 gap-2 pt-1">
                   <button 
                     @click="rsvp(ev, 'attending')"
@@ -1114,7 +1114,7 @@ onUnmounted(() => {
                     class="m3-btn-filled text-xs font-semibold py-2 px-3 min-h-[40px]"
                   >
                     <CheckCircle class="w-4 h-4 mr-1.5" />
-                    <span>I Will Attend</span>
+                    <span>Attending</span>
                   </button>
                   <button 
                     @click="promptDeclineWithExcuse(ev)"
@@ -1123,19 +1123,19 @@ onUnmounted(() => {
                     class="m3-btn-outlined text-xs font-semibold py-2 px-3 min-h-[40px]"
                   >
                     <XCircle class="w-4 h-4 mr-1.5 text-[var(--md-error)]" />
-                    <span>Cannot Attend</span>
+                    <span>Not Attending</span>
                   </button>
                 </div>
                 
-                <!-- Color-Coded Confirmed RSVP Status with Excuse Details -->
+                <!-- Color-Coded Confirmed Attendance Status with Excuse Details -->
                 <div v-else class="p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)]/40 rounded-xl space-y-1">
                   <div class="flex items-center justify-between">
                     <span class="font-medium text-xs flex items-center" :class="ev.rsvpStatus === 'attending' ? 'text-emerald-700 dark:text-emerald-400' : 'text-[var(--md-error)]'">
                       <CheckCircle v-if="ev.rsvpStatus === 'attending'" class="w-4 h-4 mr-1.5" />
                       <XCircle v-else class="w-4 h-4 mr-1.5" />
-                      {{ ev.rsvpStatus === 'attending' ? 'Confirmed Attending' : 'Declined' }}
+                      {{ ev.rsvpStatus === 'attending' ? 'Attending' : 'Not Attending' }}
                     </span>
-                    <button @click="ev.rsvpStatus = null" aria-label="Change RSVP Status" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
+                    <button @click="ev.rsvpStatus = null" aria-label="Change Attendance Status" class="text-xs font-medium text-[var(--md-primary)] hover:underline cursor-pointer px-2 py-1">Change</button>
                   </div>
                   <p v-if="ev.rsvpStatus === 'declined' && ev.excuseJustification" class="text-[11px] text-[var(--md-on-surface-variant)] italic">
                     Reason: {{ ev.excuseJustification }}
@@ -1402,56 +1402,56 @@ onUnmounted(() => {
                 <User class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" />
                 {{ post.author }}
                 <span v-if="post.ackCount > 0" class="text-[11px] text-[var(--md-outline)] font-normal ml-2">
-                  ({{ post.ackCount }} ack'd)
+                  ({{ post.ackCount }} read)
                 </span>
               </span>
 
               <!-- High-Contrast Action Triggers (Official M3 Buttons) -->
               <div class="flex items-center space-x-2">
-                <!-- State 1: Action Required (Not yet acknowledged / reviewed) -->
+                <!-- State 1: Action Required (Not yet read / confirmed) -->
                 <template v-if="!isAcknowledged(post.id)">
-                  <!-- If notice demands an RSVP, show direct Review & RSVP Action Trigger -->
+                  <!-- If notice demands an attendance confirmation, show direct Action Trigger -->
                   <button 
                     v-if="isRsvpAnnouncement(post)"
                     @click="handleAnnouncementAction(post)" 
                     type="button" 
-                    aria-label="Review and RSVP to upcoming events" 
+                    aria-label="Confirm attendance for upcoming events" 
                     class="m3-btn-filled text-xs font-semibold px-5 min-h-[44px]"
                   >
                     <CalendarCheck class="w-4 h-4 mr-1.5" />
-                    <span>Review &amp; RSVP</span>
+                    <span>Confirm Attendance</span>
                   </button>
 
-                  <!-- Standard Notice Acknowledgment Button -->
+                  <!-- Standard Notice Mark as Read Button -->
                   <button 
                     v-else 
                     @click="handleAcknowledgeAnnouncement(post)" 
                     type="button" 
-                    aria-label="Acknowledge Notice" 
+                    aria-label="Mark notice as read" 
                     class="m3-btn-filled text-xs font-semibold px-5 min-h-[44px]"
                   >
                     <Check class="w-4 h-4 mr-1.5" />
-                    <span>Acknowledge Notice</span>
+                    <span>Mark as Read</span>
                   </button>
                 </template>
 
-                <!-- State 2: Already Confirmed / Reviewed -->
+                <!-- State 2: Already Confirmed / Read -->
                 <template v-else>
                   <span class="m3-chip m3-chip-info font-semibold h-10 px-4 rounded-full">
                     <Check class="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>{{ isRsvpAnnouncement(post) ? 'Reviewed' : 'Acknowledged' }}</span>
+                    <span>{{ isRsvpAnnouncement(post) ? 'Confirmed' : 'Read' }}</span>
                   </span>
 
-                  <!-- Secondary View Gigs link button for RSVP notices -->
+                  <!-- Secondary View Schedule link button for attendance notices -->
                   <button 
                     v-if="isRsvpAnnouncement(post)"
-                    @click="scrollToEvents"
+                    @scrollToEvents="scrollToEvents"
                     type="button" 
-                    aria-label="View upcoming gigs and schedules" 
+                    aria-label="View upcoming schedules" 
                     class="m3-btn-outlined text-xs font-semibold px-4 min-h-[40px]"
                   >
                     <Calendar class="w-3.5 h-3.5 mr-1" />
-                    <span>View Gigs</span>
+                    <span>View Schedule</span>
                   </button>
                 </template>
               </div>
@@ -1529,7 +1529,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Filter Sub-Tabs (Google Pill Chips) -->
+        <!-- Filter Sub-Tabs (Pill Chips) -->
         <div class="flex items-center space-x-1 p-1 bg-slate-100 dark:bg-[#18191a] rounded-full text-xs font-medium overflow-x-auto border border-slate-200/60 dark:border-neutral-800">
           <button 
             @click="attendanceTabFilter = 'all'"
@@ -1545,7 +1545,7 @@ onUnmounted(() => {
             class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
             :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#2d2f31] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
-            RSVP Attending ({{ attendanceCounts.attending }})
+            Attending ({{ attendanceCounts.attending }})
           </button>
           <button 
             @click="attendanceTabFilter = 'declined'"
@@ -1561,7 +1561,7 @@ onUnmounted(() => {
             class="px-3 py-1.5 rounded-full transition-all whitespace-nowrap cursor-pointer"
             :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
-            No Response ({{ attendanceCounts.unconfirmed }})
+            Pending ({{ attendanceCounts.unconfirmed }})
           </button>
         </div>
 
@@ -1591,7 +1591,7 @@ onUnmounted(() => {
                     {{ member.instrument }}
                   </span>
                   <span>•</span>
-                  <!-- Initial RSVP Tag -->
+                  <!-- Initial Attendance Status Tag -->
                   <span 
                     class="text-[10px] font-medium px-2 py-0.2 rounded-full"
                     :class="{
@@ -1600,7 +1600,7 @@ onUnmounted(() => {
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
                     }"
                   >
-                    {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'No Response' }}
+                    {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'Pending' }}
                   </span>
                 </div>
                 <!-- Excuse Justification (Table 19) -->

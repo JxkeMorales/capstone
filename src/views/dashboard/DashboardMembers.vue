@@ -14,7 +14,6 @@ import {
   Trash2, 
   CheckCircle2, 
   AlertCircle, 
-  Crown,
   Settings,
   SlidersHorizontal,
   ChevronRight,
@@ -277,6 +276,28 @@ const fetchRoster = async (skipCache = false) => {
   }
 }
 
+// SINGLE OFFICER HOLDER HELPERS
+const getOfficerHolder = (posId) => {
+  if (['member', 'majorette', 'flag_bearer', 'super_admin'].includes(posId)) return null
+  return members.value.find(m => getMemberPositionId(m) === posId)
+}
+
+const getOfficerHolderText = (posId) => {
+  const holder = getOfficerHolder(posId)
+  if (!holder) return ''
+  if (editingMember.value && holder.id === editingMember.value.id) return ' (Currently this member)'
+  return ` (Held by: ${holder.name})`
+}
+
+const currentHolderWarning = computed(() => {
+  if (!editingMember.value || !managePositionId.value) return ''
+  const holder = getOfficerHolder(managePositionId.value)
+  if (holder && holder.id !== editingMember.value.id) {
+    return `Note: This post is currently held by ${holder.name}. Saving will assign this post here and return ${holder.name} to Musician.`
+  }
+  return ''
+})
+
 // OPEN MANAGE MUSICIAN MODAL (SUPER ADMIN)
 const openManageModal = (member) => {
   editingMember.value = member
@@ -305,9 +326,9 @@ const saveMemberManagement = async () => {
   const execTitleToSave = newPos.role === 'executive' ? newPos.title : null
 
   try {
-    // 1. Single Officer Enforcement: Clear previous holder in local memory & DB if leadership post
-    const isLeadershipPost = ['president', 'vice_president', 'secretary', 'treasurer'].includes(newPos.id)
-    if (isLeadershipPost) {
+    // 1. Single Officer Enforcement: Clear previous holder if officer post
+    const isOfficerPost = ['president', 'vice_president', 'secretary', 'treasurer', 'auditor', 'resident_conductor', 'band_manager', 'coordinator'].includes(newPos.id)
+    if (isOfficerPost) {
       const prevHolder = members.value.find(m => m.id !== member.id && getMemberPositionId(m) === newPos.id)
       if (prevHolder) {
         prevHolder.executive_title = null
@@ -509,12 +530,12 @@ onUnmounted(() => {
     </header>
 
     <!-- 1. PINNED ACTIVE EXECUTIVE OFFICERS (ONLY CURRENTLY APPOINTED OFFICERS) -->
-    <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Band Leadership">
+    <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Band Officers">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
-          <Crown class="w-4 h-4 text-amber-500" />
+          <ShieldCheck class="w-4 h-4 text-amber-600 dark:text-amber-400" />
           <h2 class="text-xs font-semibold text-slate-700 dark:text-neutral-300">
-            Band Leadership &amp; Executive Officers
+            Band Officers
           </h2>
         </div>
         <span class="text-[11px] font-medium text-slate-400 dark:text-neutral-500">
@@ -530,9 +551,10 @@ onUnmounted(() => {
           class="bg-white dark:bg-[#202124] rounded-3xl p-4 border border-slate-200/90 dark:border-neutral-800 shadow-xs flex flex-col justify-between"
         >
           <div>
-            <!-- Officer Title Badge -->
+            <!-- Officer Title Badge (Subtle M3 Tonal Chip) -->
             <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs">
+              <span class="text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 flex items-center">
+                <ShieldCheck class="w-3 h-3 mr-1 text-amber-600 dark:text-amber-400" />
                 {{ pos.title }}
               </span>
               <span class="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
@@ -590,12 +612,12 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 2. "PA-IMPORTANTE" ATTENDANCE BEHAVIOR MONITOR (< 85%) -->
+    <!-- 2. ATTENDANCE BEHAVIOR REVIEW (< 85%) -->
     <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/40 rounded-3xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2 text-rose-700 dark:text-rose-400">
           <UserX class="w-4 h-4" />
-          <h2 class="font-semibold text-xs sm:text-sm">Attendance Review List</h2>
+          <h2 class="font-semibold text-xs sm:text-sm">Attendance Review (Frequent Absences)</h2>
         </div>
         <span class="text-xs font-medium bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 px-2.5 py-0.5 rounded-full">
           {{ paImportanteList.length }} Below 85%
@@ -756,7 +778,7 @@ onUnmounted(() => {
                 </span>
               </td>
 
-              <!-- Unified Position / Leadership Role Badge -->
+              <!-- Unified Position / Officer Role Badge -->
               <td class="py-3.5 px-4">
                 <span 
                   v-if="getMemberPositionId(member) === 'super_admin'" 
@@ -766,13 +788,13 @@ onUnmounted(() => {
                 </span>
                 <span 
                   v-else-if="getMemberPositionId(member) !== 'member'" 
-                  class="inline-flex items-center text-[10px] font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2.5 py-0.5 rounded-full shadow-xs"
+                  class="inline-flex items-center text-[10px] font-medium border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-2.5 py-0.5 rounded-full"
                 >
-                  <Crown class="w-3.5 h-3.5 mr-1 text-amber-300" /> {{ getMemberPosition(member).badge }}
+                  <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-amber-400" /> {{ getMemberPosition(member).badge }}
                 </span>
                 <span 
                   v-else 
-                  class="inline-flex items-center text-[10px] font-normal text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#2d3035] px-2.5 py-0.5 rounded-full"
+                  class="inline-flex items-center text-[10px] font-normal text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-[#2d3035] px-2.5 py-0.5 rounded-full border border-slate-200/50 dark:border-neutral-700/50"
                 >
                   Musician
                 </span>
@@ -862,8 +884,9 @@ onUnmounted(() => {
                 <div class="flex items-center space-x-1.5 mt-0.5 flex-wrap">
                   <span 
                     v-if="getMemberPositionId(member) !== 'member'" 
-                    class="text-[9px] font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2 py-0.5 rounded-full shadow-xs"
+                    class="text-[9px] font-medium border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full inline-flex items-center"
                   >
+                    <ShieldCheck class="w-3 h-3 mr-1 text-amber-600 dark:text-amber-400" />
                     {{ getMemberPosition(member).badge }}
                   </span>
                   <span class="text-xs text-slate-500 dark:text-neutral-400 capitalize">
@@ -934,21 +957,25 @@ onUnmounted(() => {
         <!-- Modal Form Body -->
         <div class="space-y-4 overflow-y-auto flex-1 pr-1">
           
-          <!-- UNIFIED ROLE & LEADERSHIP POSITION SELECTOR -->
+          <!-- UNIFIED ROLE & OFFICER POSITION SELECTOR -->
           <div>
             <label class="block text-xs font-medium text-slate-700 dark:text-neutral-300 mb-1 flex items-center">
-              <Crown class="w-3.5 h-3.5 mr-1 text-amber-500" /> Position &amp; Leadership
+              <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-500" /> Position &amp; Officer Role
             </label>
             <select 
               v-model="managePositionId"
               class="w-full p-3 bg-slate-50 dark:bg-[#18191a] border border-slate-200 dark:border-[#2d3035] rounded-xl text-xs text-slate-900 dark:text-white min-h-[48px] focus:outline-none focus:border-slate-400 dark:focus:border-neutral-600 cursor-pointer"
             >
               <option v-for="pos in POSITIONS" :key="pos.id" :value="pos.id">
-                {{ pos.label }}
+                {{ pos.label }}{{ getOfficerHolderText(pos.id) }}
               </option>
             </select>
-            <p class="text-[11px] text-slate-400 dark:text-neutral-500 mt-1">
-              Leadership posts are strictly single-officer appointments. Assigning a post automatically unassigns any previous holder.
+            <p v-if="currentHolderWarning" class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-medium flex items-center">
+              <AlertCircle class="w-3 h-3 mr-1 shrink-0" />
+              {{ currentHolderWarning }}
+            </p>
+            <p v-else class="text-[11px] text-slate-400 dark:text-neutral-500 mt-1">
+              Officer posts are single-officer appointments. Assigning a post automatically moves any previous holder back to Musician.
             </p>
           </div>
 

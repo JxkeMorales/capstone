@@ -730,9 +730,9 @@ onUnmounted(() => {
                 @click="openAttendanceTracker(ev)" 
                 type="button" 
                 class="px-3.5 py-1.5 bg-[var(--md-surface-container-high)] hover:bg-[var(--md-surface-container-highest)] text-[var(--md-on-surface)] font-medium text-xs rounded-full flex items-center cursor-pointer min-h-[36px] transition-colors"
-                aria-label="Attendance & Roll Call Log"
+                aria-label="Attendance Check"
               >
-                <Users class="w-4 h-4 mr-1.5" /> Roll Call
+                <Users class="w-4 h-4 mr-1.5" /> Attendance Check
               </button>
 
               <!-- Secretary / Admin Delete Button -->
@@ -764,7 +764,7 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- SECRETARY / ADMIN EVENT RSVP ATTENDANCE TRACKER & ROLL-CALL MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
+    <!-- SECRETARY / ADMIN EVENT ATTENDANCE CHECK MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
     <div v-if="showAttendanceModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-3 sm:p-4">
       <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
@@ -775,7 +775,7 @@ onUnmounted(() => {
               <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#2d3035] text-slate-700 dark:text-neutral-300">
                 {{ selectedEventForAttendance?.type || 'Event' }}
               </span>
-              <span class="text-[10px] text-slate-400 dark:text-neutral-500">Roll-Call Log</span>
+              <span class="text-[10px] text-slate-400 dark:text-neutral-500">Attendance Log</span>
             </div>
             <h3 class="font-bold text-base text-slate-900 dark:text-white truncate">
               {{ selectedEventForAttendance?.title }}
@@ -815,15 +815,15 @@ onUnmounted(() => {
             </button>
 
             <button 
-              v-if="(store.isSecretaryAdmin || store.isSuperAdmin) && attendanceCounts.unconfirmed > 0"
+              v-if="store.canConductRollCall && attendanceCounts.unconfirmed > 0"
               @click="alertUnconfirmedForEvent"
               :disabled="isAlertingEventUnconfirmed"
               type="button" 
               class="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-full shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-all disabled:opacity-50 min-h-[44px] shrink-0"
-              title="Send targeted RSVP reminder to unconfirmed members for this event"
+              title="Send attendance reminder to pending members for this event"
             >
               <Send class="w-4 h-4" />
-              <span>{{ isAlertingEventUnconfirmed ? 'Alerting...' : `Alert (${attendanceCounts.unconfirmed})` }}</span>
+              <span>{{ isAlertingEventUnconfirmed ? 'Alerting...' : `Remind (${attendanceCounts.unconfirmed})` }}</span>
             </button>
 
             <button 
@@ -855,7 +855,7 @@ onUnmounted(() => {
             class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
             :class="attendanceTabFilter === 'attending' ? 'bg-white dark:bg-[#2d2f31] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
-            RSVP Attending ({{ attendanceCounts.attending }})
+            Attending ({{ attendanceCounts.attending }})
           </button>
           <button 
             @click="attendanceTabFilter = 'declined'"
@@ -871,7 +871,7 @@ onUnmounted(() => {
             class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
             :class="attendanceTabFilter === 'unconfirmed' ? 'bg-white dark:bg-[#2d2f31] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400'"
           >
-            No Response ({{ attendanceCounts.unconfirmed }})
+            Pending ({{ attendanceCounts.unconfirmed }})
           </button>
         </div>
 
@@ -901,7 +901,7 @@ onUnmounted(() => {
                     {{ member.instrument }}
                   </span>
                   <span>•</span>
-                  <!-- Initial RSVP Tag -->
+                  <!-- Initial Attendance Status Tag -->
                   <span 
                     class="text-[10px] font-medium px-2 py-0.2 rounded-full"
                     :class="{
@@ -910,7 +910,7 @@ onUnmounted(() => {
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300': member.initialRsvp === 'none'
                     }"
                   >
-                    {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'No Response' }}
+                    {{ member.initialRsvp === 'attending' ? 'Attending' : member.initialRsvp === 'declined' ? 'Declined' : 'Pending' }}
                   </span>
                 </div>
                 <!-- Excuse Justification (Table 19) -->

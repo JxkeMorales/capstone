@@ -26,19 +26,19 @@ export const useMainStore = defineStore('main', {
     isAdmin: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
     isOfficerOrAdmin: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
     
-    // Feature Permissions (Super Admin universal control + Secretary Operational execution)
+    // Feature Permissions (Admin universal control + All Officers operational execution)
     canApproveAccounts: (state) => state.currentRole === 'super_admin',
     canAssignAdminRoles: (state) => state.currentRole === 'super_admin',
     canDeleteAccounts: (state) => state.currentRole === 'super_admin',
     
-    canManageEvents: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
-    canManageAnnouncements: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
-    canPromoteMembers: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
-    canConductRollCall: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
-    canUseSchedulingAlgorithm: (state) => ['super_admin', 'secretary_admin'].includes(state.currentRole),
+    canManageEvents: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
+    canManageAnnouncements: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
+    canPromoteMembers: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
+    canConductRollCall: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
+    canUseSchedulingAlgorithm: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
     
     canViewExecutiveAnalytics: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
-    canGenerateReports: (state) => state.currentRole === 'super_admin',
+    canGenerateReports: (state) => ['super_admin', 'secretary_admin', 'executive'].includes(state.currentRole),
   },
   
   actions: {
