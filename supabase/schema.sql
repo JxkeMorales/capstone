@@ -121,10 +121,66 @@ CREATE POLICY "Admins and Execs can view verified profiles"
 ON public.profiles FOR SELECT
 USING (is_verified = true AND public.get_auth_role(auth.uid()) IN ('secretary_admin', 'executive'));
 
--- RLS: Users can always view & update their own profile
-CREATE POLICY "Users can manage own profile"
-ON public.profiles FOR ALL
+-- RLS: Users can view their own profile
+DROP POLICY IF EXISTS "Users can manage own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile"
+ON public.profiles FOR SELECT
+TO authenticated
 USING (auth.uid() = id);
+
+-- RLS: Users can update their own profile (sensitive columns protected by trigger guard below)
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+ON public.profiles FOR UPDATE
+TO authenticated
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+-- Trigger: Prevent unauthorized escalation of role, verification, title, rank, reliability
+CREATE OR REPLACE FUNCTION public.guard_profile_updates()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_caller_role public.app_role;
+BEGIN
+  -- If sensitive columns are unchanged, allow update
+  IF (OLD.role IS NOT DISTINCT FROM NEW.role) AND
+     (OLD.is_verified IS NOT DISTINCT FROM NEW.is_verified) AND
+     (OLD.executive_title IS NOT DISTINCT FROM NEW.executive_title) AND
+     (OLD.rank IS NOT DISTINCT FROM NEW.rank) AND
+     (OLD.reliability_score IS NOT DISTINCT FROM NEW.reliability_score) THEN
+    RETURN NEW;
+  END IF;
+
+  -- Sensitive columns modified: verify caller role
+  v_caller_role := public.get_auth_role(auth.uid());
+
+  IF v_caller_role NOT IN ('super_admin', 'secretary_admin') THEN
+    RAISE EXCEPTION 'Access denied: Only Super Admin and Secretary Admin can modify member roles, verification status, rank, or reliability scores.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF (OLD.role IS DISTINCT FROM NEW.role OR
+      OLD.is_verified IS DISTINCT FROM NEW.is_verified OR
+      OLD.executive_title IS DISTINCT FROM NEW.executive_title) AND
+      v_caller_role != 'super_admin' THEN
+    RAISE EXCEPTION 'Access denied: Only Super Admin can modify system roles, verification, or executive titles.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS guard_profile_updates_trigger ON public.profiles;
+CREATE TRIGGER guard_profile_updates_trigger
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.guard_profile_updates();
 
 -- RLS: ONLY Super Admin can update user roles, executive titles, and verification
 CREATE POLICY "Super Admins can update roles and verification"
