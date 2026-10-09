@@ -24,6 +24,14 @@ AS $$
 DECLARE
     v_user_id UUID;
 BEGIN
+    -- Security Guard: Prevent unauthorized RPC execution (SEC-2 / OWASP A01)
+    IF auth.uid() IS NULL OR public.get_auth_role(auth.uid()) != 'super_admin' THEN
+        IF current_user NOT IN ('postgres', 'supabase_admin') THEN
+            RAISE EXCEPTION 'Access denied: Only Super Admin can invoke seed_user_account.'
+                USING ERRCODE = '42501';
+        END IF;
+    END IF;
+
     -- Check if user already exists in auth.users
     SELECT id INTO v_user_id FROM auth.users WHERE email = p_email;
 
@@ -90,6 +98,10 @@ BEGIN
     RETURN v_user_id;
 END;
 $$;
+
+-- Neutralize RPC access: Revoke execute privileges from public, anon, and authenticated
+REVOKE EXECUTE ON FUNCTION public.seed_user_account(TEXT, TEXT, TEXT, public.app_role, TEXT, public.executive_title) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.seed_user_account(TEXT, TEXT, TEXT, public.app_role, TEXT, public.executive_title) TO service_role, postgres;
 
 -- Execute Seeding for the requested accounts (Replace 'CHANGE_ME_SECURE_PASSWORD' before running):
 
