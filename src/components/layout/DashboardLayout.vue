@@ -825,7 +825,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 flex transition-colors duration-200">
+  <!-- Skip to main content link for keyboard navigation (WCAG 2.4.1 Bypass Blocks) -->
+  <a 
+    href="#main-content" 
+    class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:px-4 focus:py-2.5 focus:bg-amber-500 focus:text-slate-950 focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none"
+  >
+    Skip to main content
+  </a>
+
+  <div class="min-h-dvh bg-[#f8fafc] dark:bg-[#121214] text-slate-900 dark:text-neutral-100 flex transition-colors duration-200">
     
     <!-- 1. TABLET NAVIGATION RAIL (600px - 1024px: Fixed 72px Left Rail, Table 8) -->
     <aside 
@@ -835,7 +843,7 @@ onUnmounted(() => {
       <!-- Top Rail Brand Icon -->
       <div class="flex flex-col items-center space-y-4">
         <div class="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-1 shadow-xs">
-          <img src="/band1870logo.jpg" alt="Logo" class="w-full h-full object-contain" />
+          <img src="/band1870logo.jpg" alt="Logo" width="40" height="40" class="w-full h-full object-contain" />
         </div>
 
         <!-- Rail Navigation Items Stack -->
@@ -939,7 +947,7 @@ onUnmounted(() => {
       <!-- Brand Logo & Title -->
       <div class="flex items-center space-x-3 pb-3 border-b border-slate-200/60 dark:border-white/[0.05]">
         <div class="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex-shrink-0 flex items-center justify-center p-1 shadow-xs">
-          <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
+          <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" width="40" height="40" class="w-full h-full object-contain" />
         </div>
         <div>
           <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
@@ -1049,6 +1057,8 @@ onUnmounted(() => {
             <img v-if="store.profile?.profile_picture" 
                  :src="store.profile.profile_picture" 
                  alt="Avatar" 
+                 width="36"
+                 height="36"
                  class="w-full h-full object-cover" />
             <div v-else class="w-full h-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs">
               {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
@@ -1072,8 +1082,8 @@ onUnmounted(() => {
     </aside>
 
     <!-- 3. MAIN RESPONSIVE CANVAS AREA (Adaptive Offsets: 0 on mobile, 72px on tablet, 260px on desktop) -->
-    <div class="flex-1 min-w-0 min-h-screen flex flex-col w-full sm:pl-[72px] lg:pl-64 xl:pl-72">
-      <div class="flex-1 min-w-0 flex flex-col max-w-6xl mx-auto w-full">
+    <div class="flex-1 min-w-0 min-h-dvh flex flex-col w-full sm:pl-[72px] lg:pl-64 xl:pl-72">
+      <div class="flex-1 min-w-0 flex flex-col max-w-[1200px] mx-auto w-full">
       
       <!-- TOP APP BAR (Official Material 3 Small Top App Bar) -->
       <header class="sticky top-0 z-40 bg-[var(--md-surface)]/95 border-b border-[var(--md-outline-variant)]/30 px-4 sm:px-6 h-16 flex items-center justify-between transition-colors">
@@ -1081,17 +1091,17 @@ onUnmounted(() => {
           <!-- Mobile Brand Logo (Visible only on <600px mobile screens) -->
           <div class="flex items-center space-x-2.5 sm:hidden">
             <div class="w-8 h-8 rounded-xl overflow-hidden border border-[var(--md-outline-variant)] bg-white flex items-center justify-center p-0.5 shadow-xs">
-              <img src="/band1870logo.jpg" alt="Logo" class="w-full h-full object-contain" />
+              <img src="/band1870logo.jpg" alt="Logo" width="32" height="32" class="w-full h-full object-contain" />
             </div>
             <span class="font-bold text-base tracking-tight text-[var(--md-on-surface)]">SmartBand</span>
           </div>
 
           <!-- Tablet & Desktop View Title (Official M3 Title Large) -->
           <div class="hidden sm:flex items-center space-x-2.5">
-            <h1 class="text-lg sm:text-xl font-medium tracking-tight text-[var(--md-on-surface)]">
+            <p class="text-lg sm:text-xl font-medium tracking-tight text-[var(--md-on-surface)]">
               {{ currentViewTitle }}
-            </h1>
-            <span v-if="store.currentRole" class="m3-chip m3-chip-assist h-6 text-[11px] px-2.5 rounded-md">
+            </p>
+            <span v-if="store.currentRole" class="m3-chip m3-chip-assist h-7 text-xs px-3">
               {{ currentRoleBadge }}
             </span>
           </div>
@@ -1177,22 +1187,20 @@ onUnmounted(() => {
       </Transition>
 
       <!-- Main Router Page Body (Safe spacing at bottom so mobile bar never overlaps) -->
-      <main class="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-32 sm:pb-12">
+      <main id="main-content" class="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-32 sm:pb-12 max-w-[1200px] w-full mx-auto">
         <RouterView />
       </main>
 
       <!-- 4. OFFICIAL MATERIAL 3 NAVIGATION BAR (80dp Height with 32x64dp Pill Active Indicator, Table 8) -->
       <nav 
         class="sm:hidden fixed bottom-0 left-0 w-full bg-[var(--md-surface-container)] border-t border-[var(--md-outline-variant)]/30 shadow-xs pb-safe z-30 select-none"
-        aria-label="Mobile Bottom Navigation Bar"
+        aria-label="Mobile Navigation Bar"
       >
-        <div class="flex justify-around items-center h-20 px-2 max-w-md mx-auto" role="menubar">
+        <div class="flex justify-around items-center h-20 px-2 max-w-md mx-auto">
           
           <!-- Tab 1: Home Dashboard -->
           <RouterLink 
             to="/dashboard" 
-            role="menuitem"
-            aria-label="Home Dashboard Tab"
             class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
             <div 
@@ -1212,8 +1220,6 @@ onUnmounted(() => {
           <!-- Tab 2: Events Schedule -->
           <RouterLink 
             to="/dashboard/schedule" 
-            role="menuitem"
-            aria-label="Events Schedule Tab"
             class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
             <div 
@@ -1233,8 +1239,6 @@ onUnmounted(() => {
           <!-- Tab 3: Member Directory -->
           <RouterLink 
             to="/dashboard/members" 
-            role="menuitem"
-            aria-label="Band Member Directory Tab"
             class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
             <div 
@@ -1255,8 +1259,6 @@ onUnmounted(() => {
           <RouterLink 
             v-if="store.isSuperAdmin || store.isSecretaryAdmin || store.isExecutive"
             to="/dashboard/admin" 
-            role="menuitem"
-            aria-label="Admin Operations Hub Tab"
             class="flex flex-col items-center justify-center flex-1 h-full py-1 relative min-h-[48px]"
           >
             <div 
@@ -1277,8 +1279,6 @@ onUnmounted(() => {
           <!-- Tab 5: Profile -->
           <RouterLink 
             to="/dashboard/profile" 
-            role="menuitem"
-            aria-label="User Profile Tab"
             class="flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[48px]"
           >
             <div 
@@ -1294,7 +1294,6 @@ onUnmounted(() => {
               Profile
             </span>
           </RouterLink>
-
         </div>
       </nav>
 
@@ -1303,8 +1302,15 @@ onUnmounted(() => {
 
     <!-- HIGH-VISIBILITY CALL-TIME ALARM DIALOG (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
     <Transition name="toast">
-      <div v-if="activeAlarmModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+      <div v-if="activeAlarmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+        <div 
+          role="dialog" 
+          aria-modal="true" 
+          aria-labelledby="alarm-modal-title"
+          tabindex="-1"
+          @keydown.escape="dismissActiveAlarm"
+          class="bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2d3035] rounded-[28px] p-6 max-w-sm w-full space-y-4 shadow-xl text-center"
+        >
           
           <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-[#282a2c] text-slate-800 dark:text-white flex items-center justify-center mx-auto">
             <Volume2 class="w-7 h-7" />
@@ -1314,7 +1320,7 @@ onUnmounted(() => {
             <span class="inline-block px-3 py-1 bg-slate-100 dark:bg-[#282a2c] text-slate-700 dark:text-neutral-300 text-[11px] font-semibold uppercase rounded-full tracking-wider mb-2">
               Call-Time Alarm
             </span>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white leading-snug">
+            <h2 id="alarm-modal-title" class="text-xl font-bold text-slate-900 dark:text-white leading-snug">
               {{ activeAlarmModal.title }}
             </h2>
             <p class="text-sm font-semibold text-rose-600 dark:text-rose-400 mt-1 uppercase tracking-wide">
@@ -1339,13 +1345,20 @@ onUnmounted(() => {
     </Transition>
 
     <!-- APP SETTINGS & NOTIFICATIONS DRAWER MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSettingsDrawer" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left">
+    <div v-if="showSettingsDrawer" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4" @click.self="showSettingsDrawer = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="settings-drawer-title"
+        tabindex="-1"
+        @keydown.escape="showSettingsDrawer = false"
+        class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left"
+      >
         
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
           <div class="flex items-center space-x-2">
             <Bell class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
-            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Settings &amp; Notifications</h3>
+            <h3 id="settings-drawer-title" class="font-bold text-base text-[var(--md-on-surface)]">Settings &amp; Notifications</h3>
           </div>
           <button @click="showSettingsDrawer = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close Settings">
             <X class="w-5 h-5" />
@@ -1504,12 +1517,19 @@ onUnmounted(() => {
     </div>
 
     <!-- TERMS & CONDITIONS MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showTermsModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[80vh] flex flex-col">
+    <div v-if="showTermsModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4" @click.self="showTermsModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="terms-modal-title"
+        tabindex="-1"
+        @keydown.escape="showTermsModal = false"
+        class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[80vh] flex flex-col"
+      >
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
           <div class="flex items-center space-x-2">
             <FileText class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
-            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Terms &amp; Conditions</h3>
+            <h3 id="terms-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Terms &amp; Conditions</h3>
           </div>
           <button @click="showTermsModal = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close Terms">
             <X class="w-5 h-5" />
@@ -1552,8 +1572,15 @@ onUnmounted(() => {
     </div>
 
     <!-- COMPREHENSIVE ROLE & OPERATIONAL USER GUIDE MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showRoleGuideModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <div v-if="showRoleGuideModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4" @click.self="showRoleGuideModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="role-guide-modal-title"
+        tabindex="-1"
+        @keydown.escape="showRoleGuideModal = false"
+        class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-5 sm:p-6 max-w-xl w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col"
+      >
         
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
@@ -1562,7 +1589,7 @@ onUnmounted(() => {
               <BookOpen class="w-4 h-4" />
             </div>
             <div>
-              <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">SmartBand User &amp; Role Guide</h3>
+              <h3 id="role-guide-modal-title" class="font-bold text-base text-[var(--md-on-surface)] leading-tight">SmartBand User &amp; Role Guide</h3>
               <p class="text-[11px] text-[var(--md-on-surface-variant)]">Operational responsibilities, turnout rules, and quick manuals</p>
             </div>
           </div>
@@ -1614,7 +1641,7 @@ onUnmounted(() => {
           <div v-if="activeGuideTab === 'roles'" class="space-y-3">
             <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="m3-chip m3-chip-info h-5 text-[10px] px-2 rounded-md font-semibold">Musician</span>
+                <span class="m3-chip m3-chip-info h-6 text-xs px-2.5 font-semibold">Musician</span>
                 <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Regular Band Member</h4>
               </div>
               <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
@@ -1627,7 +1654,7 @@ onUnmounted(() => {
 
             <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="m3-chip m3-chip-rsvp h-5 text-[10px] px-2 rounded-md font-semibold">Secretary</span>
+                <span class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 font-semibold">Secretary</span>
                 <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Band Secretary</h4>
               </div>
               <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
@@ -1640,7 +1667,7 @@ onUnmounted(() => {
 
             <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="m3-chip m3-chip-assist h-5 text-[10px] px-2 rounded-md font-semibold">Executive</span>
+                <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 font-semibold">Executive</span>
                 <h4 class="font-bold text-[var(--md-on-surface)] text-sm">President, Conductor &amp; Board</h4>
               </div>
               <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
@@ -1652,7 +1679,7 @@ onUnmounted(() => {
 
             <div class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-1.5">
               <div class="flex items-center space-x-2">
-                <span class="m3-chip m3-chip-urgent h-5 text-[10px] px-2 rounded-md font-semibold">Super Admin</span>
+                <span class="m3-chip m3-chip-urgent h-6 text-xs px-2.5 font-semibold">Super Admin</span>
                 <h4 class="font-bold text-[var(--md-on-surface)] text-sm">IT Super Admin</h4>
               </div>
               <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)]">
@@ -1766,13 +1793,20 @@ onUnmounted(() => {
     </div>
 
     <!-- SIGN OUT CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSignOutModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+    <div v-if="showSignOutModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4" @click.self="showSignOutModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="signout-modal-title"
+        tabindex="-1"
+        @keydown.escape="showSignOutModal = false"
+        class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-6 max-w-sm w-full space-y-4 shadow-xl text-center"
+      >
         <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-on-surface)]">
           <LogOut class="w-5 h-5 text-[var(--md-error)]" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
+          <h3 id="signout-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
           <p class="text-xs text-[var(--md-on-surface-variant)] font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
         <div class="grid grid-cols-2 gap-2.5 pt-2">

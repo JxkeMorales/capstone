@@ -25,7 +25,11 @@ const getIconColor = (type) => {
 
 <template>
   <!-- Global Non-Intrusive iOS-style Toast Banner Container -->
-  <div class="fixed top-3 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center space-y-2 w-11/12 max-w-sm pointer-events-none">
+  <div 
+    class="fixed top-3 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center space-y-2 w-11/12 max-w-sm pointer-events-none"
+    aria-live="polite"
+    aria-relevant="additions text"
+  >
     <TransitionGroup 
       enter-active-class="transition duration-250 ease-out"
       enter-from-class="transform -translate-y-3 opacity-0 scale-95"
@@ -37,6 +41,7 @@ const getIconColor = (type) => {
       <div 
         v-for="toast in uiStore.toasts" 
         :key="toast.id"
+        :role="toast.type === 'error' ? 'alert' : 'status'"
         class="w-full bg-white dark:bg-[#1e1f20] text-slate-900 dark:text-neutral-100 rounded-2xl shadow-md border border-slate-200 dark:border-[#2d3035] px-3.5 py-2.5 flex items-center space-x-3 pointer-events-auto"
       >
         <!-- Icon (Dual-Coding Sensory Independence Table 6) -->
@@ -46,18 +51,18 @@ const getIconColor = (type) => {
         
         <!-- Content -->
         <div class="flex-1 min-w-0 pr-1">
-          <h4 v-if="toast.title" class="font-semibold text-xs text-slate-900 dark:text-white tracking-tight truncate">
+          <p v-if="toast.title" class="font-semibold text-xs text-slate-900 dark:text-white tracking-tight truncate">
             {{ toast.title }}
-          </h4>
+          </p>
           <p v-if="toast.message" class="text-[11px] text-slate-500 dark:text-neutral-400 leading-tight mt-0.5 line-clamp-2">
             {{ toast.message }}
           </p>
         </div>
 
-        <!-- Close Button (Min 40x40px hit area) -->
+        <!-- Close Button (Min 44x44px hit area) -->
         <button 
           @click="uiStore.removeToast(toast.id)"
-          class="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"
+          class="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800"
           aria-label="Dismiss Notification"
         >
           <X class="w-4 h-4" />

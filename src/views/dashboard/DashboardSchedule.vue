@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download, Send } from 'lucide-vue-next'
+import { Calendar, MapPin, Clock, Filter, CheckCircle2, XCircle, AlertCircle, Plus, Users, X, Trash2, UserCheck, UserX, History, ChevronDown, Download, Send, RefreshCw } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -46,6 +46,7 @@ const applyFilters = () => {
 const activeScheduleTab = ref('upcoming')
 const rawEvents = ref([])
 const isLoading = ref(true)
+const loadError = ref(null)
 
 // Realtime Sync References
 let pollTimer = null
@@ -225,6 +226,7 @@ const notifyOtherTabs = (eventType) => {
 const fetchEvents = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
+    loadError.value = null
     const cachedEvents = localStorage.getItem('smartband_schedule_events_cache') || localStorage.getItem('smartband_raw_events_cache')
     if (cachedEvents) {
       try {
@@ -238,10 +240,12 @@ const fetchEvents = async (skipCache = false) => {
   }
 
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('events')
       .select('*')
       .order('event_date', { ascending: true })
+
+    if (error) throw error
 
     if (data) {
       rawEvents.value = data.map(ev => {
@@ -264,6 +268,7 @@ const fetchEvents = async (skipCache = false) => {
     }
   } catch (err) {
     console.error('Error fetching events:', err)
+    loadError.value = 'Failed to load schedule from server. Please verify your connection.'
   } finally {
     isLoading.value = false
   }
@@ -613,6 +618,8 @@ onUnmounted(() => {
         v-if="store.canManageEvents" 
         @click="showAddEventModal = true"
         type="button"
+        aria-haspopup="dialog"
+        :aria-expanded="showAddEventModal"
         class="m3-btn-filled min-h-[44px] text-xs font-semibold px-4 sm:px-5 shrink-0"
       >
         <Plus class="w-4 h-4 mr-1.5" />
@@ -641,10 +648,10 @@ onUnmounted(() => {
           type="button"
           class="py-2.5 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] flex items-center justify-center text-center"
           :class="activeScheduleTab === 'accepted' 
-            ? 'bg-[var(--md-surface)] text-[var(--md-on-surface)] shadow-xs font-semibold' 
+            ? 'bg-[var(--md-surface)] text-emerald-700 dark:text-emerald-400 shadow-xs font-semibold' 
             : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
         >
-          <CheckCircle2 class="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <CheckCircle2 class="w-3.5 h-3.5 mr-1 text-emerald-700 dark:text-emerald-400 shrink-0" />
           <span class="truncate">Attending ({{ myAcceptedEvents.length }})</span>
         </button>
 
@@ -677,7 +684,7 @@ onUnmounted(() => {
         <!-- Filter Dropdown Menu -->
         <div v-if="showFilterMenu" class="absolute right-0 mt-2 w-64 bg-[var(--md-surface-container-high)] rounded-2xl shadow-xl border border-[var(--md-outline-variant)]/60 overflow-hidden z-50 p-2">
           <div class="px-3 py-2 border-b border-[var(--md-outline-variant)]/30">
-            <h3 class="text-xs font-semibold text-[var(--md-on-surface)]">Filter by Category</h3>
+            <p class="text-xs font-semibold text-[var(--md-on-surface)]">Filter by Category</p>
           </div>
           <div class="max-h-60 overflow-y-auto p-1 space-y-1">
             <label 
@@ -704,7 +711,36 @@ onUnmounted(() => {
 
     <!-- Events List -->
     <section class="space-y-3" aria-label="Events Feed">
-      <div v-if="displayedEvents.length > 0" class="space-y-3">
+      <!-- 1. Skeleton Loading State (Item 20) -->
+      <div v-if="isLoading" class="space-y-3">
+        <div v-for="i in 3" :key="i" class="m3-card-elevated p-5 space-y-3.5 border border-[var(--md-outline-variant)]/40 animate-pulse">
+          <div class="flex justify-between items-start">
+            <div class="space-y-2 flex-1">
+              <div class="h-5 w-24 bg-slate-200 dark:bg-neutral-800 rounded-md"></div>
+              <div class="h-5 bg-slate-200 dark:bg-neutral-800 rounded w-1/2"></div>
+            </div>
+            <div class="h-8 w-28 bg-slate-200 dark:bg-neutral-800 rounded-full shrink-0"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 bg-[var(--md-surface-container)] p-3 rounded-2xl border border-[var(--md-outline-variant)]/30">
+            <div class="h-4 bg-slate-200 dark:bg-neutral-800 rounded w-3/4"></div>
+            <div class="h-4 bg-slate-200 dark:bg-neutral-800 rounded w-1/2"></div>
+            <div class="col-span-2 h-4 bg-slate-200 dark:bg-neutral-800 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Error State with Retry CTA (Item 21) -->
+      <div v-else-if="loadError" class="m3-card-outlined p-8 text-center space-y-3 border-rose-300 dark:border-rose-900/50">
+        <AlertCircle class="w-8 h-8 text-rose-600 dark:text-rose-400 mx-auto" />
+        <h3 class="text-sm font-bold text-slate-900 dark:text-neutral-100">Unable to Load Schedule</h3>
+        <p class="text-xs text-slate-600 dark:text-neutral-400 max-w-sm mx-auto">{{ loadError }}</p>
+        <button @click="fetchEvents(true)" type="button" class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto">
+          <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Retry Connection
+        </button>
+      </div>
+
+      <!-- 3. Events List -->
+      <div v-else-if="displayedEvents.length > 0" class="space-y-3">
         <div 
           v-for="ev in displayedEvents" 
           :key="ev.id"
@@ -713,14 +749,14 @@ onUnmounted(() => {
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
             <div class="min-w-0 flex-1">
               <div class="flex items-center space-x-1.5">
-                <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
+                <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                   {{ ev.type }}
                 </span>
-                <span v-if="activeScheduleTab === 'past'" class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md">
+                <span v-if="activeScheduleTab === 'past'" class="m3-chip m3-chip-neutral h-7 text-xs px-3">
                   Completed
                 </span>
               </div>
-              <h3 class="font-bold text-base text-[var(--md-on-surface)] mt-1 leading-snug">{{ ev.title }}</h3>
+              <h2 class="font-bold text-base text-[var(--md-on-surface)] mt-1 leading-snug">{{ ev.title }}</h2>
             </div>
             
             <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
@@ -756,28 +792,67 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="m3-card-outlined p-8 text-center">
-        <Calendar class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2" />
-        <p class="text-sm font-semibold text-[var(--md-on-surface)]">
-          {{ activeScheduleTab === 'upcoming' ? 'No upcoming events scheduled in this category.' : 'No past events found in this category.' }}
-        </p>
+      <!-- 4. Empty State with CTA (Item 22) -->
+      <div v-else class="m3-card-outlined p-8 text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-outline)]">
+          <Calendar class="w-6 h-6" />
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-[var(--md-on-surface)]">
+            {{ activeScheduleTab === 'upcoming' ? 'No Upcoming Events Scheduled' : activeScheduleTab === 'accepted' ? 'No Accepted Events' : 'No Past Events Found' }}
+          </h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 max-w-sm mx-auto">
+            {{ activeScheduleTab === 'upcoming' ? 'New rehearsals, church gigs, and parades will appear here once scheduled.' : activeScheduleTab === 'accepted' ? 'RSVP "Attending" to any upcoming gig to add it to your personal schedule.' : 'Archived historical events will appear after completion.' }}
+          </p>
+        </div>
+        <button 
+          v-if="store.canManageEvents && activeScheduleTab === 'upcoming'" 
+          @click="showAddEventModal = true" 
+          type="button" 
+          class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+        >
+          <Plus class="w-3.5 h-3.5 mr-1.5" /> Schedule New Event
+        </button>
+        <button 
+          v-else-if="activeScheduleTab === 'accepted'"
+          @click="activeScheduleTab = 'upcoming'"
+          type="button"
+          class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+        >
+          Browse Upcoming Events
+        </button>
+        <button 
+          v-else 
+          @click="fetchEvents(true)" 
+          type="button" 
+          class="m3-btn-outlined text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+        >
+          <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Refresh Schedule
+        </button>
       </div>
     </section>
 
     <!-- SECRETARY / ADMIN EVENT ATTENDANCE CHECK MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+    <div 
+      v-if="showAttendanceModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="attendance-modal-title"
+      @keydown.escape="showAttendanceModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4"
+    >
       <div class="m3-surface-modal p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="min-w-0 pr-2">
             <div class="flex items-center space-x-1.5 mb-1">
-              <span class="m3-chip m3-chip-assist h-5 text-[10px] px-2 rounded-md">
+              <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                 {{ selectedEventForAttendance?.type || 'Event' }}
               </span>
               <span class="text-[10px] text-[var(--md-outline)] font-medium">Attendance Check Log</span>
             </div>
-            <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">
+            <h3 id="attendance-modal-title" class="font-bold text-base text-[var(--md-on-surface)] truncate">
               {{ selectedEventForAttendance?.title }}
             </h3>
             <p class="text-xs text-[var(--md-on-surface-variant)] mt-0.5">
@@ -794,11 +869,11 @@ onUnmounted(() => {
           <div class="flex items-center justify-between text-xs">
             <span class="font-semibold text-[var(--md-on-surface)]">Turnout Tally</span>
             <div class="flex items-center space-x-2 font-medium text-[11px]">
-              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ attendanceCounts.present }} Present</span>
+              <span class="text-emerald-700 dark:text-emerald-400 font-semibold">{{ attendanceCounts.present }} Present</span>
               <span>•</span>
               <span class="text-rose-600 dark:text-rose-400 font-semibold">{{ attendanceCounts.absent }} Absent</span>
               <span>•</span>
-              <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ attendanceCounts.excused }} Excused</span>
+              <span class="text-amber-800 dark:text-amber-400 font-semibold">{{ attendanceCounts.excused }} Excused</span>
             </div>
           </div>
 
@@ -853,7 +928,7 @@ onUnmounted(() => {
             @click="attendanceTabFilter = 'attending'"
             type="button"
             class="px-3.5 py-2 rounded-full transition-all whitespace-nowrap cursor-pointer min-h-[38px]"
-            :class="attendanceTabFilter === 'attending' ? 'bg-[var(--md-surface)] text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
+            :class="attendanceTabFilter === 'attending' ? 'bg-[var(--md-surface)] text-emerald-700 dark:text-emerald-400 shadow-xs font-semibold' : 'text-[var(--md-on-surface-variant)] hover:text-[var(--md-on-surface)]'"
           >
             Attending ({{ attendanceCounts.attending }})
           </button>
@@ -889,7 +964,7 @@ onUnmounted(() => {
             <!-- Member Details -->
             <div class="flex items-center space-x-2.5 min-w-0">
               <div class="w-9 h-9 rounded-full overflow-hidden bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-[var(--md-outline-variant)]">
-                <img v-if="member.profile_picture" :src="member.profile_picture" alt="" class="w-full h-full object-cover" />
+                <img v-if="member.profile_picture" :src="member.profile_picture" alt="" width="36" height="36" loading="lazy" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
@@ -1000,13 +1075,20 @@ onUnmounted(() => {
     </div>
 
     <!-- DELETE CONFIRM MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showDeleteConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+    <div 
+      v-if="showDeleteConfirmModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-event-modal-title"
+      @keydown.escape="showDeleteConfirmModal = false; targetEventIdToDelete = null"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
       <div class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         <div>
-          <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Delete Event?</h3>
+          <h3 id="delete-event-modal-title" class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Delete Event?</h3>
           <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 leading-relaxed">
             Are you sure you want to delete this scheduled event?
           </p>
@@ -1019,13 +1101,20 @@ onUnmounted(() => {
     </div>
 
     <!-- SCHEDULE NEW GIG MODAL (Secretary & Admin) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAddEventModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
+    <div 
+      v-if="showAddEventModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-event-modal-title"
+      @keydown.escape="showAddEventModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4"
+    >
       <div class="m3-surface-modal p-6 max-w-md w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="flex items-center space-x-2">
             <Calendar class="w-5 h-5 text-[var(--md-primary)]" />
             <div>
-              <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Schedule Band Gig</h3>
+              <h3 id="add-event-modal-title" class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Schedule Band Gig</h3>
               <p class="text-[11px] text-[var(--md-on-surface-variant)]">Announces event and cross-references musician availability</p>
             </div>
           </div>

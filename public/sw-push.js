@@ -34,7 +34,11 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close()
-  const targetUrl = event.notification.data?.url || '/dashboard'
+  let targetUrl = event.notification.data?.url || '/dashboard'
+  // Validate notification click URL (Item 36): enforce safe relative path
+  if (typeof targetUrl !== 'string' || !targetUrl.startsWith('/') || targetUrl.startsWith('//')) {
+    targetUrl = '/dashboard'
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {

@@ -1,6 +1,3 @@
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
 let cachedLogoBase64 = null
 
 /**
@@ -63,6 +60,13 @@ export const triggerPdfDownload = (doc, filename) => {
  * Generates an official, minimal, pure-white PDF Attendance Roll-Call Sheet for a specific event
  */
 export const generateEventAttendancePdf = async ({ event, roster, preparedByName = 'Band Secretary' }) => {
+  const [jsPDFModule, autoTableModule] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ])
+  const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF || jsPDFModule
+  const autoTable = autoTableModule.default || autoTableModule
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'pt',

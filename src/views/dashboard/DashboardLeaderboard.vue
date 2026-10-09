@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Trophy, Activity, CheckCircle2, AlertTriangle, BarChart3, ChevronUp, UserX, AlertCircle, Users } from 'lucide-vue-next'
+import { Trophy, Activity, CheckCircle2, AlertTriangle, BarChart3, ChevronUp, UserX, AlertCircle, Users, RefreshCw } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -11,7 +11,14 @@ const uiStore = useUIStore()
 const leaderboard = ref([])
 const paImportanteList = ref([])
 const isLoading = ref(true)
+const loadError = ref(null)
 let cleanupSync = null
+
+// PAGINATION STATE (Item 30: Server-side paging 50/page)
+const PAGE_SIZE = 50
+const currentPage = ref(0)
+const hasMoreLeaderboard = ref(false)
+const isLoadingMore = ref(false)
 
 const fetchLeaderboard = async (skipLoading = false) => {
   // Offline cache-first load
@@ -25,22 +32,30 @@ const fetchLeaderboard = async (skipLoading = false) => {
     } catch (e) {}
   }
 
-  if (!skipLoading && leaderboard.value.length === 0) isLoading.value = true
+  if (!skipLoading && leaderboard.value.length === 0) {
+    isLoading.value = true
+    loadError.value = null
+  }
+
+  currentPage.value = 0
   try {
-    let { data, error } = await supabase
+    let { data, error, count } = await supabase
       .from('public_roster')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('reliability_score', { ascending: false })
+      .range(0, PAGE_SIZE - 1)
 
     if (error) {
       // Fallback: query profiles directly if view does not exist
       const res = await supabase
         .from('profiles')
-        .select('id, full_name, instrument, rank, reliability_score, profile_picture')
+        .select('id, full_name, instrument, rank, reliability_score, profile_picture', { count: 'exact' })
         .eq('is_verified', true)
         .order('reliability_score', { ascending: false })
+        .range(0, PAGE_SIZE - 1)
       if (res.error) throw res.error
       data = res.data
+      count = res.count
     }
 
     if (data) {
@@ -54,6 +69,8 @@ const fetchLeaderboard = async (skipLoading = false) => {
         profile_picture: m.profile_picture || null
       }))
 
+      hasMoreLeaderboard.value = (count ? leaderboard.value.length < count : data.length === PAGE_SIZE)
+
       // Flag "Pa-Importante" behavior: Members with reliability score < 85%
       paImportanteList.value = leaderboard.value.filter(m => m.score < 85)
 
@@ -63,8 +80,63 @@ const fetchLeaderboard = async (skipLoading = false) => {
     }
   } catch (err) {
     console.error('Error fetching leaderboard:', err)
+    loadError.value = 'Failed to load reliability leaderboard. Please verify your connection.'
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadMoreLeaderboard = async () => {
+  if (isLoadingMore.value || !hasMoreLeaderboard.value) return
+  isLoadingMore.value = true
+  try {
+    const nextPage = currentPage.value + 1
+    const from = nextPage * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+
+    let { data, error, count } = await supabase
+      .from('public_roster')
+      .select('*', { count: 'exact' })
+      .order('reliability_score', { ascending: false })
+      .range(from, to)
+
+    if (error) {
+      const res = await supabase
+        .from('profiles')
+        .select('id, full_name, instrument, rank, reliability_score, profile_picture', { count: 'exact' })
+        .eq('is_verified', true)
+        .order('reliability_score', { ascending: false })
+        .range(from, to)
+      if (res.error) throw res.error
+      data = res.data
+      count = res.count
+    }
+
+    if (data && data.length > 0) {
+      const newItems = data.map(m => ({
+        id: m.id,
+        name: m.full_name,
+        section: m.instrument || 'Musician',
+        score: m.reliability_score ?? 100,
+        rank: m.rank || 'Junior',
+        avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'MB',
+        profile_picture: m.profile_picture || null
+      }))
+
+      leaderboard.value = [...leaderboard.value, ...newItems]
+      currentPage.value = nextPage
+      hasMoreLeaderboard.value = (count ? leaderboard.value.length < count : data.length === PAGE_SIZE)
+      paImportanteList.value = leaderboard.value.filter(m => m.score < 85)
+      try {
+        localStorage.setItem('smartband_leaderboard_cache', JSON.stringify(leaderboard.value))
+      } catch (e) {}
+    } else {
+      hasMoreLeaderboard.value = false
+    }
+  } catch (err) {
+    console.error('Error loading more leaderboard:', err)
+  } finally {
+    isLoadingMore.value = false
   }
 }
 
@@ -155,7 +227,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
+  <div class="p-4 sm:p-6 space-y-6 max-w-[1200px] mx-auto">
     
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-[#2d3442] pb-4">
       <div>
@@ -177,13 +249,13 @@ onUnmounted(() => {
     </header>
 
     <!-- Personal Reliability Dashboard -->
-    <section class="bg-white dark:bg-[#1a1e26] rounded-3xl p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3442]">
+    <section class="bg-white dark:bg-[#1a1e26] rounded-2xl p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3442]">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <span class="text-xs font-medium text-slate-500 dark:text-neutral-400 uppercase tracking-wider">My Reliability Score</span>
           <div class="flex items-baseline mt-1">
             <span class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-neutral-100 leading-none">{{ store.profile?.reliability_score || 100 }}</span>
-            <span class="text-lg font-semibold text-slate-400 dark:text-neutral-500 ml-1">%</span>
+            <span class="text-lg font-semibold text-slate-500 dark:text-neutral-400 ml-1">%</span>
           </div>
         </div>
         <div class="bg-slate-50 dark:bg-[#242933] px-4 py-2 rounded-full border border-slate-200/80 dark:border-[#2d3442] flex items-center space-x-2 min-h-[44px]">
@@ -199,7 +271,7 @@ onUnmounted(() => {
     </section>
 
     <!-- "PA-IMPORTANTE" ATTENDANCE BEHAVIOR MONITOR (Executive & Secretary) -->
-    <section v-if="store.canViewExecutiveAnalytics && paImportanteList.length > 0" class="bg-white dark:bg-[#1a1e26] border border-rose-200/80 dark:border-rose-900/40 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xs">
+    <section v-if="store.canViewExecutiveAnalytics && paImportanteList.length > 0" class="bg-white dark:bg-[#1a1e26] border border-rose-200/80 dark:border-rose-900/40 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2 text-rose-700 dark:text-rose-400">
           <UserX class="w-4 h-4" />
@@ -217,7 +289,7 @@ onUnmounted(() => {
       <div class="space-y-2">
         <div v-for="item in paImportanteList" :key="item.id" class="bg-slate-50 dark:bg-[#15181e] p-3 rounded-2xl border border-slate-200/70 dark:border-[#2d3442] flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <img v-if="item.profile_picture" :src="item.profile_picture" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-[#2d3442] flex-shrink-0" />
+            <img v-if="item.profile_picture" :src="item.profile_picture" alt="" width="36" height="36" loading="lazy" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-[#2d3442] flex-shrink-0" />
             <div v-else class="w-9 h-9 rounded-full bg-slate-200 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 font-bold text-xs flex items-center justify-center flex-shrink-0">
               {{ item.avatar }}
             </div>
@@ -249,8 +321,32 @@ onUnmounted(() => {
         <h2 class="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">Verified Band Roster</h2>
       </div>
 
-      <div class="bg-white dark:bg-[#1a1e26] rounded-3xl shadow-xs border border-slate-200/80 dark:border-[#2d3442] overflow-hidden divide-y divide-slate-100 dark:divide-[#2d3442]">
-        <div v-if="leaderboard.length > 0">
+      <div class="bg-white dark:bg-[#1a1e26] rounded-2xl shadow-xs border border-slate-200/80 dark:border-[#2d3442] overflow-hidden divide-y divide-slate-100 dark:divide-[#2d3442]">
+        <!-- 1. Skeleton Loading State (Item 20) -->
+        <div v-if="isLoading" class="p-6 space-y-4">
+          <div v-for="i in 5" :key="i" class="flex items-center space-x-3 animate-pulse">
+            <div class="w-6 h-4 bg-slate-200 dark:bg-neutral-800 rounded"></div>
+            <div class="w-9 h-9 rounded-full bg-slate-200 dark:bg-neutral-800"></div>
+            <div class="space-y-1.5 flex-1">
+              <div class="h-4 bg-slate-200 dark:bg-neutral-800 rounded w-1/3"></div>
+              <div class="h-3 bg-slate-200 dark:bg-neutral-800 rounded w-1/4"></div>
+            </div>
+            <div class="h-6 w-12 bg-slate-200 dark:bg-neutral-800 rounded"></div>
+          </div>
+        </div>
+
+        <!-- 2. Error State with Retry CTA (Item 21) -->
+        <div v-else-if="loadError" class="p-8 text-center space-y-3">
+          <AlertCircle class="w-8 h-8 text-rose-600 dark:text-rose-400 mx-auto" />
+          <h3 class="text-sm font-bold text-slate-900 dark:text-neutral-100">Unable to Load Leaderboard</h3>
+          <p class="text-xs text-slate-600 dark:text-neutral-400 max-w-sm mx-auto">{{ loadError }}</p>
+          <button @click="fetchLeaderboard(true)" type="button" class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto">
+            <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Retry Connection
+          </button>
+        </div>
+
+        <!-- 3. Leaderboard List -->
+        <div v-else-if="leaderboard.length > 0">
           <div 
             v-for="(member, index) in leaderboard" 
             :key="member.id"
@@ -258,12 +354,12 @@ onUnmounted(() => {
             :class="member.id === store.user?.id ? 'bg-slate-50 dark:bg-[#242933]' : ''"
           >
             <!-- Rank Number -->
-            <div class="w-7 text-center font-bold text-xs text-slate-400 dark:text-neutral-500 mr-2">
+            <div class="w-7 text-center font-bold text-xs text-slate-500 dark:text-neutral-400 mr-2">
               {{ index + 1 }}
             </div>
             
             <!-- Avatar -->
-            <img v-if="member.profile_picture" :src="member.profile_picture" class="w-9 h-9 rounded-full object-cover mr-3 flex-shrink-0 border border-slate-200/60 dark:border-[#2d3442] shadow-xs" />
+            <img v-if="member.profile_picture" :src="member.profile_picture" alt="" width="36" height="36" loading="lazy" class="w-9 h-9 rounded-full object-cover mr-3 flex-shrink-0 border border-slate-200/60 dark:border-[#2d3442] shadow-xs" />
             <div v-else class="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#242933] flex items-center justify-center font-bold text-xs text-slate-700 dark:text-neutral-300 mr-3 flex-shrink-0 border border-slate-200/60 dark:border-[#2d3442] shadow-xs">
               {{ member.avatar }}
             </div>
@@ -294,13 +390,38 @@ onUnmounted(() => {
             
             <!-- Score -->
             <div class="text-right flex-shrink-0 pr-1">
-              <span class="text-base font-bold text-slate-900 dark:text-neutral-100">{{ member.score }}<span class="text-xs font-normal text-slate-400 dark:text-neutral-500">%</span></span>
+              <span class="text-base font-bold text-slate-900 dark:text-neutral-100">{{ member.score }}<span class="text-xs font-normal text-slate-500 dark:text-neutral-400">%</span></span>
             </div>
+          </div>
+
+          <!-- Pagination: Server-side Load More (Item 30) -->
+          <div v-if="hasMoreLeaderboard" class="p-4 text-center border-t border-slate-100 dark:border-[#2d3442]">
+            <button 
+              @click="loadMoreLeaderboard" 
+              :disabled="isLoadingMore"
+              type="button" 
+              class="m3-btn-outlined text-xs min-h-[40px] px-6 inline-flex items-center mx-auto"
+            >
+              <RefreshCw v-if="isLoadingMore" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              <span>{{ isLoadingMore ? 'Loading More Rankings...' : 'Load More Rankings (50)' }}</span>
+            </button>
           </div>
         </div>
 
-        <div v-else class="p-8 text-center text-xs font-medium text-slate-400 dark:text-neutral-500">
-          No verified members found yet. When Super Admin verifies accounts, they will appear here.
+        <!-- 4. Empty State with CTA (Item 22) -->
+        <div v-else class="p-8 text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#242933] flex items-center justify-center mx-auto text-slate-400 dark:text-neutral-500">
+            <Trophy class="w-6 h-6" />
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-neutral-100">No Verified Members Found Yet</h3>
+            <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
+              When Super Admin verifies accounts, musician attendance and reliability rankings will appear here.
+            </p>
+          </div>
+          <button @click="fetchLeaderboard(true)" type="button" class="m3-btn-outlined text-xs min-h-[40px] px-5 inline-flex items-center mx-auto">
+            <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Refresh Rankings
+          </button>
         </div>
       </div>
     </section>

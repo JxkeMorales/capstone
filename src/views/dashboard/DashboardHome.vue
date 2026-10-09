@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download, AlertTriangle, Volume2, Check, CalendarCheck } from 'lucide-vue-next'
+import { Calendar, MapPin, CheckCircle, XCircle, Bell, MessageSquare, ShieldCheck, TrendingUp, User, Plus, ShieldAlert, X, AlertCircle, Trash2, Smartphone, FileText, Users, UserCheck, UserX, History, Clock, ChevronRight, Download, AlertTriangle, Volume2, Check, CalendarCheck, RefreshCw } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
 import { supabase } from '@/supabase'
@@ -15,6 +15,7 @@ const pendingAccounts = ref([])
 const rawEvents = ref([])
 const announcements = ref([])
 const isLoading = ref(true)
+const loadError = ref(null)
 const activeEventsTab = ref('upcoming')
 const activeAnnouncementTab = ref('recent') // 'upcoming' | 'past'
 
@@ -143,24 +144,63 @@ const notifyOtherTabs = (eventType, payload = {}) => {
   broadcastSync(eventType, payload)
 }
 
+// READ-THROUGH CACHE (Item 31: offline-first render cache then revalidate)
+const loadHomeFromCache = () => {
+  try {
+    const cachedEvents = localStorage.getItem('smartband_home_events_cache')
+    const cachedAnn = localStorage.getItem('smartband_home_announcements_cache')
+    let hasCachedContent = false
+    if (cachedEvents) {
+      rawEvents.value = JSON.parse(cachedEvents)
+      hasCachedContent = true
+    }
+    if (cachedAnn) {
+      announcements.value = JSON.parse(cachedAnn)
+      hasCachedContent = true
+    }
+    return hasCachedContent
+  } catch (e) {
+    return false
+  }
+}
+
+// PAGINATION STATE (Item 30: Server-side paging 50/page)
+const EVENTS_PAGE_SIZE = 50
+const eventsPage = ref(0)
+const hasMoreEvents = ref(false)
+const isLoadingMoreEvents = ref(false)
+
+const ANN_PAGE_SIZE = 50
+const annPage = ref(0)
+const hasMoreAnn = ref(false)
+const isLoadingMoreAnn = ref(false)
+
 const fetchHomeData = async (skipCache = false) => {
+  let hadCache = false
   if (!skipCache) {
-    isLoading.value = true
-    // Removed localStorage cache dependency - Supabase is the source of truth
-    // LocalStorage was causing data staleness across tabs; now we always fetch fresh data
+    hadCache = loadHomeFromCache()
+    if (!hadCache) {
+      isLoading.value = true
+    }
+    loadError.value = null
   }
 
+  eventsPage.value = 0
+  annPage.value = 0
+
   try {
-    // 1. Fetch all events
-    const { data: eventData, error: evErr } = await supabase
+    // 1. Fetch events with pagination (50/page)
+    const { data: eventData, error: evErr, count: evCount } = await supabase
       .from('events')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
+      .range(0, EVENTS_PAGE_SIZE - 1)
+
+    if (evErr) throw evErr
 
     if (eventData) {
       let rsvpMap = {}
       if (store.user) {
-        // Safe query selecting known valid schema columns (prevents 400 Bad Request on missing excuse_justification column)
         const { data: rsvpData } = await supabase
           .from('event_rsvps')
           .select('event_id, status')
@@ -190,15 +230,21 @@ const fetchHomeData = async (skipCache = false) => {
           createdAt: ev.created_at
         }
       })
+
+      hasMoreEvents.value = (evCount ? rawEvents.value.length < evCount : eventData.length === EVENTS_PAGE_SIZE)
+      try {
+        localStorage.setItem('smartband_home_events_cache', JSON.stringify(rawEvents.value))
+      } catch (e) {}
     }
 
-    if (evErr) console.error('Error fetching events:', evErr)
-
-    // 2. Fetch announcements (ISO/IEC 25010 & TC-04 Priority & Target Section)
-    const { data: annData, error: annErr } = await supabase
+    // 2. Fetch announcements with pagination (50/page)
+    const { data: annData, error: annErr, count: annCount } = await supabase
       .from('announcements')
-      .select('*, author:profiles(full_name)')
+      .select('*, author:profiles(full_name)', { count: 'exact' })
       .order('created_at', { ascending: false })
+      .range(0, ANN_PAGE_SIZE - 1)
+
+    if (annErr) throw annErr
 
     if (annData) {
       announcements.value = annData.map(a => ({
@@ -213,12 +259,14 @@ const fetchHomeData = async (skipCache = false) => {
         targetSection: a.target_section || 'all',
         ackCount: 0
       }))
+
+      hasMoreAnn.value = (annCount ? announcements.value.length < annCount : annData.length === ANN_PAGE_SIZE)
+      try {
+        localStorage.setItem('smartband_home_announcements_cache', JSON.stringify(announcements.value))
+      } catch (e) {}
     }
 
-    if (annErr) console.error('Error fetching announcements:', annErr)
-
     // 2b. Fetch Acknowledgment counts & user acknowledgments (TC-05 Two-Way Tracking)
-    // Synchronize from local store first to avoid 404 network spam if remote table isn't migrated
     try {
       if (store.user?.id) {
         const cachedAcks = localStorage.getItem(`smartband_ack_${store.user.id}`)
@@ -238,8 +286,120 @@ const fetchHomeData = async (skipCache = false) => {
     }
   } catch (err) {
     console.error('Error fetching home data:', err)
+    if (!hadCache && rawEvents.value.length === 0 && announcements.value.length === 0) {
+      loadError.value = 'Failed to load schedule or announcements. Please verify your connection.'
+    }
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadMoreEvents = async () => {
+  if (isLoadingMoreEvents.value || !hasMoreEvents.value) return
+  isLoadingMoreEvents.value = true
+  try {
+    const nextPage = eventsPage.value + 1
+    const from = nextPage * EVENTS_PAGE_SIZE
+    const to = from + EVENTS_PAGE_SIZE - 1
+
+    const { data: eventData, error: evErr, count: evCount } = await supabase
+      .from('events')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (evErr) throw evErr
+    if (eventData && eventData.length > 0) {
+      let rsvpMap = {}
+      if (store.user) {
+        const { data: rsvpData } = await supabase
+          .from('event_rsvps')
+          .select('event_id, status')
+          .eq('user_id', store.user.id)
+        if (rsvpData) {
+          rsvpData.forEach(r => {
+            rsvpMap[r.event_id] = { 
+              status: r.status, 
+              excuse: localStorage.getItem(`smartband_rsvp_excuse_${r.event_id}`) || null 
+            }
+          })
+        }
+      }
+
+      const newEvents = eventData.map(ev => {
+        const evDate = new Date(ev.event_date)
+        return {
+          id: ev.id,
+          rawDate: ev.event_date,
+          title: ev.title,
+          date: evDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: evDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          location: ev.location,
+          type: ev.event_type,
+          rsvpStatus: rsvpMap[ev.id]?.status || localStorage.getItem(`smartband_rsvp_${ev.id}`) || null,
+          excuseJustification: rsvpMap[ev.id]?.excuse || localStorage.getItem(`smartband_rsvp_excuse_${ev.id}`) || null,
+          createdAt: ev.created_at
+        }
+      })
+
+      rawEvents.value = [...rawEvents.value, ...newEvents]
+      eventsPage.value = nextPage
+      hasMoreEvents.value = (evCount ? rawEvents.value.length < evCount : eventData.length === EVENTS_PAGE_SIZE)
+      try {
+        localStorage.setItem('smartband_home_events_cache', JSON.stringify(rawEvents.value))
+      } catch (e) {}
+    } else {
+      hasMoreEvents.value = false
+    }
+  } catch (err) {
+    console.error('Error loading more events:', err)
+  } finally {
+    isLoadingMoreEvents.value = false
+  }
+}
+
+const loadMoreAnnouncements = async () => {
+  if (isLoadingMoreAnn.value || !hasMoreAnn.value) return
+  isLoadingMoreAnn.value = true
+  try {
+    const nextPage = annPage.value + 1
+    const from = nextPage * ANN_PAGE_SIZE
+    const to = from + ANN_PAGE_SIZE - 1
+
+    const { data: annData, error: annErr, count: annCount } = await supabase
+      .from('announcements')
+      .select('*, author:profiles(full_name)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (annErr) throw annErr
+    if (annData && annData.length > 0) {
+      const newAnn = annData.map(a => ({
+        id: a.id,
+        author: a.author?.full_name || 'Band Officer',
+        date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        title: a.title,
+        rawDate: a.created_at,
+        content: a.content,
+        priority: a.priority || (a.category && a.category.toLowerCase().includes('urgent') ? 'HIGH' : a.category) || 'HIGH',
+        category: a.category || 'General',
+        targetSection: a.target_section || 'all',
+        ackCount: 0
+      }))
+
+      announcements.value = [...announcements.value, ...newAnn]
+      annPage.value = nextPage
+      hasMoreAnn.value = (annCount ? announcements.value.length < annCount : annData.length === ANN_PAGE_SIZE)
+      try {
+        localStorage.setItem('smartband_home_announcements_cache', JSON.stringify(announcements.value))
+      } catch (e) {}
+    } else {
+      hasMoreAnn.value = false
+    }
+  } catch (err) {
+    console.error('Error loading more announcements:', err)
+  } finally {
+    isLoadingMoreAnn.value = false
   }
 }
 
@@ -951,7 +1111,7 @@ onUnmounted(() => {
     </div>
 
     <!-- PENDING APPROVALS QUEUE (Super Admin Only) -->
-    <section v-if="store.canApproveAccounts && pendingAccounts.length > 0" class="bg-[var(--md-surface-container)] border border-amber-500/30 dark:border-amber-500/20 rounded-3xl p-4 sm:p-5 space-y-3">
+    <section v-if="store.canApproveAccounts && pendingAccounts.length > 0" class="bg-[var(--md-surface-container)] border border-amber-500/30 dark:border-amber-500/20 rounded-2xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <ShieldAlert class="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -983,6 +1143,8 @@ onUnmounted(() => {
           <img v-if="store.profile?.profile_picture" 
                :src="store.profile.profile_picture" 
                alt="Avatar" 
+               width="48"
+               height="48"
                class="w-full h-full object-cover" />
           <div v-else class="w-full h-full text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm">
             {{ store.profile?.full_name ? store.profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'MB' }}
@@ -993,9 +1155,9 @@ onUnmounted(() => {
             <span class="font-bold text-[var(--md-on-surface)] text-base leading-tight">
               {{ store.profile?.full_name || 'Band Member' }}
             </span>
-            <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-6 px-2.5 text-[11px] rounded-md font-semibold">Verified</span>
-            <span v-else class="m3-chip m3-chip-rsvp h-6 px-2.5 text-[11px] rounded-md font-semibold">Pending</span>
-            <span v-if="!store.profile?.is_verified" class="m3-chip m3-chip-assist h-6 px-2.5 text-[11px] rounded-md">
+            <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-7 px-3 text-xs font-semibold">Verified</span>
+            <span v-else class="m3-chip m3-chip-rsvp h-7 px-3 text-xs font-semibold">Pending</span>
+            <span v-if="!store.profile?.is_verified" class="m3-chip m3-chip-assist h-7 px-3 text-xs">
               {{ pushPermission === 'granted' ? 'Push ✓' : pushPermission === 'denied' ? 'Push ×' : 'Push ⚠' }}
             </span>
           </div>
@@ -1076,7 +1238,7 @@ onUnmounted(() => {
             >
               <div class="relative z-10">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
+                  <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                     {{ ev.type }}
                   </span>
                   
@@ -1173,10 +1335,10 @@ onUnmounted(() => {
               <div class="relative z-10">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
+                    <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                       {{ ev.type }}
                     </span>
-                    <span class="m3-chip m3-chip-info h-6 text-xs px-2.5 rounded-md font-semibold">
+                    <span class="m3-chip m3-chip-info h-7 text-xs px-3 font-semibold">
                       ✓ Confirmed
                     </span>
                   </div>
@@ -1243,10 +1405,10 @@ onUnmounted(() => {
               <div class="flex items-start justify-between">
                 <div>
                   <div class="flex items-center space-x-1.5">
-                    <span class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md">
+                    <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                       {{ ev.type }}
                     </span>
-                    <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md">
+                    <span class="m3-chip m3-chip-neutral h-7 text-xs px-3">
                       Completed
                     </span>
                   </div>
@@ -1286,6 +1448,19 @@ onUnmounted(() => {
           <div v-else class="m3-card-outlined p-8 text-center">
             <History class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2" />
             <p class="text-sm font-semibold text-[var(--md-on-surface)]">No past gigs recorded yet.</p>
+          </div>
+
+          <!-- Pagination: Server-side Load More Events (Item 30) -->
+          <div v-if="hasMoreEvents" class="pt-2 text-center">
+            <button 
+              @click="loadMoreEvents" 
+              :disabled="isLoadingMoreEvents"
+              type="button" 
+              class="m3-btn-outlined text-xs min-h-[40px] px-6 inline-flex items-center mx-auto"
+            >
+              <RefreshCw v-if="isLoadingMoreEvents" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              <span>{{ isLoadingMoreEvents ? 'Loading More Events...' : 'Load More Events (50)' }}</span>
+            </button>
           </div>
         </div>
       </section>
@@ -1332,8 +1507,31 @@ onUnmounted(() => {
             <span class="truncate">Archived ({{ archivedAnnouncements.length }})</span>
           </button>
         </div>
-        
-        <div v-if="displayedAnnouncements.length > 0" class="m3-card-outlined p-4 sm:p-5 shadow-xs flex flex-col max-h-[460px] overflow-y-auto space-y-3">
+
+        <!-- 1. Skeleton Loading State (Item 20) -->
+        <div v-if="isLoading" class="m3-card-outlined p-4 sm:p-5 space-y-3">
+          <div v-for="i in 3" :key="i" class="m3-card-elevated p-4 rounded-2xl animate-pulse space-y-3 border border-[var(--md-outline-variant)]/40">
+            <div class="flex items-center space-x-2">
+              <div class="h-5 w-20 bg-slate-200 dark:bg-neutral-800 rounded-md"></div>
+              <div class="h-5 w-16 bg-slate-200 dark:bg-neutral-800 rounded-md"></div>
+            </div>
+            <div class="h-4 bg-slate-200 dark:bg-neutral-800 rounded w-3/4"></div>
+            <div class="h-3 bg-slate-200 dark:bg-neutral-800 rounded w-full"></div>
+            <div class="h-3 bg-slate-200 dark:bg-neutral-800 rounded w-2/3"></div>
+          </div>
+        </div>
+
+        <!-- 2. Error State with Retry CTA (Item 21) -->
+        <div v-else-if="loadError" class="m3-card-outlined p-6 text-center space-y-3 border-rose-300 dark:border-rose-900/50">
+          <AlertCircle class="w-8 h-8 text-rose-600 dark:text-rose-400 mx-auto" />
+          <h3 class="text-sm font-bold text-slate-900 dark:text-neutral-100">Unable to Load Announcements</h3>
+          <p class="text-xs text-slate-600 dark:text-neutral-400 max-w-sm mx-auto">{{ loadError }}</p>
+          <button @click="fetchHomeData(true)" type="button" class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto">
+            <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Retry Connection
+          </button>
+        </div>
+
+        <div v-else-if="displayedAnnouncements.length > 0" class="m3-card-outlined p-4 sm:p-5 shadow-xs flex flex-col max-h-[460px] overflow-y-auto space-y-3">
           <article 
             v-for="post in displayedAnnouncements" 
             :key="post.id"
@@ -1475,29 +1673,74 @@ onUnmounted(() => {
               </div>
             </div>
           </article>
+
+          <!-- Pagination: Server-side Load More Announcements (Item 30) -->
+          <div v-if="hasMoreAnn" class="pt-2 text-center">
+            <button 
+              @click="loadMoreAnnouncements" 
+              :disabled="isLoadingMoreAnn"
+              type="button" 
+              class="m3-btn-outlined text-xs min-h-[40px] px-6 inline-flex items-center mx-auto"
+            >
+              <RefreshCw v-if="isLoadingMoreAnn" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              <span>{{ isLoadingMoreAnn ? 'Loading More Notices...' : 'Load More Notices (50)' }}</span>
+            </button>
+          </div>
         </div>
 
-        <div v-else class="m3-card-outlined p-8 text-center">
-          <p class="text-sm font-semibold text-[var(--md-on-surface-variant)]">No announcements posted yet.</p>
+        <!-- 4. Empty State with CTA (Item 22) -->
+        <div v-else class="m3-card-outlined p-8 text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-outline)]">
+            <Bell class="w-6 h-6" />
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-[var(--md-on-surface)]">No Announcements Posted Yet</h3>
+            <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 max-w-sm mx-auto">
+              Broadcast urgent call-times, marching rehearsals, and uniform guidelines to the band.
+            </p>
+          </div>
+          <button 
+            v-if="store.canPostAnnouncements" 
+            @click="showAnnouncementModal = true" 
+            type="button" 
+            class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+          >
+            <Plus class="w-3.5 h-3.5 mr-1.5" /> Post Announcement
+          </button>
+          <button 
+            v-else 
+            @click="fetchHomeData(true)" 
+            type="button" 
+            class="m3-btn-outlined text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+          >
+            <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Check for Updates
+          </button>
         </div>
       </section>
 
     </div>
 
     <!-- SECRETARY / ADMIN EVENT ATTENDANCE TRACKER & ATTENDANCE CHECK MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAttendanceModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="m3-surface-modal p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
+    <div v-if="showAttendanceModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4" @click.self="showAttendanceModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="attendance-modal-title"
+        tabindex="-1"
+        @keydown.escape="showAttendanceModal = false"
+        class="m3-surface-modal p-4 sm:p-6 max-w-md sm:max-w-lg w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col"
+      >
         
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="min-w-0 pr-2">
             <div class="flex items-center space-x-1.5 mb-1">
-              <span class="m3-chip m3-chip-assist h-5 text-[10px] px-2 rounded-md">
+              <span class="m3-chip m3-chip-assist h-7 text-xs px-3">
                 {{ selectedEventForAttendance?.type || 'Event' }}
               </span>
               <span class="text-[10px] text-[var(--md-outline)] font-medium">Attendance Check Log</span>
             </div>
-            <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">
+            <h3 id="attendance-modal-title" class="font-bold text-base text-[var(--md-on-surface)] truncate">
               {{ selectedEventForAttendance?.title }}
             </h3>
             <p class="text-xs text-[var(--md-on-surface-variant)] mt-0.5">
@@ -1514,11 +1757,11 @@ onUnmounted(() => {
           <div class="flex items-center justify-between text-xs">
             <span class="font-semibold text-[var(--md-on-surface)]">Turnout Tally</span>
             <div class="flex items-center space-x-2 font-medium text-[11px]">
-              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ attendanceCounts.present }} Present</span>
+              <span class="text-emerald-700 dark:text-emerald-400 font-semibold">{{ attendanceCounts.present }} Present</span>
               <span>•</span>
               <span class="text-rose-600 dark:text-rose-400 font-semibold">{{ attendanceCounts.absent }} Absent</span>
               <span>•</span>
-              <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ attendanceCounts.excused }} Excused</span>
+              <span class="text-amber-800 dark:text-amber-400 font-semibold">{{ attendanceCounts.excused }} Excused</span>
             </div>
           </div>
 
@@ -1597,7 +1840,7 @@ onUnmounted(() => {
             <!-- Member Details -->
             <div class="flex items-center space-x-2.5 min-w-0">
               <div class="w-9 h-9 rounded-full overflow-hidden bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs flex-shrink-0 border border-[var(--md-outline-variant)]">
-                <img v-if="member.profile_picture" :src="member.profile_picture" alt="" class="w-full h-full object-cover" />
+                <img v-if="member.profile_picture" :src="member.profile_picture" alt="" width="36" height="36" loading="lazy" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
@@ -1708,11 +1951,18 @@ onUnmounted(() => {
     </div>
 
     <!-- CREATE ANNOUNCEMENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAnnouncementModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+    <div v-if="showAnnouncementModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4" @click.self="showAnnouncementModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="announcement-modal-title"
+        tabindex="-1"
+        @keydown.escape="showAnnouncementModal = false"
+        class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left"
+      >
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
           <div>
-            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Post Announcement</h3>
+            <h3 id="announcement-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Post Announcement</h3>
             <p class="text-[11px] text-[var(--md-on-surface-variant)]">Broadcasts to musician dashboards &amp; closed devices</p>
           </div>
           <button @click="showAnnouncementModal = false" type="button" aria-label="Close modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
@@ -1757,10 +2007,17 @@ onUnmounted(() => {
     </div>
 
     <!-- CREATE EVENT MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showEventModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+    <div v-if="showEventModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4" @click.self="showEventModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="event-modal-title"
+        tabindex="-1"
+        @keydown.escape="showEventModal = false"
+        class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left"
+      >
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
-          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Schedule Event</h3>
+          <h3 id="event-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Schedule Event</h3>
           <button @click="showEventModal = false" type="button" aria-label="Close modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
             <X class="w-4 h-4" />
           </button>
@@ -1801,11 +2058,18 @@ onUnmounted(() => {
     </div>
 
     <!-- EXCUSE JUSTIFICATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showExcuseModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
+    <div v-if="showExcuseModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4" @click.self="showExcuseModal = false">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="excuse-modal-title"
+        tabindex="-1"
+        @keydown.escape="showExcuseModal = false"
+        class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left"
+      >
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-2">
           <div>
-            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Submit Absence Excuse</h3>
+            <h3 id="excuse-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Submit Absence Excuse</h3>
             <p class="text-[11px] text-[var(--md-on-surface-variant)]">Required for official band attendance log</p>
           </div>
           <button @click="showExcuseModal = false" type="button" aria-label="Close excuse modal" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]">
@@ -1843,8 +2107,7 @@ onUnmounted(() => {
               v-model="customExcuseNote" 
               rows="3" 
               placeholder="e.g. Scheduled college midterm exam until 6:00 PM..." 
-              class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] focus:outline-none focus:border-[var(--md-outline)]"
-            ></textarea>
+              class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] focus:outline-none focus:border-[var(--md-outline)]"></textarea>
           </div>
         </div>
 
@@ -1858,13 +2121,20 @@ onUnmounted(() => {
     </div>
 
     <!-- CONFIRM MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+    <div v-if="showConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4" @click.self="showConfirmModal = false; confirmTargetId = null">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="confirm-modal-title"
+        tabindex="-1"
+        @keydown.escape="showConfirmModal = false; confirmTargetId = null"
+        class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center"
+      >
         <div class="w-12 h-12 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         <div>
-          <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Confirm Action?</h3>
+          <h3 id="confirm-modal-title" class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Confirm Action?</h3>
           <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 leading-relaxed">
             Are you sure you want to proceed?
           </p>

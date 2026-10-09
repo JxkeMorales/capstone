@@ -349,7 +349,7 @@ const handleFileUpload = async (event) => {
 </script>
 
 <template>
-  <div class="p-3.5 sm:p-6 space-y-6 max-w-5xl mx-auto">
+  <div class="p-3.5 sm:p-6 space-y-6 max-w-[1200px] mx-auto">
     
     <!-- Top Header (M3 Headline & Action Buttons) -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-[var(--md-outline-variant)]/30 pb-4">
@@ -377,16 +377,26 @@ const handleFileUpload = async (event) => {
     </header>
 
     <!-- Profile Info Card (Official M3 Elevated Card) -->
-    <section class="m3-card-elevated p-5 sm:p-6 border border-[var(--md-outline-variant)]/40 rounded-3xl space-y-5">
+    <section class="m3-card-elevated p-5 sm:p-6 border border-[var(--md-outline-variant)]/40 rounded-2xl space-y-5">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4 min-w-0 pr-2">
           
-          <!-- Avatar with Upload Indicator -->
-          <div class="relative w-16 h-16 sm:w-18 sm:h-18 flex-shrink-0 group cursor-pointer" @click="triggerFileUpload">
-            <input type="file" accept="image/jpeg, image/png, image/webp" @change="handleFileUpload" class="hidden" ref="fileInput" />
+          <!-- Avatar with Upload Indicator (Keyboard Accessible via label & focusable file input) -->
+          <label 
+            class="relative w-16 h-16 sm:w-18 sm:h-18 flex-shrink-0 group cursor-pointer rounded-full block focus-within:ring-2 focus-within:ring-amber-500 focus-within:ring-offset-2"
+            title="Upload new profile picture"
+          >
+            <input 
+              type="file" 
+              accept="image/jpeg, image/png, image/webp" 
+              @change="handleFileUpload" 
+              class="sr-only" 
+              ref="fileInput" 
+              aria-label="Upload profile photo"
+            />
             
             <template v-if="store.profile?.profile_picture && !imgLoadError">
-              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" class="w-full h-full object-cover rounded-full border-2 border-[var(--md-outline-variant)] shadow-xs" />
+              <img :src="store.profile.profile_picture" @error="imgLoadError = true" alt="Avatar" width="72" height="72" class="w-full h-full object-cover rounded-full border-2 border-[var(--md-outline-variant)] shadow-xs" />
               <div v-if="store.profile.profile_picture_status === 'pending'" class="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[var(--md-surface)] uppercase">Pending</div>
               <div v-else-if="store.profile.profile_picture_status === 'declined'" class="absolute -bottom-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[var(--md-surface)] uppercase">Declined</div>
               <div v-else-if="store.profile.profile_picture_status === 'approved'" class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-0.5 rounded-full border-2 border-[var(--md-surface)]" title="Approved">
@@ -404,17 +414,17 @@ const handleFileUpload = async (event) => {
                <Camera v-if="!isUploading" class="w-5 h-5 text-white" />
                <Loader2 v-else class="w-5 h-5 text-white animate-spin" />
             </div>
-          </div>
+          </label>
 
           <div class="min-w-0">
             <div class="flex items-center space-x-2 flex-wrap gap-y-1">
               <h2 class="text-lg sm:text-xl font-bold text-[var(--md-on-surface)] truncate leading-tight">
                 {{ store.profile?.full_name || 'Member' }}
               </h2>
-              <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-6 px-2.5 text-[11px] rounded-md font-semibold">
+              <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-7 px-3 text-xs font-semibold">
                 Verified Musician
               </span>
-              <span v-else class="m3-chip m3-chip-rsvp h-6 px-2.5 text-[11px] rounded-md font-semibold">
+              <span v-else class="m3-chip m3-chip-rsvp h-7 px-3 text-xs font-semibold">
                 Pending Verification
               </span>
             </div>
@@ -423,7 +433,7 @@ const handleFileUpload = async (event) => {
               <Music class="w-3.5 h-3.5 text-[var(--md-outline)] shrink-0" />
               <span>{{ store.profile?.instrument || 'Musician' }}</span>
               <span>•</span>
-              <span class="m3-chip m3-chip-assist h-5 px-2 text-[10px] rounded-md">{{ store.profile?.rank || 'Junior' }} Rank</span>
+              <span class="m3-chip m3-chip-assist h-6 px-2.5 text-xs">{{ store.profile?.rank || 'Junior' }} Rank</span>
             </p>
           </div>
         </div>
@@ -471,7 +481,7 @@ const handleFileUpload = async (event) => {
         </button>
       </div>
 
-      <div class="m3-card-outlined rounded-3xl p-3 sm:p-5 border border-[var(--md-outline-variant)]/40 overflow-x-auto">
+      <div class="m3-card-outlined rounded-2xl p-3 sm:p-5 border border-[var(--md-outline-variant)]/40 overflow-x-auto">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>
@@ -509,14 +519,21 @@ const handleFileUpload = async (event) => {
     </section>
 
     <!-- COMPLETE POP-UP SETTINGS MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showEditProfileModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[88vh] flex flex-col">
+    <div 
+      v-if="showEditProfileModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-modal-title"
+      @keydown.escape="showEditProfileModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-3 sm:p-4"
+    >
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl text-left max-h-[88vh] flex flex-col">
         
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/30 pb-3">
           <div class="flex items-center space-x-2">
             <Settings class="w-5 h-5 text-[var(--md-on-surface-variant)]" />
-            <h3 class="font-bold text-base text-[var(--md-on-surface)]">Profile & Settings</h3>
+            <h3 id="settings-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Profile & Settings</h3>
           </div>
           <button @click="showEditProfileModal = false" class="min-w-[48px] min-h-[48px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container)] transition-colors flex items-center justify-center cursor-pointer" aria-label="Close modal">
             <X class="w-5 h-5" />
@@ -564,8 +581,9 @@ const handleFileUpload = async (event) => {
           <div v-if="activeSettingsTab === 'profile'" class="space-y-4">
             <!-- Full Name -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-[var(--md-on-surface)]">Full Name</label>
+              <label for="profile-edit-name" class="text-xs font-medium text-[var(--md-on-surface)]">Full Name</label>
               <input 
+                id="profile-edit-name"
                 v-model="editFullName" 
                 type="text" 
                 class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)]"
@@ -574,8 +592,9 @@ const handleFileUpload = async (event) => {
 
             <!-- Primary Instrument -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-[var(--md-on-surface)]">Primary Instrument</label>
+              <label for="profile-edit-primary-inst" class="text-xs font-medium text-[var(--md-on-surface)]">Primary Instrument</label>
               <select 
+                id="profile-edit-primary-inst"
                 v-model="editPrimaryInstrument" 
                 class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)] cursor-pointer"
               >
@@ -585,8 +604,9 @@ const handleFileUpload = async (event) => {
 
             <!-- Secondary Instrument -->
             <div class="space-y-1.5 text-left">
-              <label class="text-xs font-medium text-[var(--md-on-surface)]">Secondary Instrument (Optional)</label>
+              <label for="profile-edit-secondary-inst" class="text-xs font-medium text-[var(--md-on-surface)]">Secondary Instrument (Optional)</label>
               <select 
+                id="profile-edit-secondary-inst"
                 v-model="editSecondaryInstrument" 
                 class="w-full px-4 py-3 bg-[var(--md-surface-container-lowest)] border border-[var(--md-outline-variant)] rounded-2xl text-xs font-medium text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-primary)] cursor-pointer"
               >
@@ -598,12 +618,13 @@ const handleFileUpload = async (event) => {
             <!-- Philippine Mobile Phone Number -->
             <div class="space-y-1.5 text-left">
               <div class="flex justify-between items-center">
-                <label class="text-xs font-medium text-[var(--md-on-surface)]">Mobile Phone Number</label>
+                <label for="profile-edit-phone" class="text-xs font-medium text-[var(--md-on-surface)]">Mobile Phone Number</label>
                 <span class="text-[10px] font-medium" :class="editContactNumber.length === 11 && editContactNumber.startsWith('09') ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--md-on-surface-variant)]'">
                   {{ editContactNumber.length }}/11 digits
                 </span>
               </div>
               <input 
+                id="profile-edit-phone"
                 :value="editContactNumber" 
                 @input="handlePhoneEditInput" 
                 type="tel" 
@@ -734,13 +755,20 @@ const handleFileUpload = async (event) => {
     </div>
 
     <!-- SIGN OUT CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showSignOutModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+    <div 
+      v-if="showSignOutModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="signout-modal-title"
+      @keydown.escape="showSignOutModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
+      <div class="m3-surface-modal bg-[var(--md-surface-container-high)] text-[var(--md-on-surface)] border border-[var(--md-outline-variant)]/60 rounded-[28px] p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-on-surface)]">
           <LogOut class="w-5 h-5 text-[var(--md-error)]" />
         </div>
         <div class="space-y-1">
-          <h3 class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
+          <h3 id="signout-modal-title" class="font-bold text-base text-[var(--md-on-surface)]">Sign Out of SmartBand?</h3>
           <p class="text-xs text-[var(--md-on-surface-variant)] font-normal">Are you sure you want to sign out? You will need to log back in to access event schedules and receive operational alarms.</p>
         </div>
         <div class="grid grid-cols-2 gap-3 pt-2">

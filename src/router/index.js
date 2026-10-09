@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { nextTick } from 'vue'
 import { supabase } from '../supabase'
 import { useMainStore } from '../stores/main'
 
@@ -8,7 +9,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'landing',
-      component: () => import('../views/LandingView.vue')
+      component: () => import('../views/LandingView.vue'),
+      meta: { title: 'Welcome' }
     },
     {
       path: '/home',
@@ -17,7 +19,8 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/HomeView.vue')
+      component: () => import('../views/HomeView.vue'),
+      meta: { title: 'Sign In' }
     },
     {
       path: '/dashboard',
@@ -28,37 +31,37 @@ const router = createRouter({
           path: '',
           name: 'dashboard-home',
           component: () => import('../views/dashboard/DashboardHome.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Home' }
         },
         {
           path: 'schedule',
           name: 'dashboard-schedule',
           component: () => import('../views/dashboard/DashboardSchedule.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Events' }
         },
         {
           path: 'leaderboard',
           name: 'dashboard-leaderboard',
           component: () => import('../views/dashboard/DashboardLeaderboard.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Leaderboard' }
         },
         {
           path: 'members',
           name: 'dashboard-members',
           component: () => import('../views/dashboard/DashboardMembers.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Roster' }
         },
         {
           path: 'profile',
           name: 'dashboard-profile',
           component: () => import('../views/dashboard/DashboardProfile.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Profile' }
         },
         {
           path: 'admin',
           name: 'dashboard-admin',
           component: () => import('../views/dashboard/DashboardAdmin.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, title: 'Operations & Moderation' }
         }
       ]
     },
@@ -66,7 +69,8 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('../views/NotFoundView.vue')
+      component: () => import('../views/NotFoundView.vue'),
+      meta: { title: 'Page Not Found' }
     }
   ]
 })
@@ -130,6 +134,20 @@ router.beforeEach(async (to, from) => {
     }
     return true
   }
+})
+
+// Update document title and manage focus on SPA route transition (WCAG 2.4.2 & 2.4.3)
+router.afterEach((to) => {
+  const pageTitle = to.meta?.title || 'Band Portal'
+  document.title = `${pageTitle} — SmartBand`
+
+  nextTick(() => {
+    const mainHeading = document.querySelector('main h1, h1')
+    if (mainHeading) {
+      mainHeading.setAttribute('tabindex', '-1')
+      mainHeading.focus({ preventScroll: true })
+    }
+  })
 })
 
 // Auto-reload latest assets when Vercel deploys and replaces dynamic chunk modules

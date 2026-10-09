@@ -18,7 +18,8 @@ import {
   SlidersHorizontal,
   ChevronRight,
   UserCheck,
-  Star
+  Star,
+  RefreshCw
 } from 'lucide-vue-next'
 import { useMainStore } from '@/stores/main'
 import { useUIStore } from '@/stores/ui'
@@ -33,6 +34,7 @@ const activeSectionFilter = ref('All')
 const activeTierFilter = ref('all') // 'all' | 'officers' | 'senior' | 'junior'
 const members = ref([])
 const isLoading = ref(true)
+const loadError = ref(null)
 const toastMessage = ref('')
 
 // Availability Modal Sheet State
@@ -234,22 +236,31 @@ const sortedRoster = computed(() => {
   })
 })
 
+// PAGINATION STATE (Item 30: Server-side paging 50/page)
+const PAGE_SIZE = 50
+const currentPage = ref(0)
+const hasMoreMembers = ref(false)
+const isLoadingMore = ref(false)
+
 // FETCH ROSTER
 const fetchRoster = async (skipCache = false) => {
   if (!skipCache) {
     isLoading.value = true
+    loadError.value = null
     const cached = localStorage.getItem('smartband_members_roster_cache')
     if (cached) {
       try { members.value = JSON.parse(cached) } catch (e) {}
     }
   }
 
+  currentPage.value = 0
   try {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('is_verified', true)
       .order('full_name', { ascending: true })
+      .range(0, PAGE_SIZE - 1)
 
     if (error) throw error
 
@@ -267,12 +278,56 @@ const fetchRoster = async (skipCache = false) => {
         profile_picture: m.profile_picture || null
       }))
 
+      hasMoreMembers.value = (count ? members.value.length < count : data.length === PAGE_SIZE)
       localStorage.setItem('smartband_members_roster_cache', JSON.stringify(members.value))
     }
   } catch (err) {
     console.error('Error fetching roster:', err)
+    loadError.value = 'Failed to load member roster from server. Please verify your connection.'
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadMoreMembers = async () => {
+  if (isLoadingMore.value || !hasMoreMembers.value) return
+  isLoadingMore.value = true
+  try {
+    const nextPage = currentPage.value + 1
+    const from = nextPage * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+    const { data, error, count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact' })
+      .eq('is_verified', true)
+      .order('full_name', { ascending: true })
+      .range(from, to)
+
+    if (error) throw error
+    if (data && data.length > 0) {
+      const newItems = data.map(m => ({
+        id: m.id,
+        name: m.full_name || 'Unnamed Musician',
+        instrument: m.instrument || 'Clarinet',
+        rank: m.rank || 'Junior',
+        role: m.role || 'member',
+        executive_title: m.executive_title || null,
+        reliability: m.reliability_score ?? 100,
+        contact: m.contact_number || m.email || '',
+        avatar: m.full_name ? m.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'MB',
+        profile_picture: m.profile_picture || null
+      }))
+      members.value = [...members.value, ...newItems]
+      currentPage.value = nextPage
+      hasMoreMembers.value = (count ? members.value.length < count : data.length === PAGE_SIZE)
+      localStorage.setItem('smartband_members_roster_cache', JSON.stringify(members.value))
+    } else {
+      hasMoreMembers.value = false
+    }
+  } catch (err) {
+    console.error('Error loading more members:', err)
+  } finally {
+    isLoadingMore.value = false
   }
 }
 
@@ -491,7 +546,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-7xl mx-auto">
+  <div class="space-y-6 max-w-[1200px] mx-auto">
     
     <!-- Top Header -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[var(--md-outline-variant)]/40">
@@ -500,10 +555,10 @@ onUnmounted(() => {
           <span class="text-xs font-medium text-[var(--md-on-surface-variant)]">
             {{ store.isOfficerOrAdmin ? 'Band Directory & Ranks' : 'Band Directory' }}
           </span>
-          <span v-if="store.isSuperAdmin" class="m3-chip m3-chip-urgent h-5 px-2 text-[10px] rounded-md font-semibold">
+          <span v-if="store.isSuperAdmin" class="m3-chip m3-chip-urgent h-6 px-2.5 text-xs font-semibold">
             Admin
           </span>
-          <span v-else-if="store.isOfficerOrAdmin" class="m3-chip m3-chip-rsvp h-5 px-2 text-[10px] rounded-md font-semibold">
+          <span v-else-if="store.isOfficerOrAdmin" class="m3-chip m3-chip-rsvp h-6 px-2.5 text-xs font-semibold">
             Officer
           </span>
         </div>
@@ -533,7 +588,7 @@ onUnmounted(() => {
     <section v-if="pinnedLeadership.length > 0" class="space-y-3" aria-label="Band Officers">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
-          <ShieldCheck class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <ShieldCheck class="w-4 h-4 text-amber-800 dark:text-amber-400" />
           <h2 class="text-xs font-semibold text-[var(--md-on-surface)]">
             Band Officers
           </h2>
@@ -553,11 +608,11 @@ onUnmounted(() => {
           <div>
             <!-- Officer Title Badge (Subtle M3 Tonal Chip) -->
             <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 rounded-md">
-                <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-amber-400" />
+              <span class="m3-chip m3-chip-rsvp h-7 text-xs px-3">
+                <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-800 dark:text-amber-400" />
                 {{ pos.title }}
               </span>
-              <span class="m3-chip m3-chip-info h-5 text-[10px] px-2 rounded-md font-semibold">
+              <span class="m3-chip m3-chip-info h-6 text-xs px-2.5 font-semibold">
                 Active
               </span>
             </div>
@@ -565,7 +620,7 @@ onUnmounted(() => {
             <!-- Officer Profile Details -->
             <div class="flex items-start space-x-3">
               <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm">
-                <img v-if="pos.officer.profile_picture" :src="pos.officer.profile_picture" :alt="pos.officer.name" class="w-full h-full object-cover" />
+                <img v-if="pos.officer.profile_picture" :src="pos.officer.profile_picture" :alt="pos.officer.name" width="48" height="48" loading="lazy" class="w-full h-full object-cover" />
                 <span v-else>{{ pos.officer.avatar }}</span>
               </div>
               <div class="min-w-0 flex-1">
@@ -578,7 +633,7 @@ onUnmounted(() => {
                 </p>
                 <!-- Only visible to Officers & Admins -->
                 <div v-if="store.isOfficerOrAdmin" class="flex items-center space-x-1.5 mt-2">
-                  <span class="m3-chip m3-chip-neutral h-5 text-[10px] px-2 rounded-md">
+                  <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5">
                     {{ pos.officer.rank }}
                   </span>
                   <span class="text-[10px] font-semibold text-[var(--md-on-surface-variant)]">
@@ -613,13 +668,13 @@ onUnmounted(() => {
     </section>
 
     <!-- 2. ATTENDANCE BEHAVIOR REVIEW (< 85%) -->
-    <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-[var(--md-surface-container)] border border-rose-500/30 rounded-3xl p-4 sm:p-5 space-y-3">
+    <section v-if="store.canPromoteMembers && paImportanteList.length > 0" class="bg-[var(--md-surface-container)] border border-rose-500/30 rounded-2xl p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2 text-rose-600 dark:text-rose-400">
           <UserX class="w-4 h-4" />
           <h2 class="font-semibold text-xs sm:text-sm">Attendance Review (Frequent Absences)</h2>
         </div>
-        <span class="m3-chip m3-chip-urgent h-6 text-xs px-2.5 rounded-md font-semibold">
+        <span class="m3-chip m3-chip-urgent h-7 text-xs px-3 font-semibold">
           {{ paImportanteList.length }} Below 85%
         </span>
       </div>
@@ -726,11 +781,37 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <!-- DESKTOP / TABLET VIEW (TABLE WITH HORIZONTAL OVERFLOW SCROLLING) -->
-      <div 
-        class="hidden md:block m3-card-outlined overflow-hidden border border-[var(--md-outline-variant)]/60 rounded-3xl"
-        :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
-      >
+      <!-- 1. Skeleton Loading State (Item 20) -->
+      <div v-if="isLoading" class="m3-card-outlined p-5 space-y-4">
+        <div v-for="i in 5" :key="i" class="flex items-center justify-between animate-pulse py-2">
+          <div class="flex items-center space-x-3 flex-1">
+            <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-neutral-800 shrink-0"></div>
+            <div class="space-y-1.5 flex-1">
+              <div class="h-4 bg-slate-200 dark:bg-neutral-800 rounded w-1/3"></div>
+              <div class="h-3 bg-slate-200 dark:bg-neutral-800 rounded w-1/4"></div>
+            </div>
+          </div>
+          <div class="h-6 w-20 bg-slate-200 dark:bg-neutral-800 rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- 2. Error State with Retry CTA (Item 21) -->
+      <div v-else-if="loadError" class="m3-card-outlined p-8 text-center space-y-3 border-rose-300 dark:border-rose-900/50">
+        <AlertCircle class="w-8 h-8 text-rose-600 dark:text-rose-400 mx-auto" />
+        <h3 class="text-sm font-bold text-slate-900 dark:text-neutral-100">Unable to Load Musician Directory</h3>
+        <p class="text-xs text-slate-600 dark:text-neutral-400 max-w-sm mx-auto">{{ loadError }}</p>
+        <button @click="fetchRoster(true)" type="button" class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto">
+          <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Retry Connection
+        </button>
+      </div>
+
+      <!-- 3. Roster Present (Desktop + Mobile) -->
+      <div v-else-if="sortedRoster.length > 0">
+        <!-- DESKTOP / TABLET VIEW (TABLE WITH HORIZONTAL OVERFLOW SCROLLING) -->
+        <div 
+          class="hidden md:block m3-card-outlined overflow-hidden border border-[var(--md-outline-variant)]/60 rounded-2xl"
+          :class="sortedRoster.length > 10 ? 'max-h-[560px] overflow-y-auto' : ''"
+        >
         <table class="w-full text-left border-collapse text-xs">
           <!-- Sticky Header (Table 4: 48px Header Height) -->
           <thead class="sticky top-0 bg-[var(--md-surface-container)] border-b border-[var(--md-outline-variant)]/40 z-10 font-semibold text-[var(--md-on-surface-variant)] text-xs h-12">
@@ -753,7 +834,7 @@ onUnmounted(() => {
               <td class="py-3.5 px-4">
                 <div class="flex items-center space-x-3">
                   <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs">
-                    <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
+                    <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" width="36" height="36" loading="lazy" class="w-full h-full object-cover" />
                     <span v-else>{{ member.avatar }}</span>
                   </div>
                   <div class="min-w-0">
@@ -772,7 +853,7 @@ onUnmounted(() => {
 
               <!-- Section / Instrument -->
               <td class="py-3.5 px-4">
-                <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md inline-flex items-center capitalize">
+                <span class="m3-chip m3-chip-neutral h-7 text-xs px-3 inline-flex items-center capitalize">
                   <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" />
                   {{ member.instrument }}
                 </span>
@@ -782,19 +863,19 @@ onUnmounted(() => {
               <td class="py-3.5 px-4">
                 <span 
                   v-if="getMemberPositionId(member) === 'super_admin'" 
-                  class="m3-chip m3-chip-urgent h-6 text-xs px-2.5 rounded-md inline-flex items-center font-semibold"
+                  class="m3-chip m3-chip-urgent h-7 text-xs px-3 inline-flex items-center font-semibold"
                 >
                   <ShieldCheck class="w-3.5 h-3.5 mr-1" /> Super Admin
                 </span>
                 <span 
                   v-else-if="getMemberPositionId(member) !== 'member'" 
-                  class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 rounded-md inline-flex items-center font-semibold"
+                  class="m3-chip m3-chip-rsvp h-7 text-xs px-3 inline-flex items-center font-semibold"
                 >
-                  <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-amber-400" /> {{ getMemberPosition(member).badge }}
+                  <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-800 dark:text-amber-400" /> {{ getMemberPosition(member).badge }}
                 </span>
                 <span 
                   v-else 
-                  class="m3-chip m3-chip-assist h-6 text-xs px-2.5 rounded-md inline-flex items-center font-normal"
+                  class="m3-chip m3-chip-assist h-7 text-xs px-3 inline-flex items-center font-normal"
                 >
                   Musician
                 </span>
@@ -803,7 +884,7 @@ onUnmounted(() => {
               <!-- Rank (Officers & Admins Only) -->
               <td v-if="store.isOfficerOrAdmin" class="py-3.5 px-4">
                 <span 
-                  class="m3-chip m3-chip-neutral h-6 text-xs px-2.5 rounded-md inline-flex items-center"
+                  class="m3-chip m3-chip-neutral h-7 text-xs px-3 inline-flex items-center"
                 >
                   <Award class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" /> {{ member.rank }}
                 </span>
@@ -865,13 +946,13 @@ onUnmounted(() => {
         <div 
           v-for="member in sortedRoster" 
           :key="member.id"
-          class="m3-card-elevated p-4 border border-[var(--md-outline-variant)]/40 rounded-3xl space-y-3"
+          class="m3-card-elevated p-4 border border-[var(--md-outline-variant)]/40 rounded-2xl space-y-3"
         >
           <!-- Top Row: Musician Identity -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center space-x-3 min-w-0">
               <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-[var(--md-outline-variant)] bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-xs">
-                <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" class="w-full h-full object-cover" />
+                <img v-if="member.profile_picture" :src="member.profile_picture" :alt="member.name" width="40" height="40" loading="lazy" class="w-full h-full object-cover" />
                 <span v-else>{{ member.avatar }}</span>
               </div>
               <div class="min-w-0">
@@ -881,9 +962,9 @@ onUnmounted(() => {
                 <div class="flex items-center space-x-1.5 mt-0.5 flex-wrap">
                   <span 
                     v-if="getMemberPositionId(member) !== 'member'" 
-                    class="m3-chip m3-chip-rsvp h-5 text-[10px] px-2 rounded-md font-semibold inline-flex items-center"
+                    class="m3-chip m3-chip-rsvp h-6 text-xs px-2.5 font-semibold inline-flex items-center"
                   >
-                    <ShieldCheck class="w-3 h-3 mr-1 text-amber-600 dark:text-amber-400" />
+                    <ShieldCheck class="w-3 h-3 mr-1 text-amber-800 dark:text-amber-400" />
                     {{ getMemberPosition(member).badge }}
                   </span>
                   <span class="text-xs text-[var(--md-on-surface-variant)] capitalize font-medium">
@@ -895,7 +976,7 @@ onUnmounted(() => {
 
             <!-- Rank & Reliability: Officers & Admins Only -->
             <div v-if="store.isOfficerOrAdmin" class="text-right shrink-0">
-              <span class="m3-chip m3-chip-neutral h-5 text-[10px] px-2 rounded-md">
+              <span class="m3-chip m3-chip-neutral h-6 text-xs px-2.5">
                 {{ member.rank }}
               </span>
               <p class="text-[11px] font-semibold text-[var(--md-on-surface)] mt-1">{{ member.reliability }}%</p>
@@ -922,28 +1003,73 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
+      </div>
 
-        <div v-if="sortedRoster.length === 0" class="m3-card-outlined p-8 text-center">
-          <Users class="w-8 h-8 text-[var(--md-outline)] mx-auto mb-2 opacity-60" />
-          <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">No musicians match your search or filter.</p>
+      <!-- Pagination: Server-side Load More (Item 30) -->
+      <div v-if="hasMoreMembers" class="pt-4 text-center">
+        <button 
+          @click="loadMoreMembers" 
+          :disabled="isLoadingMore"
+          type="button" 
+          class="m3-btn-outlined text-xs min-h-[40px] px-6 inline-flex items-center mx-auto"
+        >
+          <RefreshCw v-if="isLoadingMore" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+          <span>{{ isLoadingMore ? 'Loading More Musicians...' : 'Load More Musicians (50)' }}</span>
+        </button>
+      </div>
+      </div>
+
+      <!-- 4. Empty State with CTA (Item 22) -->
+      <div v-else class="m3-card-outlined p-8 text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-[var(--md-surface-container)] flex items-center justify-center mx-auto text-[var(--md-outline)]">
+          <Users class="w-6 h-6" />
         </div>
+        <div>
+          <h3 class="text-sm font-bold text-[var(--md-on-surface)]">No Musicians Found</h3>
+          <p class="text-xs text-[var(--md-on-surface-variant)] mt-1 max-w-sm mx-auto">
+            {{ searchQuery || activeSectionFilter !== 'All' || activeTierFilter !== 'all' ? 'No musicians match your current search query or section filter.' : 'Verified band musicians will appear here once approved by Super Admin.' }}
+          </p>
+        </div>
+        <button 
+          v-if="searchQuery || activeSectionFilter !== 'All' || activeTierFilter !== 'all'"
+          @click="searchQuery = ''; activeSectionFilter = 'All'; activeTierFilter = 'all'" 
+          type="button" 
+          class="m3-btn-filled text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+        >
+          Reset Filters
+        </button>
+        <button 
+          v-else 
+          @click="fetchRoster(true)" 
+          type="button" 
+          class="m3-btn-outlined text-xs min-h-[40px] px-5 inline-flex items-center mx-auto"
+        >
+          <RefreshCw class="w-3.5 h-3.5 mr-1.5" /> Refresh Roster
+        </button>
       </div>
     </section>
 
     <!-- 5. ALL-IN-ONE MUSICIAN MANAGEMENT MODAL (SUPER ADMIN ONLY) (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showManageModal && editingMember" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+    <div 
+      v-if="showManageModal && editingMember" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="manage-musician-modal-title"
+      @keydown.escape="showManageModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
       <div class="m3-surface-modal p-6 max-w-md w-full space-y-4 shadow-xl text-left max-h-[90vh] flex flex-col">
         
         <!-- Modal Header with Musician Info -->
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div class="flex items-center space-x-3 min-w-0 pr-2">
             <div class="w-10 h-10 rounded-full overflow-hidden bg-[var(--md-surface-container)] text-[var(--md-on-surface)] flex items-center justify-center font-bold text-sm shrink-0 border border-[var(--md-outline-variant)]">
-              <img v-if="editingMember.profile_picture" :src="editingMember.profile_picture" :alt="editingMember.name" class="w-full h-full object-cover" />
+              <img v-if="editingMember.profile_picture" :src="editingMember.profile_picture" :alt="editingMember.name" width="40" height="40" loading="lazy" class="w-full h-full object-cover" />
               <span v-else>{{ editingMember.avatar }}</span>
             </div>
             <div class="min-w-0">
               <span class="text-[10px] text-[var(--md-outline)] uppercase tracking-wider font-semibold">Manage Musician</span>
-              <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ editingMember.name }}</h3>
+              <h3 id="manage-musician-modal-title" class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ editingMember.name }}</h3>
             </div>
           </div>
           <button @click="showManageModal = false" type="button" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]" aria-label="Close modal">
@@ -956,10 +1082,11 @@ onUnmounted(() => {
           
           <!-- UNIFIED ROLE & OFFICER POSITION SELECTOR -->
           <div>
-            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
+            <label for="manage-position-select" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
               <ShieldCheck class="w-3.5 h-3.5 mr-1 text-amber-500" /> Position &amp; Officer Role
             </label>
             <select 
+              id="manage-position-select"
               v-model="managePositionId"
               class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer"
             >
@@ -967,7 +1094,7 @@ onUnmounted(() => {
                 {{ pos.label }}{{ getOfficerHolderText(pos.id) }}
               </option>
             </select>
-            <p v-if="currentHolderWarning" class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-medium flex items-center">
+            <p v-if="currentHolderWarning" class="text-[11px] text-amber-800 dark:text-amber-400 mt-1 font-medium flex items-center">
               <AlertCircle class="w-3 h-3 mr-1 shrink-0" />
               {{ currentHolderWarning }}
             </p>
@@ -978,10 +1105,11 @@ onUnmounted(() => {
 
           <!-- INSTRUMENT SECTION -->
           <div>
-            <label class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
+            <label for="manage-instrument-select" class="block text-xs font-medium text-[var(--md-on-surface)] mb-1 flex items-center">
               <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)]" /> Instrument Section
             </label>
             <select 
+              id="manage-instrument-select"
               v-model="manageInstrument"
               class="w-full p-3 bg-[var(--md-surface-container)] border border-[var(--md-outline-variant)] rounded-xl text-xs text-[var(--md-on-surface)] min-h-[48px] focus:outline-none focus:border-[var(--md-outline)] cursor-pointer"
             >
@@ -1060,12 +1188,19 @@ onUnmounted(() => {
     </div>
 
     <!-- 6. MEMBER AVAILABILITY MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showAvailabilityModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+    <div 
+      v-if="showAvailabilityModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="availability-modal-title"
+      @keydown.escape="showAvailabilityModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
       <div class="m3-surface-modal p-6 max-w-sm sm:max-w-md w-full space-y-4 shadow-xl text-left">
         <div class="flex items-center justify-between border-b border-[var(--md-outline-variant)]/40 pb-3">
           <div>
             <span class="text-[10px] text-[var(--md-outline)] uppercase tracking-wider font-semibold">Availability Overview</span>
-            <h3 class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ selectedMemberForAvailability?.name }}</h3>
+            <h3 id="availability-modal-title" class="font-bold text-base text-[var(--md-on-surface)] truncate">{{ selectedMemberForAvailability?.name }}</h3>
           </div>
           <button @click="showAvailabilityModal = false" type="button" class="text-[var(--md-outline)] hover:text-[var(--md-on-surface)] min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full hover:bg-[var(--md-surface-container)]" aria-label="Close modal">
             <X class="w-5 h-5" />
@@ -1112,14 +1247,21 @@ onUnmounted(() => {
     </div>
 
     <!-- 7. SUPER ADMIN DELETE CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showDeleteModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
+    <div 
+      v-if="showDeleteModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-musician-modal-title"
+      @keydown.escape="showDeleteModal = false; confirmDeleteTarget = null"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
       <div class="m3-surface-modal p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         
         <div>
-          <h3 class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Delete Musician Account?</h3>
+          <h3 id="delete-musician-modal-title" class="font-bold text-base text-[var(--md-on-surface)] leading-tight">Delete Musician Account?</h3>
           <p class="text-xs text-[var(--md-on-surface-variant)] mt-1.5 leading-relaxed">
             Are you sure you want to permanently delete <strong class="text-[var(--md-on-surface)]">{{ confirmDeleteTarget?.name }}</strong>? This action cannot be undone.
           </p>

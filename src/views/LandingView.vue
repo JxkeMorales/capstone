@@ -22,7 +22,7 @@ const defaultPositions = [
     shortTitle: 'President',
     shortCode: 'PR',
     name: 'Band President',
-    image: '/officers/bandpres.png',
+    image: '/officers/bandpres.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -33,7 +33,7 @@ const defaultPositions = [
     shortTitle: 'Vice Pres.',
     shortCode: 'VP',
     name: 'Band Vice President',
-    image: '/officers/bandvicepres.png',
+    image: '/officers/bandvicepres.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -44,7 +44,7 @@ const defaultPositions = [
     shortTitle: 'Secretary',
     shortCode: 'SEC',
     name: 'Band Secretary',
-    image: '/officers/bandsecretary.png',
+    image: '/officers/bandsecretary.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -55,7 +55,7 @@ const defaultPositions = [
     shortTitle: 'Treasurer',
     shortCode: 'TRE',
     name: 'Band Treasurer',
-    image: '/officers/bandtreas.png',
+    image: '/officers/bandtreas.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -66,7 +66,7 @@ const defaultPositions = [
     shortTitle: 'Auditor',
     shortCode: 'AUD',
     name: 'Band Auditor',
-    image: '/officers/bandauditor.png',
+    image: '/officers/bandauditor.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -77,7 +77,7 @@ const defaultPositions = [
     shortTitle: 'Conductor',
     shortCode: 'MA',
     name: 'Resident Conductor',
-    image: '/officers/bandconductor.png',
+    image: '/officers/bandconductor.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -88,7 +88,7 @@ const defaultPositions = [
     shortTitle: 'Manager',
     shortCode: 'MGR',
     name: 'Band Manager',
-    image: '/officers/bandmanager.png',
+    image: '/officers/bandmanager.webp',
     responsibility: '',
     defaultInstrument: '',
   },
@@ -99,7 +99,7 @@ const defaultPositions = [
     shortTitle: 'Coordinator',
     shortCode: 'COO',
     name: 'Band Coordinator',
-    image: '/officers/bandcoordinator.png',
+    image: '/officers/bandcoordinator.webp',
     responsibility: '',
     defaultInstrument: '',
   }
@@ -226,6 +226,18 @@ const prevOfficer = () => {
 }
 
 const handleKeyDown = (e) => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  const activeEl = document.activeElement
+  if (activeEl) {
+    const tag = activeEl.tagName.toUpperCase()
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || activeEl.isContentEditable) {
+      return
+    }
+  }
+  const carousel = document.getElementById('officer-carousel')
+  if (!carousel || !carousel.contains(activeEl)) {
+    return
+  }
   if (e.key === 'ArrowLeft') {
     prevOfficer()
   } else if (e.key === 'ArrowRight') {
@@ -300,14 +312,14 @@ const handleTouchEnd = (e) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8f9fa] dark:bg-[#18191a] text-slate-900 dark:text-neutral-100 selection:bg-slate-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-slate-900 font-sans overflow-x-hidden transition-colors duration-300">
+  <div class="min-h-dvh bg-[#f8f9fa] dark:bg-[#18191a] text-slate-900 dark:text-neutral-100 selection:bg-slate-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-slate-900 font-sans overflow-x-hidden transition-colors duration-300">
     
     <!-- Navigation Bar (Clean M3 Top App Bar, Flat Surface) -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-[#f8fafc] dark:bg-[#121214] border-b border-slate-200/50 dark:border-white/[0.04] transition-colors">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-700 bg-white flex items-center justify-center p-0.5 shadow-xs">
-            <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
+            <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" width="36" height="36" class="w-full h-full object-contain" />
           </div>
           <div>
             <span class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white block leading-none">SmartBand</span>
@@ -343,13 +355,16 @@ const handleTouchEnd = (e) => {
         <img 
           src="/hero-band.jpg" 
           alt="Municipal Band Performance" 
+          width="1100"
+          height="614"
+          fetchpriority="high"
           class="w-full h-full object-cover object-center opacity-15 dark:opacity-20" 
         />
         <div class="absolute inset-0 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/90 dark:from-[#121214] dark:via-[#121214]/90 to-transparent transition-colors"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 dark:from-[#121214] dark:via-[#121214]/80 to-transparent transition-colors"></div>
       </div>
 
-      <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 w-full">
+      <div class="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 w-full">
         <div class="max-w-2xl">
           <div class="inline-flex items-center space-x-2 bg-slate-200/70 dark:bg-neutral-800/80 border border-slate-300/60 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 px-3.5 py-1 rounded-full text-xs font-medium mb-4">
             <span class="w-1.5 h-1.5 rounded-full bg-slate-500 dark:bg-neutral-400"></span>
@@ -385,7 +400,7 @@ const handleTouchEnd = (e) => {
 
     <!-- Officers Section (Clean Material 3 Card Showcase) -->
     <section id="officers" class="scroll-mt-20 py-12 sm:py-16 relative z-10 border-t border-slate-200 dark:border-[#2d3035] transition-colors">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="max-w-[1200px] mx-auto px-4 sm:px-6">
         
         <!-- Clean Section Header -->
         <div class="mb-8">
@@ -402,11 +417,15 @@ const handleTouchEnd = (e) => {
           
           <!-- LEFT: Officer Card Carousel -->
           <div class="lg:col-span-6 xl:col-span-7 flex flex-col items-center w-full">
-            
-            <div 
+                       <div 
+              id="officer-carousel"
+              tabindex="0"
+              role="region"
+              aria-roledescription="carousel"
+              aria-label="Band Officers Carousel"
               @touchstart="handleTouchStart"
               @touchend="handleTouchEnd"
-              class="relative w-full flex items-center justify-center min-h-[380px] sm:min-h-[420px] overflow-hidden py-2 select-none"
+              class="relative w-full flex items-center justify-center min-h-[380px] sm:min-h-[420px] overflow-hidden py-2 select-none focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-neutral-600 rounded-2xl"
             >
               
               <!-- Previous Button (Min 48x48px hit target) -->
@@ -429,13 +448,16 @@ const handleTouchEnd = (e) => {
                   class="hidden sm:flex flex-col relative w-32 md:w-36 h-[320px] md:h-[350px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-200 dark:border-neutral-800 shadow-sm opacity-50 hover:opacity-80 bg-slate-900"
                 >
                   <img 
-                    v-if="prevOfficerObj.image"
+                    v-if="prevOfficerObj.image" 
                     :src="prevOfficerObj.image" 
                     :alt="prevOfficerObj.name"
+                    width="144"
+                    height="350"
+                    loading="lazy"
                     class="w-full h-full object-cover object-top"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-3 text-center">
-                    <Music class="w-8 h-8 text-slate-400 mb-1" />
+                    <Music class="w-8 h-8 text-slate-500 dark:text-neutral-400 mb-1" />
                   </div>
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
                   <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10 text-left">
@@ -446,12 +468,15 @@ const handleTouchEnd = (e) => {
 
                 <!-- ACTIVE SELECTED CARD -->
                 <div 
-                  class="relative w-64 sm:w-72 md:w-80 h-[380px] sm:h-[400px] md:h-[420px] rounded-3xl overflow-hidden shadow-lg transition-all duration-300 transform scale-100 z-20 border border-slate-300/80 dark:border-neutral-700 bg-slate-900 group"
+                  class="relative w-64 sm:w-72 md:w-80 h-[380px] sm:h-[400px] md:h-[420px] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 transform scale-100 z-20 border border-slate-300/80 dark:border-neutral-700 bg-slate-900 group"
                 >
                   <img 
-                    v-if="currentOfficer.image"
+                    v-if="currentOfficer.image" 
                     :src="currentOfficer.image" 
                     :alt="currentOfficer.name"
+                    width="320"
+                    height="420"
+                    loading="lazy"
                     class="w-full h-full object-cover object-top"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-6 text-center">
@@ -487,13 +512,16 @@ const handleTouchEnd = (e) => {
                   class="hidden sm:flex flex-col relative w-32 md:w-36 h-[320px] md:h-[350px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 transform scale-95 border border-slate-200 dark:border-neutral-800 shadow-sm opacity-50 hover:opacity-80 bg-slate-900"
                 >
                   <img 
-                    v-if="nextOfficerObj.image"
+                    v-if="nextOfficerObj.image" 
                     :src="nextOfficerObj.image" 
                     :alt="nextOfficerObj.name"
+                    width="144"
+                    height="350"
+                    loading="lazy"
                     class="w-full h-full object-cover object-top"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-3 text-center">
-                    <Music class="w-8 h-8 text-slate-400 mb-1" />
+                    <Music class="w-8 h-8 text-slate-500 dark:text-neutral-400 mb-1" />
                   </div>
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
                   <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10 text-left">
@@ -543,6 +571,9 @@ const handleTouchEnd = (e) => {
                         v-if="officer.image"
                         :src="officer.image" 
                         :alt="officer.name" 
+                        width="44"
+                        height="44"
+                        loading="lazy"
                         class="w-full h-full object-cover object-top"
                       />
                       <div v-else class="w-full h-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs">
@@ -569,7 +600,7 @@ const handleTouchEnd = (e) => {
 
           <!-- RIGHT: Officer Details Card (Google Material 3 Info Surface) -->
           <div class="lg:col-span-6 xl:col-span-5 w-full">
-            <div class="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#1f2023] border border-slate-200 dark:border-neutral-800 shadow-xs relative transition-all duration-300">
+            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1f2023] border border-slate-200 dark:border-neutral-800 shadow-xs relative transition-all duration-300">
               
               <!-- Clean Position Badge -->
               <div class="mb-4">
@@ -592,9 +623,9 @@ const handleTouchEnd = (e) => {
 
               <!-- Official Duty Box -->
               <div class="p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/70 dark:border-neutral-800 text-xs sm:text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-normal">
-                <p class="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 mb-1 uppercase tracking-wider">Duties & Responsibilities</p>
+                <p class="text-[11px] font-semibold text-slate-600 dark:text-neutral-400 mb-1 uppercase tracking-wider">Duties & Responsibilities</p>
                 <p v-if="currentOfficer.responsibility" class="text-slate-800 dark:text-neutral-200">{{ currentOfficer.responsibility }}</p>
-                <p v-else class="text-slate-400 dark:text-neutral-500 italic">No specific operational duties assigned yet.</p>
+                <p v-else class="text-slate-600 dark:text-neutral-400 italic">No specific operational duties assigned yet.</p>
               </div>
 
             </div>

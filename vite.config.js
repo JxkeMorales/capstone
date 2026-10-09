@@ -10,7 +10,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['band1870logo.jpg', 'favicon.svg', 'icons.svg', 'apple-touch-icon.png'],
+      includeAssets: ['band1870logo.jpg', 'favicon.svg', 'icons.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
       devOptions: {
         enabled: true
       },
@@ -42,23 +42,35 @@ export default defineConfig({
         name: 'SmartBand Enterprise PWA',
         short_name: 'SmartBand',
         description: 'Municipal Band Management & Gig Dispatch System',
-        theme_color: '#000000',
-        background_color: '#000000',
+        theme_color: '#121214',
+        background_color: '#121214',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         icons: [
           {
-            src: '/band1870logo.jpg',
-            sizes: '512x512',
-            type: 'image/jpeg',
-            purpose: 'any maskable'
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: '/favicon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: '/band1870logo.jpg',
+            sizes: '1470x1480',
+            type: 'image/jpeg',
+            purpose: 'any'
           }
         ]
       }

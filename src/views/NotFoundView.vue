@@ -6,7 +6,7 @@ const router = useRouter()
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8fafc] dark:bg-[#121214] flex flex-col items-center justify-center p-6 text-center transition-colors duration-200">
+  <main id="main-content" class="min-h-dvh bg-[#f8fafc] dark:bg-[#121214] flex flex-col items-center justify-center p-6 text-center transition-colors duration-200">
     
     <div class="m3-surface-card max-w-md w-full p-8 sm:p-10 flex flex-col items-center text-center shadow-xs">
       <div class="w-16 h-16 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/40 rounded-full flex items-center justify-center mb-6 text-rose-600 dark:text-rose-400">
@@ -35,5 +35,5 @@ const router = useRouter()
       </button>
     </div>
 
-  </div>
+  </main>
 </template>

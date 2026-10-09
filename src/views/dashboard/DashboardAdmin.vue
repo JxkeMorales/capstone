@@ -37,8 +37,6 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import { initRealtimeSync, broadcastSync } from '@/utils/realtime'
 import { sendPushNotification } from '@/utils/push'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import { getBandLogoBase64 } from '@/utils/pdfExport'
 
 const store = useMainStore()
@@ -408,10 +406,11 @@ const sectionOptions = [
 const fetchAnalyticsAndReportsData = async () => {
   isLoadingAnalytics.value = true
   try {
+    const PAGE_SIZE = 50
     const [eventsRes, rsvpsRes, profilesRes] = await Promise.all([
-      supabase.from('events').select('*').order('event_date', { ascending: false }),
-      supabase.from('event_rsvps').select('*'),
-      supabase.from('profiles').select('*').order('full_name', { ascending: true })
+      supabase.from('events').select('*').order('event_date', { ascending: false }).limit(PAGE_SIZE),
+      supabase.from('event_rsvps').select('*').limit(250),
+      supabase.from('profiles').select('*').order('full_name', { ascending: true }).limit(PAGE_SIZE)
     ])
 
     if (eventsRes.data) {
@@ -945,10 +944,16 @@ const getReportFilename = () => {
 }
 
 // Direct PDF File Download using jsPDF & autoTable
-// Direct PDF File Download using jsPDF & autoTable
 const downloadPdfReport = async () => {
   isGeneratingPdf.value = true
   try {
+    const [jsPDFModule, autoTableModule] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ])
+    const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF || jsPDFModule
+    const autoTable = autoTableModule.default || autoTableModule
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
@@ -1180,7 +1185,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto relative">
+  <div class="p-4 sm:p-6 space-y-6 max-w-[1200px] mx-auto relative">
     
     <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
@@ -1231,7 +1236,7 @@ onUnmounted(() => {
 
       <!-- 1. ACCURATE DATE-SYNCED MEMBER AVAILABILITY CHECKER -->
       <section v-if="store.isSecretaryAdmin || store.isSuperAdmin" class="space-y-4">
-        <div class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-4">
+        <div class="bg-white dark:bg-[#1e1f20] rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <Calendar class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1287,7 +1292,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <p v-if="isSelectedDayPast" class="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center">
+          <p v-if="isSelectedDayPast" class="text-[11px] text-amber-800 dark:text-amber-400 font-medium flex items-center">
             <AlertTriangle class="w-3.5 h-3.5 mr-1.5 shrink-0 inline" /> Selected day has already passed and cannot be checked. Please choose today or an upcoming day.
           </p>
 
@@ -1302,7 +1307,7 @@ onUnmounted(() => {
         </div>
 
         <!-- MATCHED AVAILABILITY DISPLAY -->
-        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 shadow-xs border border-slate-200 dark:border-[#2d3035] space-y-3">
+        <div v-if="isDispatchGenerated" class="bg-white dark:bg-[#1e1f20] rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-[#2d3035] space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Roster for {{ selectedDayNeeded }} ({{ selectedSlotNeeded.split(' ')[0] }})</h3>
             <span class="text-xs font-medium text-slate-700 dark:text-neutral-200 bg-slate-100 dark:bg-[#2d2f31] border border-slate-200 dark:border-[#2d3035] px-3 py-1 rounded-full">
@@ -1317,7 +1322,7 @@ onUnmounted(() => {
                 <span v-if="availableUserIds.has(m.id)" class="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-2 py-0.5 rounded-full">
                   Free
                 </span>
-                <span v-else class="text-[10px] font-normal text-slate-400">Unavailable</span>
+                <span v-else class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">Unavailable</span>
               </div>
               <span class="text-slate-500 dark:text-neutral-400 font-medium">{{ m.rank }}</span>
             </div>
@@ -1325,7 +1330,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 2. ATTENDANCE REMINDERS -->
-        <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3442] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/80 dark:border-[#2d3442] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="font-bold text-sm text-slate-900 dark:text-neutral-100">Attendance Reminders</h3>
             <p class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">Send a notification reminder to musicians who have unconfirmed attendance status.</p>
@@ -1352,7 +1357,7 @@ onUnmounted(() => {
               Pending Registrations ({{ pendingAccounts.length }})
             </h2>
           </div>
-          <span v-if="pendingAccounts.length > 3" class="text-[10px] font-normal text-slate-400 dark:text-neutral-500">
+          <span v-if="pendingAccounts.length > 3" class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">
             Scroll for more
           </span>
         </div>
@@ -1361,7 +1366,7 @@ onUnmounted(() => {
           <div 
             v-for="user in pendingAccounts" 
             :key="user.id" 
-            class="bg-white dark:bg-[#1e1f20] rounded-3xl p-5 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
+            class="bg-white dark:bg-[#1e1f20] rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-[#2d3035] space-y-3"
           >
             <div class="flex justify-between items-start">
               <div>
@@ -1374,8 +1379,8 @@ onUnmounted(() => {
             </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-[#18191a] p-3 rounded-2xl text-slate-600 dark:text-neutral-300 border border-slate-100 dark:border-[#2d3035]">
-              <div><span class="text-slate-400">Section:</span> {{ user.instrument || 'None' }}</div>
-              <div><span class="text-slate-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
+              <div><span class="text-slate-600 dark:text-neutral-400">Section:</span> {{ user.instrument || 'None' }}</div>
+              <div><span class="text-slate-600 dark:text-neutral-400">Sex:</span> {{ user.sex || 'Unknown' }}</div>
             </div>
 
             <div class="flex space-x-2 pt-1">
@@ -1396,9 +1401,16 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#1e1f20] rounded-3xl border border-slate-200/80 dark:border-[#2d3035]">
-            <CheckCircle2 class="w-6 h-6 text-slate-400 mx-auto mb-2" />
+          <div v-if="pendingAccounts.length === 0" class="text-center p-8 bg-white dark:bg-[#1e1f20] rounded-2xl border border-slate-200/80 dark:border-[#2d3035] space-y-3">
+            <CheckCircle2 class="w-6 h-6 text-slate-400 mx-auto" />
             <p class="text-xs font-medium text-slate-500 dark:text-neutral-400">No pending accounts in queue.</p>
+            <button 
+              @click="fetchPendingAccounts" 
+              type="button" 
+              class="m3-btn-tonal text-xs min-h-[40px] px-4 inline-flex items-center"
+            >
+              <RotateCcw class="w-3.5 h-3.5 mr-1.5" /> Check for New Registrations
+            </button>
           </div>
         </div>
       </section>
@@ -1424,7 +1436,7 @@ onUnmounted(() => {
               :key="user.id"
               class="bg-white dark:bg-[#202124] rounded-2xl p-4 shadow-xs border border-slate-200/80 dark:border-neutral-800 flex flex-col items-center text-center space-y-2.5"
             >
-              <img :src="user.profile_picture" alt="Avatar Review" class="w-14 h-14 rounded-full object-cover border border-slate-200 dark:border-neutral-700 shadow-xs" />
+              <img :src="user.profile_picture" alt="Avatar Review" width="56" height="56" loading="lazy" class="w-14 h-14 rounded-full object-cover border border-slate-200 dark:border-neutral-700 shadow-xs" />
               <p class="text-xs font-medium text-slate-900 dark:text-neutral-100 line-clamp-1 w-full">{{ user.full_name }}</p>
               <div class="flex space-x-1.5 w-full">
                 <button @click="approveAvatar(user.id, user.full_name)" class="flex-1 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium hover:bg-slate-800 rounded-full cursor-pointer text-[10px] transition-colors">Approve</button>
@@ -1474,7 +1486,7 @@ onUnmounted(() => {
         <!-- 4 KPI Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- KPI 1: Band Reliability Score -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Avg Reliability</span>
               <Award class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1483,7 +1495,7 @@ onUnmounted(() => {
               <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-neutral-100">
                 {{ analyticsSummary.avgReliability }}%
               </span>
-              <span class="text-[10px] font-normal text-slate-400">Roster Avg</span>
+              <span class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">Roster Avg</span>
             </div>
             <!-- Progress Bar -->
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
@@ -1495,16 +1507,16 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 2: Total Unexcused No-Shows -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Unexcused No-Shows</span>
-              <AlertTriangle class="w-4 h-4 text-rose-500" />
+              <AlertTriangle class="w-4 h-4 text-rose-600 dark:text-rose-400" />
             </div>
             <div class="flex items-baseline space-x-1.5">
               <span class="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400">
                 {{ analyticsSummary.totalFlakes }}
               </span>
-              <span class="text-[10px] font-normal text-slate-400">Total Flagged</span>
+              <span class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">Total Flagged</span>
             </div>
             <p class="text-[11px] text-slate-500 dark:text-neutral-400">
               -10% penalty per unexcused no-show
@@ -1512,7 +1524,7 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 3: Follow-Through Rate -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Commitment Rate</span>
               <TrendingUp class="w-4 h-4 text-slate-500 dark:text-neutral-400" />
@@ -1521,7 +1533,7 @@ onUnmounted(() => {
               <span class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-neutral-100">
                 {{ analyticsSummary.avgFollowThrough }}%
               </span>
-              <span class="text-[10px] font-normal text-slate-400">Turnout</span>
+              <span class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">Turnout</span>
             </div>
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div 
@@ -1532,16 +1544,16 @@ onUnmounted(() => {
           </div>
 
           <!-- KPI 4: High No-Show Risk Members -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-neutral-400">
               <span>Attendance Risk</span>
               <ShieldAlert class="w-4 h-4 text-amber-500" />
             </div>
             <div class="flex items-baseline space-x-1.5">
-              <span class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
+              <span class="text-2xl sm:text-3xl font-bold text-amber-800 dark:text-amber-400">
                 {{ analyticsSummary.highRiskCount }}
               </span>
-              <span class="text-[10px] font-normal text-slate-400">Flagged</span>
+              <span class="text-[10px] font-normal text-slate-600 dark:text-neutral-400">Flagged</span>
             </div>
             <p class="text-[11px] text-slate-500 dark:text-neutral-400">
               Members with multiple misses
@@ -1552,7 +1564,7 @@ onUnmounted(() => {
         <!-- Section Turnout Breakdown Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <!-- Woodwinds -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Woodwinds</span>
               <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
@@ -1566,16 +1578,16 @@ onUnmounted(() => {
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.woodwinds.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400">
               <span>Attended: {{ sectionStats.woodwinds.attended }} / {{ sectionStats.woodwinds.promised }}</span>
-              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
+              <span :class="sectionStats.woodwinds.flakes > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-700 dark:text-emerald-400'">
                 {{ sectionStats.woodwinds.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Brass -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Brass</span>
               <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
@@ -1589,16 +1601,16 @@ onUnmounted(() => {
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.brass.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400">
               <span>Attended: {{ sectionStats.brass.attended }} / {{ sectionStats.brass.promised }}</span>
-              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
+              <span :class="sectionStats.brass.flakes > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-700 dark:text-emerald-400'">
                 {{ sectionStats.brass.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Percussion -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Percussion</span>
               <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
@@ -1612,16 +1624,16 @@ onUnmounted(() => {
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.percussion.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400">
               <span>Attended: {{ sectionStats.percussion.attended }} / {{ sectionStats.percussion.promised }}</span>
-              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
+              <span :class="sectionStats.percussion.flakes > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-700 dark:text-emerald-400'">
                 {{ sectionStats.percussion.flakes }} No-Shows
               </span>
             </div>
           </div>
 
           <!-- Majorette & Color Guard (Auxiliary) -->
-          <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
+          <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-4 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-slate-900 dark:text-neutral-100 uppercase tracking-wider">Majorette & Guard</span>
               <span class="text-[10px] font-medium bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-[#2d3442] px-2 py-0.5 rounded-full">
@@ -1635,9 +1647,9 @@ onUnmounted(() => {
             <div class="w-full bg-slate-100 dark:bg-[#242933] h-1.5 rounded-full overflow-hidden">
               <div class="bg-slate-900 dark:bg-white h-full rounded-full" :style="{ width: `${sectionStats.auxiliary.rate || 0}%` }"></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400">
               <span>Attended: {{ sectionStats.auxiliary.attended }} / {{ sectionStats.auxiliary.promised }}</span>
-              <span :class="sectionStats.auxiliary.flakes > 0 ? 'text-rose-500 font-medium' : 'text-emerald-600 dark:text-emerald-400'">
+              <span :class="sectionStats.auxiliary.flakes > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-700 dark:text-emerald-400'">
                 {{ sectionStats.auxiliary.flakes }} No-Shows
               </span>
             </div>
@@ -1645,7 +1657,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Interactive Attendance & Commitment Matrix Table -->
-        <div class="bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
+        <div class="bg-white dark:bg-[#1a1e26] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100">Musician Attendance &amp; Commitment Matrix</h3>
@@ -1658,8 +1670,10 @@ onUnmounted(() => {
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 w-full pt-1">
               <!-- Search -->
               <div class="relative w-full">
-                <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <label for="analytics-search-input" class="sr-only">Search musician by name or section</label>
+                <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-neutral-400" />
                 <input 
+                  id="analytics-search-input"
                   v-model="analyticsSearchQuery" 
                   type="text" 
                   placeholder="Search musician..."
@@ -1668,23 +1682,31 @@ onUnmounted(() => {
               </div>
 
               <!-- Section Filter -->
-              <select 
-                v-model="analyticsSectionFilter" 
-                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
-              >
-                <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
-              </select>
+              <div>
+                <label for="analytics-section-filter" class="sr-only">Filter musicians by section</label>
+                <select 
+                  id="analytics-section-filter"
+                  v-model="analyticsSectionFilter" 
+                  class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
+                >
+                  <option v-for="sec in sectionOptions" :key="sec" :value="sec">{{ sec === 'All' ? 'All Sections' : sec }}</option>
+                </select>
+              </div>
 
               <!-- Sort Order -->
-              <select 
-                v-model="analyticsSortBy" 
-                class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
-              >
-                <option value="flakes_desc">Sort: Most No-Shows First</option>
-                <option value="reliability_asc">Sort: Lowest Reliability First</option>
-                <option value="reliability_desc">Sort: Highest Reliability First</option>
-                <option value="name">Sort: Musician Name (A-Z)</option>
-              </select>
+              <div>
+                <label for="analytics-sort-select" class="sr-only">Sort musicians by attendance or reliability</label>
+                <select 
+                  id="analytics-sort-select"
+                  v-model="analyticsSortBy" 
+                  class="w-full bg-slate-50 dark:bg-[#242933] text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-xs border border-slate-200 dark:border-[#2d3442] font-medium min-h-[44px] cursor-pointer focus:outline-none focus:border-slate-400"
+                >
+                  <option value="flakes_desc">Sort: Most No-Shows First</option>
+                  <option value="reliability_asc">Sort: Lowest Reliability First</option>
+                  <option value="reliability_desc">Sort: Highest Reliability First</option>
+                  <option value="name">Sort: Musician Name (A-Z)</option>
+                </select>
+              </div>
 
               <!-- Reset Filters Action Button -->
               <button 
@@ -1702,7 +1724,7 @@ onUnmounted(() => {
           <!-- Table -->
           <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3442]">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-[#242933] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-[#2d3442] h-12">
+              <thead class="bg-slate-50 dark:bg-[#242933] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-[#2d3442] h-12">
                 <tr>
                   <th class="px-3 py-2.5 w-10 text-center">#</th>
                   <th class="px-4 py-2.5">Musician</th>
@@ -1722,7 +1744,7 @@ onUnmounted(() => {
                   class="hover:bg-slate-50/60 dark:hover:bg-[#242933]/60 transition-colors"
                   :class="{ 'bg-rose-50/30 dark:bg-rose-950/10': member.flakeCount >= 2 }"
                 >
-                  <td class="px-3 py-2.5 text-center font-normal text-slate-400">{{ idx + 1 }}</td>
+                  <td class="px-3 py-2.5 text-center font-normal text-slate-600 dark:text-neutral-400">{{ idx + 1 }}</td>
                   
                   <!-- Musician & Instrument -->
                   <td class="px-4 py-2.5">
@@ -1764,9 +1786,9 @@ onUnmounted(() => {
                   <td class="px-3 py-2.5 text-center">
                     <span 
                       class="px-2 py-0.5 rounded-full text-xs inline-flex items-center space-x-1 font-medium"
-                      :class="member.flakeCount > 0 ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40' : 'text-slate-400'"
+                      :class="member.flakeCount > 0 ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40' : 'text-slate-600 dark:text-neutral-400'"
                     >
-                      <AlertTriangle v-if="member.flakeCount > 0" class="w-3 h-3 text-rose-500 inline mr-0.5" />
+                      <AlertTriangle v-if="member.flakeCount > 0" class="w-3 h-3 text-rose-600 dark:text-rose-400 inline mr-0.5" />
                       <span>{{ member.flakeCount }}</span>
                     </span>
                   </td>
@@ -1786,7 +1808,7 @@ onUnmounted(() => {
                       </span>
                       <div class="w-12 bg-slate-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden mt-1">
                         <div 
-                          class="h-full rounded-full bg-slate-900 dark:bg-white"
+                          class="h-full rounded-full bg-slate-900 dark:bg-white" 
                           :style="{ width: `${member.reliabilityScore}%` }"
                         ></div>
                       </div>
@@ -1809,8 +1831,15 @@ onUnmounted(() => {
                 </tr>
 
                 <tr v-if="filteredAnalyticsMatrix.length === 0">
-                  <td colspan="9" class="py-8 text-center text-slate-400 font-medium">
-                    No musicians matched your search or section filters.
+                  <td colspan="9" class="py-8 text-center text-slate-600 dark:text-neutral-400 font-medium">
+                    <p class="mb-2">No musicians matched your search or section filters.</p>
+                    <button 
+                      @click="resetAnalyticsFilters" 
+                      type="button" 
+                      class="m3-btn-tonal text-xs min-h-[36px] px-3.5 inline-flex items-center"
+                    >
+                      <RotateCcw class="w-3.5 h-3.5 mr-1.5" /> Reset Filters
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -1823,7 +1852,7 @@ onUnmounted(() => {
       <section v-if="store.isSuperAdmin" class="space-y-6 pt-4 border-t border-slate-200/80 dark:border-[#2d3442]">
         
         <!-- Controls & Header (Hidden when printing) -->
-        <div class="no-print bg-white dark:bg-[#1a1e26] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
+        <div class="no-print bg-white dark:bg-[#1a1e26] rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#2d3442] shadow-xs space-y-4">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             <div>
               <div class="flex items-center space-x-2">
@@ -1943,7 +1972,7 @@ onUnmounted(() => {
           <!-- Standard Official Letterhead Header with Crest Logo -->
           <div class="text-center pb-3 border-b-2 border-slate-800">
             <div class="w-16 h-18 mx-auto mb-2 flex items-center justify-center">
-              <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" class="w-full h-full object-contain" />
+              <img src="/band1870logo.jpg" alt="Peñaranda Band 1870" width="64" height="72" loading="lazy" class="w-full h-full object-contain" />
             </div>
             <h1 class="text-2xl font-bold text-slate-900 tracking-wider uppercase">
               PEÑARANDA MARCHING BAND 1870
@@ -2011,7 +2040,7 @@ onUnmounted(() => {
                 </tr>
 
                 <tr v-if="generatedReportData.rows.length === 0">
-                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-400 font-medium border border-slate-200">
+                  <td :colspan="generatedReportData.columns.length" class="py-8 text-center text-slate-600 dark:text-neutral-400 font-medium border border-slate-200">
                     No matching records found in database registry for this report query.
                   </td>
                 </tr>
@@ -2062,14 +2091,21 @@ onUnmounted(() => {
     </div>
 
     <!-- CUSTOM CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showConfirmModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
+    <div 
+      v-if="showConfirmModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-decline-modal-title"
+      @keydown.escape="showConfirmModal = false; confirmUserTarget = null"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
+      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-[28px] p-6 max-w-sm w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-[#242933] text-slate-700 dark:text-neutral-300 flex items-center justify-center mx-auto">
           <AlertCircle class="w-6 h-6" />
         </div>
         
         <div>
-          <h3 class="font-bold text-base text-slate-900 dark:text-neutral-100 leading-tight">Decline Registration?</h3>
+          <h3 id="confirm-decline-modal-title" class="font-bold text-base text-slate-900 dark:text-neutral-100 leading-tight">Decline Registration?</h3>
           <p class="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
             Are you sure you want to permanently decline and remove <strong>{{ confirmUserTarget?.full_name }}</strong>?
           </p>
@@ -2095,19 +2131,26 @@ onUnmounted(() => {
     </div>
 
     <!-- RESET REPORTS & ANALYTICS CONFIRMATION MODAL (M3 Dialog - Flat Scrim Overlay, Zero Blur) -->
-    <div v-if="showResetAnalyticsModal" class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4">
-      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl text-center">
+    <div 
+      v-if="showResetAnalyticsModal" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reset-analytics-modal-title"
+      @keydown.escape="showResetAnalyticsModal = false"
+      class="fixed inset-0 m3-scrim-overlay z-50 flex items-center justify-center p-4"
+    >
+      <div class="m3-surface-modal border border-slate-200/80 dark:border-[#2d3442] rounded-[28px] p-6 max-w-md w-full space-y-4 shadow-xl text-center">
         <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-200 dark:border-rose-900/40">
           <RotateCcw class="w-6 h-6" />
         </div>
         
         <div class="space-y-1.5">
-          <h3 class="font-bold text-lg text-slate-900 dark:text-neutral-100 leading-tight">Reset Reports &amp; Analytics?</h3>
+          <h3 id="reset-analytics-modal-title" class="font-bold text-lg text-slate-900 dark:text-neutral-100 leading-tight">Reset Reports &amp; Analytics?</h3>
           <p class="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
             This will wipe all recorded event attendance responses, clear roll-call records, and restore <strong>all musician reliability scores back to 100%</strong>.
           </p>
           <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-left text-amber-800 dark:text-amber-300 text-[11px] space-y-1 mt-2">
-            <p class="font-semibold flex items-center"><AlertTriangle class="w-3.5 h-3.5 mr-1 text-amber-600 shrink-0" /> Important Warning:</p>
+            <p class="font-semibold flex items-center"><AlertTriangle class="w-3.5 h-3.5 mr-1 text-amber-700 shrink-0" /> Important Warning:</p>
             <p>• All event attendance history will be deleted.</p>
             <p>• Member attendance matrix and flake detections will reset to 0.</p>
             <p>• This action cannot be reversed.</p>

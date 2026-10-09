@@ -5,7 +5,16 @@ export default {
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      sm: '600px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+    },
     extend: {
+      maxWidth: {
+        'content': '1200px',
+      },
       colors: {
         primary: '#4f46e5', // Indigo 600
         secondary: '#10b981', // Emerald 500

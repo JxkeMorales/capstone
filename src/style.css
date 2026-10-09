@@ -316,7 +316,6 @@
   justify-content: center;
   gap: 8px;
   height: 40px;
-  min-height: 44px;
   padding: 0 24px;
   border-radius: 9999px;
   font-size: 14px;
@@ -327,13 +326,13 @@
   color: #ffffff;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: transform 0.1s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .m3-btn-filled:has(svg) {
   padding: 0 16px;
-}
-.m3-btn-filled:hover {
-  background-color: #1e293b;
 }
 .m3-btn-filled:active {
   transform: scale(0.98);
@@ -342,9 +341,6 @@
   background-color: #f8fafc;
   color: #0f172a;
 }
-.dark .m3-btn-filled:hover {
-  background-color: #e2e8f0;
-}
 
 .m3-btn-tonal {
   display: inline-flex;
@@ -352,7 +348,6 @@
   justify-content: center;
   gap: 8px;
   height: 40px;
-  min-height: 44px;
   padding: 0 24px;
   border-radius: 9999px;
   font-size: 14px;
@@ -363,13 +358,13 @@
   color: #0f172a;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: transform 0.1s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .m3-btn-tonal:has(svg) {
   padding: 0 16px;
-}
-.m3-btn-tonal:hover {
-  background-color: #cbd5e1;
 }
 .m3-btn-tonal:active {
   transform: scale(0.98);
@@ -378,9 +373,6 @@
   background-color: #282a2c;
   color: #f8fafc;
 }
-.dark .m3-btn-tonal:hover {
-  background-color: #383b40;
-}
 
 .m3-btn-outlined {
   display: inline-flex;
@@ -388,7 +380,6 @@
   justify-content: center;
   gap: 8px;
   height: 40px;
-  min-height: 44px;
   padding: 0 24px;
   border-radius: 9999px;
   font-size: 14px;
@@ -399,13 +390,13 @@
   color: #0f172a;
   border: 1px solid #cbd5e1;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .m3-btn-outlined:has(svg) {
   padding: 0 16px;
-}
-.m3-btn-outlined:hover {
-  background-color: rgba(15, 23, 42, 0.05);
 }
 .m3-btn-outlined:active {
   transform: scale(0.98);
@@ -414,9 +405,6 @@
   color: #f8fafc;
   border-color: #383b40;
 }
-.dark .m3-btn-outlined:hover {
-  background-color: rgba(248, 250, 252, 0.06);
-}
 
 .m3-btn-text {
   display: inline-flex;
@@ -424,7 +412,6 @@
   justify-content: center;
   gap: 8px;
   height: 40px;
-  min-height: 44px;
   padding: 0 12px;
   border-radius: 9999px;
   font-size: 14px;
@@ -435,16 +422,80 @@
   color: #0f172a;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: transform 0.1s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
-.m3-btn-text:hover {
-  background-color: rgba(15, 23, 42, 0.06);
+.m3-btn-text:active {
+  transform: scale(0.98);
 }
 .dark .m3-btn-text {
   color: #f8fafc;
 }
-.dark .m3-btn-text:hover {
-  background-color: rgba(248, 250, 252, 0.06);
+
+/* Material 3 State Layers (Spec §4: 0.08 hover / 0.10 focus / 0.10 pressed) */
+.m3-btn-filled::after,
+.m3-btn-tonal::after,
+.m3-btn-outlined::after,
+.m3-btn-text::after,
+.m3-fab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 1;
+}
+
+.m3-btn-filled:hover::after,
+.m3-btn-tonal:hover::after,
+.m3-btn-outlined:hover::after,
+.m3-btn-text:hover::after,
+.m3-fab:hover::after {
+  opacity: 0.08;
+}
+
+.m3-btn-filled:focus-visible::after,
+.m3-btn-tonal:focus-visible::after,
+.m3-btn-outlined:focus-visible::after,
+.m3-btn-text:focus-visible::after,
+.m3-fab:focus-visible::after {
+  opacity: 0.10;
+}
+
+.m3-btn-filled:active::after,
+.m3-btn-tonal:active::after,
+.m3-btn-outlined:active::after,
+.m3-btn-text:active::after,
+.m3-fab:active::after {
+  opacity: 0.10;
+}
+
+/* Material 3 Button Icon Tier (Spec §6: 18px for inline button icons) */
+.m3-btn-filled svg,
+.m3-btn-tonal svg,
+.m3-btn-outlined svg,
+.m3-btn-text svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Material 3 Disabled Button States (§4 mandates opacity 0.38) */
+.m3-btn-disabled,
+.m3-btn-filled:disabled,
+.m3-btn-tonal:disabled,
+.m3-btn-outlined:disabled,
+.m3-btn-text:disabled,
+button:disabled,
+[aria-disabled="true"] {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 /* FAB - Floating Action Button (Table 3) */
@@ -498,12 +549,12 @@
   align-items: center;
   gap: 6px;
   height: 32px;
-  min-height: 32px;
+  min-height: 28px;
   padding: 0 12px;
-  border-radius: 8px; /* Strict M3 8dp radius */
-  font-size: 13px;
+  border-radius: 9999px; /* Spec §6 Table 2: Pill radius */
+  font-size: 12px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 16px;
   letter-spacing: 0.1px;
   white-space: nowrap;
   user-select: none;
@@ -550,8 +601,11 @@
   background-color: var(--md-surface-container-low);
   color: var(--md-on-surface);
   border-radius: 16px;
-  box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.12);
-  border: 1px solid transparent;
+  box-shadow: none;
+  border: 1px solid #E2E8F0;
+}
+.dark .m3-card-elevated {
+  border-color: var(--md-outline-variant);
 }
 
 .m3-card-outlined {
@@ -621,9 +675,9 @@
   border-color: var(--md-outline-variant);
 }
 
-/* Scrim overlay: strictly flat with zero backdrop-filter blur */
+/* Scrim overlay: strictly flat with zero backdrop-filter blur (Spec: rgba(0,0,0,0.32)) */
 .m3-scrim-overlay {
-  background-color: rgba(0, 0, 0, 0.38);
+  background-color: rgba(0, 0, 0, 0.32);
 }
 
 /* Safe area padding utilities */
@@ -632,6 +686,50 @@
 }
 .pt-safe {
   padding-top: max(12px, env(safe-area-inset-top));
+}
+
+/* ==========================================================================
+   OFFICIAL MATERIAL 3 TEXT FIELDS & INPUTS (Table 4 & §3 Spec)
+   56px container, 1px resting -> 2px focus, 16px text, reserved helper spacing
+   ========================================================================== */
+.m3-text-field {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.m3-input {
+  height: 56px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 24px;
+  background-color: var(--md-surface-container);
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.m3-input:focus {
+  border-width: 2px;
+  border-color: #2563eb;
+  padding: 7px 15px; /* offset 1px extra border to prevent layout shift */
+}
+
+.m3-helper-text {
+  min-height: 20px; /* Reserved spacing so no layout jump occurs */
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--md-on-surface-variant);
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.m3-helper-text-error {
+  color: var(--md-error);
 }
 
 /* ==========================================================================
@@ -645,5 +743,50 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   GLOBAL PRINT MEDIA STYLESHEET (Item 38 / §8)
+   ========================================================================== */
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: auto;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide app navigation chrome and floating UI elements during print */
+  nav,
+  aside,
+  header:not(.print-header),
+  .no-print,
+  .m3-scrim-overlay,
+  .toast-container,
+  [role="alert"] {
+    display: none !important;
+  }
+
+  /* Reset main layout wrappers so content flows naturally across paper pages */
+  main,
+  #app {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  /* Prevent awkward page breaks across cards and table rows */
+  tr,
+  .m3-card-elevated,
+  .m3-card-outlined {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

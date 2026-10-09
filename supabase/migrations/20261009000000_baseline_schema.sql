@@ -1,7 +1,7 @@
 -- ====================================================================
--- SMARTBAND CANONICAL DATABASE BASELINE SCHEMA
+-- SMARTBAND CANONICAL DATABASE BASELINE MIGRATION
 -- Peñaranda Marching Band 1870
--- Baseline schema consolidating all historical fix scripts.
+-- Baseline migration consolidating schema.sql and all historical fix scripts.
 -- Idempotent, security-hardened, and compliant with ISO/IEC 25010 & Capstone specs.
 -- ====================================================================
 
@@ -372,7 +372,7 @@ USING (public.get_auth_role(auth.uid()) IN ('secretary_admin', 'super_admin', 'e
 -- 11. PUSH SUBSCRIPTIONS TABLE & RLS
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id REFERENCES public.profiles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     endpoint TEXT NOT NULL,
     p256dh TEXT,
     auth TEXT,
