@@ -121,19 +121,35 @@ DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.object
 CREATE POLICY "Authenticated users can upload avatars"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (bucket_id = 'avatars');
+WITH CHECK (
+  bucket_id = 'avatars' 
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
 
 DROP POLICY IF EXISTS "Authenticated users can update avatars" ON storage.objects;
 CREATE POLICY "Authenticated users can update avatars"
 ON storage.objects FOR UPDATE
 TO authenticated
-USING (bucket_id = 'avatars');
+USING (
+  bucket_id = 'avatars' 
+  AND (storage.foldername(name))[1] = auth.uid()::text
+)
+WITH CHECK (
+  bucket_id = 'avatars' 
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
 
 DROP POLICY IF EXISTS "Authenticated users can delete avatars" ON storage.objects;
 CREATE POLICY "Authenticated users can delete avatars"
 ON storage.objects FOR DELETE
 TO authenticated
-USING (bucket_id = 'avatars');
+USING (
+  bucket_id = 'avatars' 
+  AND (
+    (storage.foldername(name))[1] = auth.uid()::text
+    OR public.get_auth_role(auth.uid()) = 'super_admin'
+  )
+);
 
 -- 9. SAFE USER ACCOUNT HARD-DELETE FUNCTION (Super Admin Only)
 -- Allows Super Admin to completely remove an account from both public.profiles AND auth.users
