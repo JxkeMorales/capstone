@@ -227,7 +227,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-[1200px] mx-auto">
+  <div class="space-y-6 max-w-[1200px] mx-auto">
     
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-[#2d3442] pb-4">
       <div>

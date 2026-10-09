@@ -349,7 +349,7 @@ const handleFileUpload = async (event) => {
 </script>
 
 <template>
-  <div class="p-3.5 sm:p-6 space-y-6 max-w-[1200px] mx-auto">
+  <div class="space-y-6 max-w-[1200px] mx-auto">
     
     <!-- Top Header (M3 Headline & Action Buttons) -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-[var(--md-outline-variant)]/30 pb-4">
@@ -357,18 +357,18 @@ const handleFileUpload = async (event) => {
         <p class="text-xs font-medium text-[var(--md-on-surface-variant)]">Account Management</p>
         <h1 class="text-2xl sm:text-3xl font-bold text-[var(--md-on-surface)] tracking-tight">My Profile</h1>
       </div>
-      <div class="flex items-center space-x-2 self-start sm:self-auto">
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="m3-btn-tonal min-h-[44px] text-xs font-semibold px-4 cursor-pointer"
+          class="m3-btn-tonal flex-1 sm:flex-initial min-h-[40px] text-xs font-semibold px-4 cursor-pointer flex items-center justify-center"
         >
           <Settings class="w-4 h-4 mr-1.5 text-[var(--md-on-surface-variant)]" /> Profile Settings
         </button>
         <button 
           @click="triggerSignOut"
           type="button"
-          class="m3-btn-outlined border-[var(--md-error)]/40 text-[var(--md-error)] hover:bg-[var(--md-error-container)]/20 min-h-[44px] text-xs font-semibold px-4 cursor-pointer"
+          class="m3-btn-outlined border-[var(--md-error)]/40 text-[var(--md-error)] hover:bg-[var(--md-error-container)]/20 flex-1 sm:flex-initial min-h-[40px] text-xs font-semibold px-4 cursor-pointer flex items-center justify-center"
           aria-label="Sign Out of Account"
         >
           <LogOut class="w-4 h-4 mr-1.5" /> Sign Out
@@ -377,9 +377,9 @@ const handleFileUpload = async (event) => {
     </header>
 
     <!-- Profile Info Card (Official M3 Elevated Card) -->
-    <section class="m3-card-elevated p-5 sm:p-6 border border-[var(--md-outline-variant)]/40 rounded-2xl space-y-5">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4 min-w-0 pr-2">
+    <section class="m3-card-elevated p-4 sm:p-6 border border-[var(--md-outline-variant)]/40 rounded-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center space-x-3.5 min-w-0 flex-1">
           
           <!-- Avatar with Upload Indicator (Keyboard Accessible via label & focusable file input) -->
           <label 
@@ -416,36 +416,39 @@ const handleFileUpload = async (event) => {
             </div>
           </label>
 
-          <div class="min-w-0">
-            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h2 class="text-lg sm:text-xl font-bold text-[var(--md-on-surface)] truncate leading-tight">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h2 class="text-lg sm:text-xl font-bold text-[var(--md-on-surface)] leading-tight">
                 {{ store.profile?.full_name || 'Member' }}
               </h2>
-              <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-7 px-3 text-xs font-semibold">
+              <span v-if="store.profile?.is_verified" class="m3-chip m3-chip-info h-6 px-2.5 text-xs font-semibold">
                 Verified Musician
               </span>
-              <span v-else class="m3-chip m3-chip-rsvp h-7 px-3 text-xs font-semibold">
+              <span v-else class="m3-chip m3-chip-rsvp h-6 px-2.5 text-xs font-semibold">
                 Pending Verification
               </span>
             </div>
 
-            <p class="text-xs font-medium text-[var(--md-on-surface-variant)] mt-1.5 flex items-center gap-1.5 capitalize">
-              <Music class="w-3.5 h-3.5 text-[var(--md-outline)] shrink-0" />
-              <span>{{ store.profile?.instrument || 'Musician' }}</span>
+            <div class="text-xs font-medium text-[var(--md-on-surface-variant)] mt-1.5 flex flex-wrap items-center gap-1.5 capitalize">
+              <span class="flex items-center">
+                <Music class="w-3.5 h-3.5 mr-1 text-[var(--md-outline)] shrink-0" />
+                {{ store.profile?.instrument || 'Musician' }}
+              </span>
               <span>•</span>
               <span class="m3-chip m3-chip-assist h-6 px-2.5 text-xs">{{ store.profile?.rank || 'Junior' }} Rank</span>
-            </p>
+            </div>
           </div>
         </div>
 
         <button 
           @click="openEditProfile('profile')"
           type="button"
-          class="min-w-[44px] min-h-[44px] rounded-full text-[var(--md-on-surface-variant)] hover:bg-[var(--md-surface-container-high)] border border-[var(--md-outline-variant)]/40 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+          class="m3-btn-tonal text-xs px-4 min-h-[40px] flex items-center justify-center self-start sm:self-center shrink-0 cursor-pointer"
           aria-label="Edit Profile Details"
           title="Edit Profile Settings"
         >
-          <Edit3 class="w-4 h-4" />
+          <Edit3 class="w-3.5 h-3.5 mr-1.5" />
+          <span>Edit Details</span>
         </button>
       </div>
 
@@ -464,7 +467,7 @@ const handleFileUpload = async (event) => {
 
     <!-- Dynamic Weekly Availability Grid with Exact Dates (M3 Outlined Card) -->
     <section class="space-y-3">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 px-1">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-1">
         <div>
           <h2 class="text-xs font-semibold text-[var(--md-on-surface-variant)] uppercase tracking-wider flex items-center">
             <Calendar class="w-3.5 h-3.5 mr-1.5 text-[var(--md-outline)]" /> Weekly Schedule Availability
@@ -474,14 +477,49 @@ const handleFileUpload = async (event) => {
         <button 
           @click="saveAvailability" 
           :disabled="isSaving"
-          class="m3-btn-filled min-h-[44px] px-5 text-xs font-semibold cursor-pointer shrink-0"
+          class="m3-btn-filled w-full sm:w-auto min-h-[40px] px-5 text-xs font-semibold cursor-pointer shrink-0"
         >
           <CheckCircle2 v-if="saveSuccess" class="w-4 h-4 mr-1.5" />
           {{ isSaving ? 'Saving...' : saveSuccess ? 'Saved ✓' : 'Save Availability' }}
         </button>
       </div>
 
-      <div class="m3-card-outlined rounded-2xl p-3 sm:p-5 border border-[var(--md-outline-variant)]/40 overflow-x-auto">
+      <!-- MOBILE VIEW: STACKED DAY CARDS (Hidden on Tablet/Desktop) -->
+      <div class="block md:hidden space-y-2.5">
+        <div 
+          v-for="d in weekDays" 
+          :key="d.key" 
+          class="p-3.5 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-2"
+        >
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-[var(--md-on-surface)] uppercase tracking-wide">{{ d.name }}</span>
+            <span class="text-[11px] text-[var(--md-on-surface-variant)]">{{ d.dateLabel }}</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <button 
+              v-for="slot in timeSlots" 
+              :key="slot"
+              @click="toggleSlot(d.key, slot)"
+              type="button"
+              :aria-label="`Toggle ${d.name} ${slot}`"
+              class="py-2.5 px-1 rounded-xl font-semibold text-xs transition-all cursor-pointer min-h-[44px] flex flex-col items-center justify-center border"
+              :class="isSlotFree(d.key, slot) 
+                ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)] border-transparent shadow-xs' 
+                : 'bg-[var(--md-surface)] text-[var(--md-on-surface-variant)] border-[var(--md-outline-variant)]/40 hover:bg-[var(--md-surface-container-high)]'"
+            >
+              <span class="text-[10px] font-medium opacity-80 leading-none mb-1">{{ slot.split(' ')[0] }}</span>
+              <div class="flex items-center gap-1 leading-none">
+                <Check v-if="isSlotFree(d.key, slot)" class="w-3 h-3 stroke-[3]" />
+                <span class="text-[11px]">{{ isSlotFree(d.key, slot) ? 'FREE' : '—' }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESKTOP VIEW: FULL WEEKLY MATRIX TABLE (Hidden on Mobile) -->
+      <div class="hidden md:block m3-card-outlined rounded-2xl p-5 border border-[var(--md-outline-variant)]/40 overflow-x-auto">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>

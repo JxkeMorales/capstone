@@ -54,11 +54,10 @@ export const initRealtimeSync = (callback) => {
     listeners.add(callback)
   }
 
-  // 1. Master Sync Channel (Item 37: Private channel prevents anonymous spoofing)
+  // 1. Master Sync Channel (using postgres_changes + standard broadcast)
   if (!supabaseMasterChannel) {
     supabaseMasterChannel = supabase.channel('smartband-master-sync', {
       config: {
-        private: true,
         broadcast: { ack: true, self: true }
       }
     })
@@ -87,11 +86,10 @@ export const initRealtimeSync = (callback) => {
       })
   }
 
-  // 2. Broadcast Alerts Channel (Item 37: Private channel prevents anonymous spoofing)
+  // 2. Broadcast Alerts Channel (for layout and notifications)
   if (!supabaseAlertsChannel) {
     supabaseAlertsChannel = supabase.channel('smartband-broadcast-alerts', {
       config: {
-        private: true,
         broadcast: { ack: true, self: true }
       }
     })

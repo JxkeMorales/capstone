@@ -1185,7 +1185,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-[1200px] mx-auto relative">
+  <div class="space-y-6 max-w-[1200px] mx-auto relative">
     
     <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-b border-slate-200/80 dark:border-neutral-800 pb-4">
@@ -1721,8 +1721,70 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Table -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3442]">
+          <!-- MOBILE VIEW: RESPONSIVE ANALYTICS CARDS (Hidden on Desktop/Tablet) -->
+          <div class="block md:hidden space-y-3">
+            <div 
+              v-for="(member, idx) in filteredAnalyticsMatrix" 
+              :key="member.id"
+              class="bg-white dark:bg-[#1e232d] p-4 rounded-2xl border border-slate-200/80 dark:border-[#2d3442] space-y-3 shadow-xs"
+              :class="{ 'border-rose-300 dark:border-rose-900/50 bg-rose-50/20': member.flakeCount >= 2 }"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-bold text-sm text-slate-900 dark:text-neutral-100 flex items-center gap-1.5">
+                    <span class="text-xs text-slate-400">#{{ idx + 1 }}</span>
+                    <span>{{ member.name }}</span>
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 capitalize">
+                    {{ member.instrument }} • {{ member.rank }}
+                  </div>
+                </div>
+                <span 
+                  class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0"
+                  :class="{
+                    'bg-slate-100 dark:bg-[#2d2f31] text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700': member.riskTier === 'Reliable',
+                    'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40': member.riskTier === 'Moderate Risk',
+                    'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/40': member.riskTier === 'High No-Show Risk'
+                  }"
+                >
+                  {{ member.riskTier }}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 dark:border-[#2d3442] text-center text-xs">
+                <div>
+                  <span class="block text-[10px] text-slate-400 uppercase">RSVPs</span>
+                  <span class="font-semibold text-slate-800 dark:text-neutral-200">{{ member.promisedCount }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] text-slate-400 uppercase">Present</span>
+                  <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ member.attendedCount }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] text-slate-400 uppercase">No-Shows</span>
+                  <span class="font-semibold" :class="member.flakeCount > 0 ? 'text-rose-600' : 'text-slate-800 dark:text-neutral-200'">{{ member.flakeCount }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] text-slate-400 uppercase">Reliability</span>
+                  <span class="font-bold text-slate-900 dark:text-white">{{ member.reliabilityScore }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="filteredAnalyticsMatrix.length === 0" class="py-8 text-center text-slate-600 dark:text-neutral-400 font-medium">
+              <p class="mb-2">No musicians matched your search or section filters.</p>
+              <button 
+                @click="resetAnalyticsFilters" 
+                type="button" 
+                class="m3-btn-tonal text-xs min-h-[36px] px-3.5 inline-flex items-center"
+              >
+                <RotateCcw class="w-3.5 h-3.5 mr-1.5" /> Reset Filters
+              </button>
+            </div>
+          </div>
+
+          <!-- DESKTOP VIEW: DATA TABLE (Hidden on Mobile) -->
+          <div class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-[#2d3442]">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 dark:bg-[#242933] text-slate-500 dark:text-neutral-400 font-semibold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-[#2d3442] h-12">
                 <tr>
