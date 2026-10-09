@@ -204,22 +204,28 @@ CREATE POLICY "Super Admins can delete profiles"
 ON public.profiles FOR DELETE
 USING (public.get_auth_role(auth.uid()) = 'super_admin');
 
--- RLS: Verified users can view verified profiles (used by public_roster view)
+-- RLS: Verified users can view verified profiles (authenticated band members only)
+DROP POLICY IF EXISTS "Verified users can view verified profiles" ON public.profiles;
 CREATE POLICY "Verified users can view verified profiles"
 ON public.profiles FOR SELECT
+TO authenticated
 USING (is_verified = true);
 
+-- Revoke raw table SELECT from anon to stop PII harvesting (SEC-5 / OWASP A01)
+REVOKE SELECT ON public.profiles FROM anon;
+GRANT SELECT ON public.profiles TO authenticated;
 
 -- --------------------------------------------------------------------
 -- 5. PUBLIC ROSTER VIEW (Protects User Privacy: Hides Contact Numbers & Birth Dates)
--- Defined WITH (security_invoker = true) to satisfy Supabase Security Linter
+-- Safe column-allow-listed view accessible to landing page & anonymous visitors
 -- --------------------------------------------------------------------
-CREATE OR REPLACE VIEW public.public_roster 
-WITH (security_invoker = true) AS
+CREATE OR REPLACE VIEW public.public_roster AS
 SELECT 
     id,
     full_name,
     instrument,
+    role,
+    executive_title,
     rank,
     reliability_score,
     profile_picture

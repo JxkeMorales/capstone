@@ -14,8 +14,28 @@ DROP POLICY IF EXISTS "Verified users can view verified profiles" ON public.prof
 
 CREATE POLICY "Verified users can view verified profiles"
 ON public.profiles FOR SELECT
-TO authenticated, anon
+TO authenticated
 USING (is_verified = true);
+
+-- Stop PII leak to anon (SEC-5 / OWASP A01)
+REVOKE SELECT ON public.profiles FROM anon;
+GRANT SELECT ON public.profiles TO authenticated;
+
+-- Expose column-allow-listed public_roster view for public landing page
+CREATE OR REPLACE VIEW public.public_roster AS
+SELECT 
+    id,
+    full_name,
+    instrument,
+    role,
+    executive_title,
+    rank,
+    reliability_score,
+    profile_picture
+FROM public.profiles
+WHERE is_verified = true;
+
+GRANT SELECT ON public.public_roster TO authenticated, anon;
 
 -- 2. Ensure Officers & Admins have Operational Permissions on Events & Announcements
 DROP POLICY IF EXISTS "Officers can manage events" ON public.events;

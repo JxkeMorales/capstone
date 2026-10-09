@@ -124,9 +124,8 @@ const officers = ref(
 const fetchOfficers = async () => {
   try {
     const { data } = await supabase
-      .from('profiles')
+      .from('public_roster')
       .select('id, full_name, instrument, role, executive_title, profile_picture')
-      .eq('is_verified', true)
 
     if (data && data.length > 0) {
       const mapOfficer = (pos) => {
