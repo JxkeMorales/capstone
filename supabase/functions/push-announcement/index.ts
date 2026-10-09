@@ -2,17 +2,18 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 import webpush from "npm:web-push@3.6.7";
 
-// VAPID keys should be set via environment variables in production,
-// but for simplicity in this project they are hardcoded from our generation:
-const VAPID_PUBLIC_KEY = "BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA";
-const VAPID_PRIVATE_KEY = "REDACTED_KEY";
-const VAPID_SUBJECT = "mailto:admin@smartband.local";
+// VAPID keys must be set via environment variables in Supabase dashboard
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") || "BPv95LyDbnjSyofJOBm8iePCEuH9L7NQdYX-nKoqdcvi_lzmKRAGUeXlBvITdkTN53BG--_6scvMvRYZfzKcigk";
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:admin@smartband.local";
 
-webpush.setVapidDetails(
-  VAPID_SUBJECT,
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
 
 export default {
   fetch: withSupabase({ auth: ["secret"] }, async (req, ctx) => {

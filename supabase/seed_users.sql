@@ -1,7 +1,7 @@
 -- ====================================================================
 -- SMARTBAND INITIAL USER SEED SCRIPT (PostgreSQL + Supabase Auth)
 -- Password Security Notice: Passwords are 100% ENCRYPTED using Bcrypt
--- (`extensions.crypt('REDACTED_PASSWORD', extensions.gen_salt('bf'))`).
+-- (`extensions.crypt(p_password, extensions.gen_salt('bf'))`).
 -- Plaintext passwords are NEVER stored in the database!
 -- ====================================================================
 
@@ -91,12 +91,12 @@ BEGIN
 END;
 $$;
 
--- Execute Seeding for the requested accounts:
+-- Execute Seeding for the requested accounts (Replace 'CHANGE_ME_SECURE_PASSWORD' before running):
 
 -- 1. IT Super Admin Account (jxkesui@gmail.com)
 SELECT public.seed_user_account(
     'jxkesui@gmail.com',
-    'REDACTED_PASSWORD',
+    'CHANGE_ME_SECURE_PASSWORD',
     'IT Super Admin',
     'super_admin'::public.app_role,
     'Trumpet'
@@ -105,7 +105,7 @@ SELECT public.seed_user_account(
 -- 2. Band Secretary Account (lxr@mail.com)
 SELECT public.seed_user_account(
     'lxr@mail.com',
-    'REDACTED_PASSWORD',
+    'CHANGE_ME_SECURE_PASSWORD',
     'Band Secretary',
     'secretary_admin'::public.app_role,
     'Saxophone'
@@ -114,7 +114,7 @@ SELECT public.seed_user_account(
 -- 3. Regular Musician Member Account (regmem@gmail.com)
 SELECT public.seed_user_account(
     'regmem@gmail.com',
-    'REDACTED_PASSWORD',
+    'CHANGE_ME_SECURE_PASSWORD',
     'Regular Musician',
     'member'::public.app_role,
     'Clarinet'

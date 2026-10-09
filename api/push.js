@@ -1,15 +1,17 @@
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BGcxQLCkkaTHNWI4PL5UmWQ20X8dHCP6vnsql418_xaDas9cIf9riyfHfyPxXrT9zF47ViQ_B1qO_IqaxcjHzyA'
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'REDACTED_KEY'
-const VAPID_SUBJECT = 'mailto:admin@smartband.local'
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BPv95LyDbnjSyofJOBm8iePCEuH9L7NQdYX-nKoqdcvi_lzmKRAGUeXlBvITdkTN53BG--_6scvMvRYZfzKcigk'
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@smartband.local'
 
-webpush.setVapidDetails(
-  VAPID_SUBJECT,
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-)
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  )
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')

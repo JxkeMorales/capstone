@@ -20,9 +20,9 @@ DELETE FROM auth.users WHERE email IN ('jxkesui@gmail.com', 'lxr@mail.com', 'reg
 1. Open your browser to `http://localhost:5173/`.
 2. Click the **SIGN UP** tab.
 3. Fill out the form and click **CREATE ACCOUNT** for each of your 3 accounts:
-   - **IT Admin**: `jxkesui@gmail.com` / Password: `REDACTED_PASSWORD`
-   - **Secretary**: `lxr@mail.com` / Password: `REDACTED_PASSWORD`
-   - **Musician**: `regmem@gmail.com` / Password: `REDACTED_PASSWORD`
+   - **IT Admin**: `jxkesui@gmail.com` / Password: `[YOUR_SECURE_PASSWORD]`
+   - **Secretary**: `lxr@mail.com` / Password: `[YOUR_SECURE_PASSWORD]`
+   - **Musician**: `regmem@gmail.com` / Password: `[YOUR_SECURE_PASSWORD]`
 
 *(When created this way, Supabase GoTrue Auth hashes the password natively through its API, guaranteeing 100% successful login!)*
 
@@ -57,6 +57,6 @@ WHERE email = 'regmem@gmail.com';
 ## 🔑 Step 4: Log In!
 
 Go to `http://localhost:5173/` -> **SIGN IN**:
-- Enter `jxkesui@gmail.com` and `REDACTED_PASSWORD`.
+- Enter `jxkesui@gmail.com` and `[YOUR_SECURE_PASSWORD]`.
 - Click **ACCESS DASHBOARD**.
 - You will be logged in immediately with full **IT Super Admin** access!
