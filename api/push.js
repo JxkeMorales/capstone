@@ -13,40 +13,99 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   )
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  // 1. CORS & Allow-listed origins
+  const origin = req.headers.origin || ''
+  const allowedOrigins = [
+    process.env.APP_URL,
+    process.env.VITE_APP_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://localhost:4173'
+  ].filter(Boolean)
+
+  res.setHeader('Vary', 'Origin')
+  if (origin && (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey')
 
+  // 2. Preflight handling (return 204)
   if (req.method === 'OPTIONS') {
-    return res.status(200).end()
+    return res.status(204).end()
   }
 
+  // 3. Method validation (return 405 with Allow header)
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST, OPTIONS')
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
-    const { title, message, url, tag, senderId } = req.body || {}
-    if (!title) {
-      return res.status(400).json({ error: 'Missing title' })
+    // 4. Caller Authentication via JWT & Anon client
+    const authHeader = req.headers.authorization || ''
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid Bearer token' })
     }
 
-    const authHeader = req.headers.authorization || ''
     const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://tztlnltutpntzrnsrdvo.supabase.co'
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_dsd7V2hfbdaYc3h18s_xGw_cCJ4wSE4'
-    const activeKey = serviceRoleKey || supabaseAnonKey
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-    const supabase = createClient(supabaseUrl, activeKey, {
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false },
-      global: {
-        headers: (!serviceRoleKey && authHeader) ? { Authorization: authHeader } : {}
-      }
+      global: { headers: { Authorization: authHeader } }
     })
 
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid or expired session' })
+    }
+
+    // 5. Role authorization: require super_admin or secretary_admin
+    const { data: callerRole, error: roleError } = await authClient.rpc('get_auth_role', { user_id: user.id })
+    if (roleError || !['super_admin', 'secretary_admin'].includes(callerRole)) {
+      return res.status(403).json({ error: 'Forbidden: Only Band Officers (Super Admin / Secretary) can broadcast push notifications' })
+    }
+
+    // 6. Strict payload validation
+    const { title, message, url, tag, senderId } = req.body || {}
+    if (!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 120) {
+      return res.status(400).json({ error: 'Validation failed: title must be a non-empty string under 120 characters' })
+    }
+
+    if (message && (typeof message !== 'string' || message.length > 500)) {
+      return res.status(400).json({ error: 'Validation failed: message must be under 500 characters' })
+    }
+
+    // Reject non-relative URLs (prevent open redirect / phishing)
+    if (url) {
+      if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') || url.includes('\\')) {
+        return res.status(400).json({ error: 'Validation failed: url must be a relative path starting with /' })
+      }
+    }
+
+    // Validate senderId format if provided
+    if (senderId && (typeof senderId !== 'string' || !UUID_REGEX.test(senderId))) {
+      return res.status(400).json({ error: 'Validation failed: senderId must be a valid UUID' })
+    }
+
+    if (!VAPID_PRIVATE_KEY) {
+      console.warn('VAPID_PRIVATE_KEY is not configured on the server.')
+      return res.status(500).json({ error: 'Push service configuration missing on server' })
+    }
+
+    // 7. Database client for subscription retrieval
+    const dbClient = serviceRoleKey
+      ? createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
+      : authClient
+
     // Fetch all push subscriptions from Supabase
-    let query = supabase.from('push_subscriptions').select('endpoint, p256dh, auth, user_id')
+    let query = dbClient.from('push_subscriptions').select('endpoint, p256dh, auth, user_id')
     if (senderId) {
       query = query.neq('user_id', senderId)
     }
