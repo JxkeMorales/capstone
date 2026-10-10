@@ -440,20 +440,35 @@ const executeDeleteMember = async () => {
   const target = confirmDeleteTarget.value
 
   try {
+    let deletedSuccessfully = false
+
+    // 1. Authoritative account removal: deletes from auth.users (which cascades to public.profiles)
     try {
-      await supabase.rpc('delete_user_account', { target_user_id: target.id })
+      const { error: rpcErr } = await supabase.rpc('delete_user_account', { target_user_id: target.id })
+      if (!rpcErr) {
+        deletedSuccessfully = true
+      } else {
+        console.warn('RPC delete member notice:', rpcErr)
+      }
     } catch (rpcErr) {
       console.warn('RPC delete member fallback notice:', rpcErr)
     }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', target.id)
-      .select()
+    // 2. Direct profiles fallback if RPC was unavailable
+    if (!deletedSuccessfully) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', target.id)
+        .select()
 
-    if (error) throw error
-    if (!data || data.length === 0) {
+      if (error) throw error
+      if (data && data.length > 0) {
+        deletedSuccessfully = true
+      }
+    }
+
+    if (!deletedSuccessfully) {
       throw new Error('Database permission denied. Only Super Admin can delete member accounts.')
     }
 
