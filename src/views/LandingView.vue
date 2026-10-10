@@ -372,7 +372,7 @@ const handleTouchEnd = (e) => {
           </div>
           
           <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
-            Peñaranda marching band 1870.
+            Peñaranda band 1870.
           </h1>
           
           <p class="m3-body-large text-slate-600 dark:text-neutral-400 leading-relaxed font-normal mb-6 max-w-xl">

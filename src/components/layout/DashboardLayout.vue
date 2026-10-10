@@ -125,17 +125,33 @@ const handleInstallPWA = async () => {
   }
   const prompt = deferredPrompt.value || window.deferredPrompt
   if (!prompt) {
-    uiStore.addToast({ title: 'Manual Install Required', message: 'To install: Tap Share (iOS) / Menu (Android) → Add to Home Screen. On Desktop: Click the Install icon in the address bar.', type: 'warning', duration: 8000 })
+    // Open the visual step-by-step installation guide
+    activeGuideTab.value = 'pwa'
+    showRoleGuideModal.value = true
+    uiStore.addToast({ 
+      title: 'Manual Install Instructions', 
+      message: 'Follow the on-screen steps for your browser (Android Menu ⋮ or iOS Share).', 
+      type: 'info', 
+      duration: 6000 
+    })
     return
   }
-  prompt.prompt()
-  const { outcome } = await prompt.userChoice
-  if (outcome === 'accepted') {
-    showInstallBanner.value = false
-    isAppInstalled.value = true
+  try {
+    prompt.prompt()
+    const { outcome } = await prompt.userChoice
+    if (outcome === 'accepted') {
+      showInstallBanner.value = false
+      isAppInstalled.value = true
+      uiStore.addToast({ title: 'Installing SmartBand', message: 'App is being added to your home screen!', type: 'success' })
+    }
+  } catch (err) {
+    console.warn('[PWA Install Prompt Error]', err)
+    activeGuideTab.value = 'pwa'
+    showRoleGuideModal.value = true
+  } finally {
+    deferredPrompt.value = null
+    window.deferredPrompt = null
   }
-  deferredPrompt.value = null
-  window.deferredPrompt = null
 }
 
 // NORMAL, PLEASANT iOS NOTIFICATION CHIME SYNTHESIZER
@@ -1760,14 +1776,52 @@ onUnmounted(() => {
           <!-- TAB 4: PWA & OFFLINE -->
           <div v-else-if="activeGuideTab === 'pwa'" class="space-y-3">
             <div class="p-4 bg-[var(--md-surface-container)] rounded-2xl border border-[var(--md-outline-variant)]/40 space-y-2">
-              <h4 class="font-bold text-[var(--md-on-surface)] text-sm">Install as a Native App</h4>
-              <p class="text-[11px] text-[var(--md-on-surface-variant)]">
-                SmartBand is a certified Progressive Web App (PWA). You can install it on your Android phone, iPhone, iPad, Windows PC, or Mac.
+              <h4 class="font-bold text-[var(--md-on-surface)] text-sm flex items-center">
+                <Download class="w-4 h-4 mr-1.5 text-[var(--md-primary)]" /> Install SmartBand App
+              </h4>
+              <p class="text-[11px] text-[var(--md-on-surface-variant)] leading-relaxed">
+                SmartBand installs directly to your home screen or desktop without needing Google Play or Apple App Store.
               </p>
-              <ul class="list-disc list-inside space-y-1 text-[11px] text-[var(--md-on-surface-variant)] pt-1">
-                <li><strong>Chrome / Edge (PC/Mac/Android):</strong> Tap "Install App" in the top bar or click the install icon in your address bar.</li>
-                <li><strong>Safari (iOS / iPhone):</strong> Tap the <em>Share</em> button (square with arrow) &rarr; tap <em>Add to Home Screen</em>.</li>
-              </ul>
+            </div>
+
+            <!-- Platform-Specific Step Cards -->
+            <div class="space-y-2">
+              <!-- Android -->
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
+                <div class="font-bold text-xs text-[var(--md-on-surface)] flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Android (Chrome / Samsung / Brave)</span>
+                </div>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)] leading-relaxed">
+                  1. Tap the browser <strong>Menu (⋮)</strong> in the top-right corner.<br />
+                  2. Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.<br />
+                  3. Tap <strong>Install</strong> to add the app icon to your home screen.
+                </p>
+              </div>
+
+              <!-- iPhone / iPad -->
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
+                <div class="font-bold text-xs text-[var(--md-on-surface)] flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>iPhone &amp; iPad (Safari)</span>
+                </div>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)] leading-relaxed">
+                  1. Tap the <strong>Share</strong> button (square with arrow pointing up).<br />
+                  2. Scroll down and tap <strong>"Add to Home Screen"</strong>.<br />
+                  3. Tap <strong>Add</strong> in the top right.
+                </p>
+              </div>
+
+              <!-- Desktop PC / Mac -->
+              <div class="p-3 bg-[var(--md-surface-container-low)] rounded-xl border border-[var(--md-outline-variant)]/30 space-y-1">
+                <div class="font-bold text-xs text-[var(--md-on-surface)] flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                  <span>Desktop (Chrome, Edge)</span>
+                </div>
+                <p class="text-[11px] text-[var(--md-on-surface-variant)] leading-relaxed">
+                  Click the <strong>Install icon</strong> in your address bar on the right, or click Menu (⋮) &rarr; <strong>"Install SmartBand"</strong>.
+                </p>
+              </div>
             </div>
 
             <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-1 text-emerald-800 dark:text-emerald-300">

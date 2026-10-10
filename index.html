@@ -10,8 +10,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="SmartBand" />
-    <title>SmartBand — Enterprise Band PWA</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
     <script>
+      // Capture PWA install prompt at the earliest possible lifecycle event (before module scripts load)
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+      });
+
       (function() {
         try {
           var savedTheme = localStorage.getItem('smartband_theme');
