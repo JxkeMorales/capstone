@@ -313,10 +313,19 @@ const openAttendanceTracker = async (ev) => {
 
     if (memErr) throw memErr
 
-    const { data: rsvps, error: rsvpErr } = await supabase
+    let { data: rsvps, error: rsvpErr } = await supabase
       .from('event_rsvps')
-      .select('id, user_id, status')
+      .select('id, user_id, status, excuse_justification')
       .eq('event_id', ev.id)
+
+    if (rsvpErr && rsvpErr.message && rsvpErr.message.includes('excuse_justification')) {
+      const fallback = await supabase
+        .from('event_rsvps')
+        .select('id, user_id, status')
+        .eq('event_id', ev.id)
+      rsvps = fallback.data
+      rsvpErr = fallback.error
+    }
 
     if (rsvpErr) throw rsvpErr
 
@@ -324,7 +333,7 @@ const openAttendanceTracker = async (ev) => {
     if (rsvps) {
       rsvps.forEach(r => rsvpMap.set(r.user_id, { 
         status: r.status, 
-        excuse: localStorage.getItem(`smartband_rsvp_excuse_${r.event_id || ev.id}`) || null 
+        excuse: r.excuse_justification || localStorage.getItem(`smartband_rsvp_excuse_${r.event_id || ev.id}`) || null 
       }))
     }
 
